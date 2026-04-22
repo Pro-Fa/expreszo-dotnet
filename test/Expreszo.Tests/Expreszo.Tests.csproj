@@ -17,8 +17,11 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
     <!-- Test names use snake_case_for_readability; CA1707 (underscores in
-         member names) is not a useful signal inside a test assembly. -->
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
+         member names) is not a useful signal inside a test assembly.
+         CA2012 fires on ValueTask.Result access even after an explicit
+         IsCompletedSuccessfully guard — we use it deliberately in a handful
+         of sync/async tests. -->
+    <NoWarn>$(NoWarn);CA1707;CA2012</NoWarn>
 
     <!-- Test assemblies intentionally run under JIT (not AOT) so mocking
          libraries with runtime code gen (NSubstitute / Castle.DynamicProxy)

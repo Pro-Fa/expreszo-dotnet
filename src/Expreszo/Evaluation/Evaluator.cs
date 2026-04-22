@@ -3,6 +3,7 @@ using Expreszo.Ast;
 using Expreszo.Builtins;
 using Expreszo.Errors;
 using Expreszo.Parsing;
+using Expreszo.Validation;
 
 // CA1859 asks for concrete return types on private helpers. The evaluator's
 // helpers all flow into Value-typed call sites where the concrete variant
@@ -69,6 +70,7 @@ internal sealed class Evaluator
 
     private Value ResolveIdent(string name, EvalContext ctx)
     {
+        ExpressionValidator.ValidateVariableName(name);
         // 1. Built-in functions
         if (_ops.Functions.TryGetValue(name, out var fn))
         {
@@ -112,6 +114,7 @@ internal sealed class Evaluator
 
     private async ValueTask<Value> EvalMember(Member m, EvalContext ctx)
     {
+        ExpressionValidator.ValidateMemberAccess(m.Property);
         var obj = await EvalNode(m.Object, ctx).ConfigureAwait(false);
         return obj switch
         {

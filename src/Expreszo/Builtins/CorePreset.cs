@@ -215,6 +215,7 @@ internal static class CorePreset
             if (container is Value.Object obj)
             {
                 var k = ToStringValue(key);
+                Expreszo.Validation.ExpressionValidator.ValidateMemberAccess(k);
                 return obj.Props.TryGetValue(k, out var v) ? v : Value.Undefined.Instance;
             }
             if (container is Value.String s)

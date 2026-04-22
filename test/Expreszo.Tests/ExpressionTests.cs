@@ -324,7 +324,9 @@ public class ExpressionTests
         var expr = Parser.Parse("1 + 2");
         var task = expr.EvaluateAsync();
         await Assert.That(task.IsCompletedSuccessfully).IsTrue();
-        await Assert.That(((Value.Number)task.Result).V).IsEqualTo(3d);
+        // Result is safe to access since we verified IsCompletedSuccessfully above.
+        var result = (Value.Number)task.Result;
+        await Assert.That(result.V).IsEqualTo(3d);
     }
 
     [Test]
