@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.Demo</RootNamespace>
+    <AssemblyName>Expreszo.Demo</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+</Project>

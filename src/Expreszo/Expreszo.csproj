@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Expreszo</RootNamespace>
+    <AssemblyName>Expreszo</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- AOT / trimming guarantees.
+         These analyzers cause the build to fail if any production code path
+         requires dynamic code generation or untrimmable reflection. They are
+         the guardrail that enforces the AOT-safe constraint for the library. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+    <!-- NuGet package metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Expreszo</PackageId>
+    <Title>Expreszo</Title>
+    <Description>Safe, extensible expression evaluator for .NET — a configurable alternative to eval. Pratt parser, immutable AST, JsonDocument-based I/O, Native AOT compatible. Port of expreszo-typescript.</Description>
+    <PackageTags>expression;evaluator;parser;json;aot;trimming;expreszo</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Condition="Exists('..\..\README.md')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Expreszo.Tests" />
+  </ItemGroup>
+
+</Project>

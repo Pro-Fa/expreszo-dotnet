@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.Tests</RootNamespace>
+    <AssemblyName>Expreszo.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <!-- TUnit is Microsoft Testing Platform based and runs as its own
+         entry-point executable, not through VSTest. That's why OutputType=Exe. -->
+    <EnableMSTestRunner>false</EnableMSTestRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+    <!-- Turn off treat-warnings-as-errors in test code where pragmatic patterns
+         (e.g. xunit-style test data arrays, intentionally unused vars) are common.
+         Library code still has warnings=errors via Directory.Build.props scoping. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Test names use snake_case_for_readability; CA1707 (underscores in
+         member names) is not a useful signal inside a test assembly. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+
+    <!-- Test assemblies intentionally run under JIT (not AOT) so mocking
+         libraries with runtime code gen (NSubstitute / Castle.DynamicProxy)
+         are fine here. The library assembly itself is AOT-safe. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.37.24" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" PrivateAssets="all" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+</Project>

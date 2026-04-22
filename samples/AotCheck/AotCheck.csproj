@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.AotCheck</RootNamespace>
+    <AssemblyName>Expreszo.AotCheck</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <!-- AOT canary: CI builds this with PublishAot=true to ensure the library
+         call graph stays AOT-safe. Any RequiresDynamicCode / RequiresUnreferencedCode
+         warning from the library surfaces here as a build failure. -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+</Project>
