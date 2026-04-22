@@ -692,7 +692,9 @@ internal sealed class Tokenizer
                 return false;
             }
             _current = NewToken(TokenKind.Op, "as", startPos, startPos + 2);
-            // TS increments _pos by 1 then the shared ++ brings it to 2.
+            // 'as' is two characters; bump now, the shared ++ below adds the
+            // second one. Mirrors `tryMatchAsOperator` in the TS original.
+            _pos++;
         }
         else
         {
