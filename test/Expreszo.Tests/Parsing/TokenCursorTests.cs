@@ -5,7 +5,7 @@ namespace Expreszo.Tests.Parsing;
 public class TokenCursorTests
 {
     private static TokenCursor CursorFor(string expression) =>
-        TokenCursor.From(TokenizerConfig.Default, expression);
+        TokenCursor.From(ParserConfig.Default, expression);
 
     [Test]
     public async Task Cursor_starts_at_first_token()

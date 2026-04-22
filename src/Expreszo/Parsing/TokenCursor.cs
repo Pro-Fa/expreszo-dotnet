@@ -33,7 +33,7 @@ internal sealed class TokenCursor
     /// than on demand during parsing — that's a benign difference vs the TS
     /// library since malformed tokens could never be parsed anyway.
     /// </summary>
-    public static TokenCursor From(TokenizerConfig config, string expression)
+    public static TokenCursor From(ParserConfig config, string expression)
     {
         var tokenizer = new Tokenizer(config, expression);
         var builder = ImmutableArray.CreateBuilder<Token>();

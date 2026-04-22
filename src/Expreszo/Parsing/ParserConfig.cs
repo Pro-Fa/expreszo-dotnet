@@ -3,11 +3,11 @@ using System.Collections.Frozen;
 namespace Expreszo.Parsing;
 
 /// <summary>
-/// Static configuration driving the tokenizer: which names are keywords or
-/// named operators, which constants expand to numeric values, and which
-/// operators are currently enabled. In Phase 3 the <c>Parser</c> class builds
-/// one of these from its <c>ParserOptions</c>; for Phase 2 tests we build
-/// them manually.
+/// Static configuration driving both the tokenizer and the Pratt parser:
+/// which names are keywords or named operators, which constants expand to
+/// numeric values, and which operators are currently enabled. In Phase 7
+/// the public <c>Parser</c> class builds one of these from its
+/// <c>ParserOptions</c>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -16,18 +16,19 @@ namespace Expreszo.Parsing;
 /// <c>ParserOptions.operators</c>. The port keeps that extension point for
 /// internal use even though public operator customisation is out of scope.
 /// </para>
-/// <para>Instances are immutable and cheap to share across tokenizer runs.</para>
+/// <para>Instances are immutable and cheap to share across runs.</para>
 /// </remarks>
-internal sealed class TokenizerConfig
+internal sealed class ParserConfig
 {
-    public TokenizerConfig(
+    public ParserConfig(
         FrozenSet<string> keywords,
         FrozenSet<string> unaryOps,
         FrozenSet<string> binaryOps,
         FrozenSet<string> ternaryOps,
         FrozenDictionary<string, double> numericConstants,
         FrozenDictionary<string, Value> builtinLiterals,
-        Func<string, bool> isOperatorEnabled)
+        Func<string, bool> isOperatorEnabled,
+        bool allowMemberAccess = true)
     {
         Keywords = keywords;
         UnaryOps = unaryOps;
@@ -36,6 +37,7 @@ internal sealed class TokenizerConfig
         NumericConstants = numericConstants;
         BuiltinLiterals = builtinLiterals;
         IsOperatorEnabled = isOperatorEnabled;
+        AllowMemberAccess = allowMemberAccess;
     }
 
     public FrozenSet<string> Keywords { get; }
@@ -46,16 +48,14 @@ internal sealed class TokenizerConfig
     public FrozenDictionary<string, Value> BuiltinLiterals { get; }
     public Func<string, bool> IsOperatorEnabled { get; }
 
+    /// <summary>Whether member access (<c>.</c>) is permitted. Defaults to <c>true</c>.</summary>
+    public bool AllowMemberAccess { get; }
+
     public bool IsNamedOperator(string name) =>
         UnaryOps.Contains(name) || BinaryOps.Contains(name) || TernaryOps.Contains(name);
 
-    /// <summary>
-    /// Default configuration used during Phase 2 lexer tests. Enables every
-    /// operator, registers every expreszo built-in literal (<c>true</c>,
-    /// <c>false</c>, <c>null</c>) and numeric constant (<c>PI</c>, <c>E</c>,
-    /// <c>Infinity</c>, <c>NaN</c>), and lists every named operator the
-    /// library's parser recognises so lexing stays self-contained.
-    /// </summary>
+    public bool IsPrefixOperator(string name) => UnaryOps.Contains(name);
+
     // Declared BEFORE Default so they're initialized by the time Build() runs.
     // CA1861 flags repeated array allocation; these fields dodge that noise.
     private static readonly string[] DefaultKeywords =
@@ -63,6 +63,10 @@ internal sealed class TokenizerConfig
 
     private static readonly string[] DefaultUnaryOps =
     [
+        // Symbolic prefix unaries — the tokenizer emits these as single-char
+        // operators; they also need to be in UnaryOps so the Pratt parser's
+        // IsPrefixOperator check accepts them.
+        "-", "+", "!",
         "not",
         "abs", "ceil", "floor", "round", "sign",
         "sqrt", "cbrt", "trunc",
@@ -80,9 +84,14 @@ internal sealed class TokenizerConfig
         "and", "or", "in", "not in", "as",
     ];
 
-    public static TokenizerConfig Default { get; } = Build();
+    /// <summary>
+    /// Default configuration used during parser tests. Enables every operator,
+    /// registers every expreszo built-in literal and numeric constant, and
+    /// lists every named operator the library's parser recognises.
+    /// </summary>
+    public static ParserConfig Default { get; } = Build();
 
-    private static TokenizerConfig Build()
+    private static ParserConfig Build()
     {
         var keywords = DefaultKeywords.ToFrozenSet(StringComparer.Ordinal);
         var unary = DefaultUnaryOps.ToFrozenSet(StringComparer.Ordinal);
@@ -104,13 +113,14 @@ internal sealed class TokenizerConfig
             ["null"] = Value.Null.Instance,
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
-        return new TokenizerConfig(
+        return new ParserConfig(
             keywords,
             unary,
             binary,
             ternary,
             numericConstants,
             literals,
-            _ => true);
+            _ => true,
+            allowMemberAccess: true);
     }
 }

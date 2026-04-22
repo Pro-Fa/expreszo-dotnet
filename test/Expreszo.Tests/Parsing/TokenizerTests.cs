@@ -6,7 +6,7 @@ public class TokenizerTests
 {
     private static Token[] Tokenize(string expression)
     {
-        var tokenizer = new Tokenizer(TokenizerConfig.Default, expression);
+        var tokenizer = new Tokenizer(ParserConfig.Default, expression);
         var tokens = new List<Token>();
         while (true)
         {

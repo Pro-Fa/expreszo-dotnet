@@ -28,12 +28,12 @@ internal sealed class Tokenizer
         '•', // •
     };
 
-    private readonly TokenizerConfig _config;
+    private readonly ParserConfig _config;
     private readonly string _expression;
     private int _pos;
     private Token? _current;
 
-    public Tokenizer(TokenizerConfig config, string expression)
+    public Tokenizer(ParserConfig config, string expression)
     {
         _config = config;
         _expression = expression ?? string.Empty;
