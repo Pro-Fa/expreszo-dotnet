@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/Expreszo.Benchmarks/Expreszo.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/AotCheck/AotCheck.csproj" />
     <Project Path="samples/ExpreszoDemo/ExpreszoDemo.csproj" />

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.Benchmarks</RootNamespace>
+    <AssemblyName>Expreszo.Benchmarks</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <!-- BenchmarkDotNet needs Release config and recommends disabling server
+         GC in the host; the benchmark runner forks child processes with
+         their own settings per BenchmarkDotNet's recommendation. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <TieredCompilation>true</TieredCompilation>
+
+    <!-- Benchmarks are not AOT — BenchmarkDotNet uses reflection and runtime
+         codegen to emit per-benchmark wrappers. Keeping this project out of
+         the AOT pipeline isolates the library's AOT promise from the
+         measurement harness. -->
+    <IsAotCompatible>false</IsAotCompatible>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+</Project>

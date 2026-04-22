@@ -103,9 +103,19 @@ and executes the resulting native binary. Any code path introducing reflection o
 
 Your app can enable `<PublishAot>true</PublishAot>` without any warnings from this library.
 
+## Benchmarks
+
+[BenchmarkDotNet](https://benchmarkdotnet.org/)-based micro-benchmarks live in `bench/Expreszo.Benchmarks/` and cover parsing, evaluation, simplification, and end-to-end parse+evaluate cycles:
+
+```sh
+dotnet run --project bench/Expreszo.Benchmarks -c Release -- --list flat        # list available benchmarks
+dotnet run --project bench/Expreszo.Benchmarks -c Release                       # run the full matrix (~minutes)
+dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Eval*'  # run a subset
+```
+
 ## Out of scope
 
-- MCP server, language service (LSP), benchmarks — these live in `expreszo-typescript` and aren't ported here.
+- MCP server, language service (LSP).
 - Legacy-mode semantics.
 - Runtime disabling of specific operators.
 - Customising the built-in operator set (adding custom named operators). Adding custom functions will be supported via `OperatorTableBuilder` in a future release.

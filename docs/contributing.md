@@ -105,6 +105,26 @@ dotnet pack src/Expreszo/Expreszo.csproj --configuration Release --output ./arti
 
 Produces `Expreszo.X.Y.Z.nupkg` + `.snupkg`.
 
+### Benchmarks
+
+Micro-benchmarks use [BenchmarkDotNet](https://benchmarkdotnet.org/) and live in `bench/Expreszo.Benchmarks/`. They cover parsing, repeated evaluation, simplification, and end-to-end parse + evaluate cycles.
+
+```bash
+# List available benchmarks
+dotnet run --project bench/Expreszo.Benchmarks -c Release -- --list flat
+
+# Run everything (takes minutes)
+dotnet run --project bench/Expreszo.Benchmarks -c Release
+
+# Run a subset by filter
+dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Evaluation*'
+
+# Quick smoke run (inaccurate numbers, but verifies the harness compiles and runs)
+dotnet run --project bench/Expreszo.Benchmarks -c Release -- --job dry --filter '*Trivial*'
+```
+
+The benchmarks project is intentionally **not** AOT-compatible — BenchmarkDotNet itself uses reflection and runtime code generation to emit per-benchmark wrappers. Keeping the harness out of the AOT pipeline isolates the library's AOT guarantee from measurement infrastructure.
+
 ### Docs
 
 Documentation lives under `docs/` and is built with [MkDocs](https://www.mkdocs.org/) + [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).
