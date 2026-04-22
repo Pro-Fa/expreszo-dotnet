@@ -34,7 +34,16 @@ jobs:
         # through `dotnet run` which is the MTP-native entry point.
         # The treenode-filter pattern is quoted so bash does not glob-expand
         # `/*/*/*/*` against the runner's filesystem before it reaches TUnit.
-        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*'
+        # --coverage uses MTP's bundled dotnet-coverage extension to emit a
+        # Cobertura report into the test project's TestResults folder.
+        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*' --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: test/Expreszo.Tests/bin/Release/net10.0/TestResults/coverage.cobertura.xml
+          fail_ci_if_error: false
 
       - name: Pack
         run: dotnet pack src/Expreszo/Expreszo.csproj --configuration Release --no-build --output ./artifacts

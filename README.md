@@ -11,6 +11,8 @@
 
 A safe, extensible expression evaluator for .NET - a configurable alternative to `eval()`. Parses and evaluates the same expression language as [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript).
 
+[Read full documentation](https://pro-fa.github.io/expreszo-dotnet/)
+
 ## Highlights
 
 - Pratt parser, immutable AST, 27 operators, 82 built-in functions.
