@@ -12,22 +12,22 @@ using Expreszo.Errors;
 namespace Expreszo.Parsing;
 
 /// <summary>
-/// Pratt-style AST-emitting parser. Direct port of
-/// <c>src/parsing/pratt.ts</c>. Uses the immutable <see cref="TokenCursor"/>
-/// for state — "save/restore" around speculative parses (arrow functions,
-/// prefix-op-vs-call disambiguation) is a local variable assignment.
+/// Pratt-style AST-emitting parser. Uses the immutable
+/// <see cref="TokenCursor"/> for state — "save / restore" around speculative
+/// parses (arrow functions, prefix-op-vs-call disambiguation) is a local
+/// variable assignment.
 /// </summary>
 /// <remarks>
-/// Byte-for-byte parity with the TS parser is preserved by wrapping
-/// subexpressions in <see cref="Paren"/> nodes at the exact same positions
-/// the legacy lexer emits IEXPR instructions:
+/// The parser emits <see cref="Paren"/> nodes at specific positions so the
+/// AST round-trips through the string formatter with precedence explicit and
+/// short-circuit / lazy-RHS positions identifiable:
 /// <list type="bullet">
 ///   <item>Assignment RHS: <c>x = Paren(value)</c></item>
 ///   <item>Function definition body: <c>f(a) = Paren(body)</c></item>
 ///   <item>Ternary branches: <c>c ? Paren(a) : Paren(b)</c></item>
 ///   <item>Short-circuit RHS: <c>x and Paren(y)</c>, <c>x or Paren(y)</c></item>
 ///   <item>Arrow function body: <c>params =&gt; Paren(body)</c></item>
-///   <item>Statement-terminated <c>parseExpression</c>: wraps cumulative output in <c>Paren(Sequence(...))</c></item>
+///   <item>Semicolon-separated statements: <c>Paren(Sequence(...))</c></item>
 /// </list>
 /// </remarks>
 internal sealed class PrattParser
@@ -149,7 +149,7 @@ internal sealed class PrattParser
         EnterRecursion();
         var instr = new List<Node>();
 
-        // Mirror legacy: attempt a leading `;` (empty leading statement).
+        // Attempt a leading `;` (empty leading statement — rare but allowed).
         if (ParseUntilEndStatement(instr))
         {
             _depth--;
@@ -277,7 +277,9 @@ internal sealed class PrattParser
             }
             else if (left is Member memLeft)
             {
-                // Mirror legacy's Sequence workaround for member assignments.
+                // Member assignment: evaluate the object for side effects,
+                // then bind the value as a top-level variable named after the
+                // property. The evaluator diagnoses the non-standard shape.
                 left = new Sequence(
                     [
                         memLeft.Object,

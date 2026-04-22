@@ -5,8 +5,8 @@ namespace Expreszo.Parsing;
 
 /// <summary>
 /// Immutable view over a pre-tokenised expression. Backtracking is a single
-/// assignment (<c>cursor = saved</c>) instead of a mutable save/restore dance.
-/// Port of <c>src/parsing/token-cursor.ts</c>.
+/// assignment (<c>cursor = saved</c>) instead of a mutable save / restore
+/// dance.
 /// </summary>
 /// <remarks>
 /// The cursor eagerly drains a <see cref="Tokenizer"/> at construction time so
@@ -29,9 +29,8 @@ internal sealed class TokenCursor
 
     /// <summary>
     /// Drains the tokenizer into a flat array and returns a cursor positioned
-    /// at the first token. Tokenisation errors surface at this point rather
-    /// than on demand during parsing — that's a benign difference vs the TS
-    /// library since malformed tokens could never be parsed anyway.
+    /// at the first token. Tokenisation errors surface here rather than on
+    /// demand during parsing.
     /// </summary>
     public static TokenCursor From(ParserConfig config, string expression)
     {

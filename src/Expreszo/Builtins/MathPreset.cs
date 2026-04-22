@@ -105,7 +105,7 @@ internal static class MathPreset
         {
             if (args.Length < 1 || args[0] is Value.Undefined) return Value.Undefined.Instance;
             var x = CorePreset.ToNumber(args[0]);
-            // Lanczos approximation — matches the TS library byte-for-byte.
+            // Lanczos approximation (g = 7, n = 9).
             return Value.Number.Of(Gamma(x));
         }));
 

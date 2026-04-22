@@ -3,10 +3,10 @@ using System.Text.Json;
 namespace Expreszo.Tests;
 
 /// <summary>
-/// Phase 8 coverage fills: drives every AST-visitor branch through the
-/// Expression.Simplify / Substitute / ToString / Symbols surface. Keeps
-/// the tests expression-driven rather than hand-building AST so they stay
-/// readable while still covering every node variant.
+/// Drives every AST-visitor branch through the Expression.Simplify /
+/// Substitute / ToString / Symbols surface. Keeps the tests expression-driven
+/// rather than hand-building AST so they stay readable while still covering
+/// every node variant.
 /// </summary>
 public class VisitorCoverageTests
 {

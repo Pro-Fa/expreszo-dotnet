@@ -1,9 +1,6 @@
 namespace Expreszo.Parsing;
 
-/// <summary>
-/// Discriminates token categories produced by the lexer. Matches the
-/// <c>TEOF</c>/<c>TNUMBER</c>/... constants in expreszo-typescript.
-/// </summary>
+/// <summary>Discriminates token categories produced by the lexer.</summary>
 public enum TokenKind
 {
     /// <summary>End of expression.</summary>

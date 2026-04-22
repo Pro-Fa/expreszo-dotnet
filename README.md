@@ -1,14 +1,12 @@
 # Expreszo .NET
 
-A safe, extensible expression evaluator for .NET — a configurable alternative to `eval()`. C# port of [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript) with the same expression language.
-
-**Status:** Active development. See [`CHANGELOG.md`](CHANGELOG.md) / git history for phase progress.
+A safe, extensible expression evaluator for .NET — a configurable alternative to `eval()`. Parses and evaluates the same expression language as [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript).
 
 ## Highlights
 
-- Same expression syntax as `expreszo-typescript`: Pratt parser, immutable AST, 36 operators, 71 built-in functions.
+- Pratt parser, immutable AST, 36 operators, 71 built-in functions.
 - **JsonDocument-based I/O** — variables in, results out, using `System.Text.Json` primitives.
-- Single async-capable evaluator with synchronous fast path (`ValueTask<Value>` under the hood).
+- Single async-capable evaluator with a synchronous fast path (`ValueTask<Value>` under the hood).
 - **Native AOT and trim compatible** — zero reflection, zero runtime code generation. CI verifies on every PR.
 - `net10.0` target.
 
@@ -83,7 +81,7 @@ Three behaviours to know about:
 
 - **`Undefined` is distinct from `Null`.** Missing members and uninitialized variables return `Value.Undefined`; explicit JSON nulls return `Value.Null`. The `??` operator, the `isUndefined`/`isNull` functions, and short-circuit semantics all depend on this distinction.
 - **Assignments don't propagate back to your input `JsonDocument`.** The evaluator copies the document into an internal scope on entry. Assignments mutate that scope only; the caller's document is untouched. (`JsonDocument` is immutable in System.Text.Json.)
-- **Numbers are IEEE 754 `double`** — same semantics as JavaScript. Very large integers in your JSON lose precision, matching the TypeScript library's behaviour. There is no `decimal` mode.
+- **Numbers are IEEE 754 `double`** — same semantics as JavaScript. Very large integers in your JSON lose precision; serialise them as strings if you need exact round-tripping. There is no `decimal` mode.
 
 ## Security
 
@@ -108,7 +106,7 @@ Your app can enable `<PublishAot>true</PublishAot>` without any warnings from th
 ## Out of scope
 
 - MCP server, language service (LSP), benchmarks — these live in `expreszo-typescript` and aren't ported here.
-- Legacy-mode semantics from the TypeScript library.
+- Legacy-mode semantics.
 - Runtime disabling of specific operators.
 - Customising the built-in operator set (adding custom named operators). Adding custom functions will be supported via `OperatorTableBuilder` in a future release.
 

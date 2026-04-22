@@ -2,8 +2,8 @@ namespace Expreszo.Errors;
 
 /// <summary>
 /// Diagnostic context attached to every <see cref="ExpressionException"/>.
-/// Mirrors the <c>ErrorContext</c> record from expreszo-typescript. All fields
-/// are optional — parsers and evaluators populate only what's relevant.
+/// All fields are optional — parsers and evaluators populate only what's
+/// relevant to the failure.
 /// </summary>
 public sealed record ErrorContext
 {

@@ -4,16 +4,15 @@ using Expreszo.Errors;
 namespace Expreszo.Parsing;
 
 /// <summary>
-/// Stateful, forward-only lexer. A close port of expreszo-typescript's
-/// <c>TokenStream</c> (<c>src/parsing/token-stream.ts</c>). Kept internal;
-/// consumers go through <see cref="TokenCursor"/>.
+/// Stateful, forward-only lexer. Internal; consumers go through
+/// <see cref="TokenCursor"/>.
 /// </summary>
 /// <remarks>
-/// The port preserves the original's quirks intentionally: radix integers
-/// are matched before general numbers, named operators (and / or / not in / as)
-/// override the general identifier rule when a name resolves to an enabled
-/// operator, and the question-mark operator disambiguates between <c>?</c>
-/// and <c>??</c>. See inline comments for places where JS semantics bite.
+/// Ordering quirks worth knowing about: radix integers are matched before
+/// general numbers, named operators (<c>and</c> / <c>or</c> / <c>not in</c> /
+/// <c>as</c>) override the general identifier rule when a name resolves to an
+/// enabled operator, and the question-mark operator disambiguates between
+/// <c>?</c> and <c>??</c>.
 /// </remarks>
 internal sealed class Tokenizer
 {
@@ -108,7 +107,7 @@ internal sealed class Tokenizer
         {
             return false;
         }
-        // Mirror TS `c.toUpperCase() !== c.toLowerCase()`.
+        // Non-ASCII: treat as a letter if it's case-variable.
         return char.ToUpperInvariant(c) != char.ToLowerInvariant(c);
     }
 
@@ -353,7 +352,7 @@ internal sealed class Tokenizer
         }
 
         // Scan for the matching closing quote, counting preceding backslashes
-        // to distinguish escaped quotes. Mirrors the TS loop exactly.
+        // to distinguish escaped quotes.
         var index = _expression.IndexOf(quote, startPos + 1);
         while (index >= 0 && _pos < _expression.Length)
         {
@@ -693,7 +692,7 @@ internal sealed class Tokenizer
             }
             _current = NewToken(TokenKind.Op, "as", startPos, startPos + 2);
             // 'as' is two characters; bump now, the shared ++ below adds the
-            // second one. Mirrors `tryMatchAsOperator` in the TS original.
+            // second one.
             _pos++;
         }
         else

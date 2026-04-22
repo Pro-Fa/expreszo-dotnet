@@ -11,15 +11,14 @@ namespace Expreszo;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Assignment (<c>=</c>) writes to the current frame (matching the
-/// <c>{ ...values, [param]: arg }</c> shallow-copy pattern used by the
-/// TypeScript evaluator). The <see cref="Assign(string, Value)"/> method does
-/// not walk up the chain looking for an existing binding — assignments inside
-/// a lambda body stay local to that lambda's scope, exactly as in TS.
+/// Assignment (<c>=</c>) writes to the current frame — <see cref="Assign(string, Value)"/>
+/// does not walk up the parent chain looking for an existing binding, so
+/// assignments inside a lambda body stay local to that lambda's scope.
 /// </para>
 /// <para>
-/// Not thread-safe. A single <c>Expression</c> can be evaluated concurrently
-/// as long as each evaluation uses its own <see cref="Scope"/> instance.
+/// Not thread-safe. A single <see cref="Expression"/> can be evaluated
+/// concurrently as long as each evaluation uses its own <see cref="Scope"/>
+/// instance.
 /// </para>
 /// </remarks>
 public sealed class Scope

@@ -8,8 +8,7 @@ namespace Expreszo.Ast;
 /// <see cref="TextSpan"/> covering its source range so downstream consumers
 /// (validators, formatters, future IDE tooling) can point at the right
 /// characters. All nodes are immutable; visitors return new nodes instead of
-/// mutating in place. Matches the TypeScript <c>Node</c> union in
-/// <c>src/ast/nodes.ts</c>.
+/// mutating in place.
 /// </summary>
 public abstract record Node
 {

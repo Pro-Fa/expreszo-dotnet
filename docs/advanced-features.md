@@ -144,7 +144,7 @@ Supported targets: `"number"`, `"int"` / `"integer"`, `"boolean"`.
 
 ## Undefined vs Null
 
-`undefined` and `null` are distinct values in Expreszo — this is important for semantic parity with the TypeScript library and for JavaScript-style `??` behaviour.
+`undefined` and `null` are distinct values in Expreszo — this matters for JavaScript-style `??` behaviour and for distinguishing "missing" from "explicit null".
 
 ```
 x > 3 ? undefined : x

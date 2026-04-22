@@ -167,7 +167,7 @@ public abstract record Value
         _ => true,
     };
 
-    /// <summary>Human-readable type tag, matching expreszo-typescript's <c>typeof</c>-style names.</summary>
+    /// <summary>Human-readable type tag — JavaScript-style <c>typeof</c> names.</summary>
     public string TypeName() => this switch
     {
         Number => "number",

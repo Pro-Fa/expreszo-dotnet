@@ -3,9 +3,10 @@ using Expreszo.Errors;
 namespace Expreszo.Builtins;
 
 /// <summary>
-/// Minimal operator / function preset required to evaluate arithmetic,
-/// comparisons, logical expressions, and basic utility operations. Phase 5
-/// expands this into the full 107-operator / 71-function catalogue.
+/// Core operator preset: arithmetic, comparison, logical (including the
+/// null-coalesce and type-cast operators), bracket indexing, and prefix /
+/// postfix unaries. Domain presets (math, string, array, object, utility,
+/// type-check) layer on top.
 /// </summary>
 internal static class CorePreset
 {
@@ -133,7 +134,7 @@ internal static class CorePreset
         b.AddBinary("or", OperatorTableBuilder.Sync(args => Value.Boolean.Of(args[0].IsTruthy() || args[1].IsTruthy())));
         b.AddBinary("||", OperatorTableBuilder.Sync(args => Value.Boolean.Of(args[0].IsTruthy() || args[1].IsTruthy())));
 
-        // null coalesce — mirror JS / TS parity: treat Null, Undefined, NaN, Infinity as nullish.
+        // null coalesce — Null, Undefined, NaN, and Infinity are all nullish.
         b.AddBinary("??", OperatorTableBuilder.Sync(args =>
         {
             var l = args[0];
@@ -181,8 +182,9 @@ internal static class CorePreset
 
         b.AddUnary("!", OperatorTableBuilder.Sync(args =>
         {
-            // Postfix factorial. Prefix usage is rare but semantically "not"
-            // in the TS library; context disambiguates at parse time.
+            // Postfix factorial. (Prefix `!` means logical-not and is
+            // dispatched via the `not` entry; context disambiguates at
+            // parse time.)
             if (args[0] is Value.Undefined) return Value.Undefined.Instance;
             var v = ToNumber(args[0]);
             if (v < 0 || v != Math.Floor(v)) throw new EvaluationException("factorial requires a non-negative integer");

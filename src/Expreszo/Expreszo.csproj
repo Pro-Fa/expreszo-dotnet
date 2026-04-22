@@ -29,7 +29,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>Expreszo</PackageId>
     <Title>Expreszo</Title>
-    <Description>Safe, extensible expression evaluator for .NET — a configurable alternative to eval. Pratt parser, immutable AST, JsonDocument-based I/O, Native AOT compatible. Port of expreszo-typescript.</Description>
+    <Description>Safe, extensible expression evaluator for .NET — a configurable alternative to eval. Pratt parser, immutable AST, JsonDocument-based I/O, Native AOT compatible.</Description>
     <PackageTags>expression;evaluator;parser;json;aot;trimming;expreszo</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

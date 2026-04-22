@@ -4,10 +4,7 @@ using Expreszo.Parsing;
 
 namespace Expreszo;
 
-/// <summary>
-/// Configuration options for <see cref="Parser"/>. Mirrors the subset of the
-/// TypeScript library's <c>ParserOptions</c> that's still in scope here.
-/// </summary>
+/// <summary>Configuration options for <see cref="Parser"/>.</summary>
 public sealed record ParserOptions
 {
     /// <summary>Whether member access (<c>obj.prop</c>) is permitted. Defaults to <c>true</c>.</summary>

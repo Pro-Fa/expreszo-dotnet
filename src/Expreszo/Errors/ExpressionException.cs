@@ -1,10 +1,9 @@
 namespace Expreszo.Errors;
 
 /// <summary>
-/// Base class for every exception the library raises from parse or evaluate.
-/// Carries an <see cref="ErrorContext"/> with line/column/span and optional
-/// variable, function, and property names. Matches the TypeScript library's
-/// <c>ExpressionError</c> hierarchy.
+/// Base class for every exception the library raises during parse or
+/// evaluate. Carries an <see cref="ErrorContext"/> with line / column / span
+/// and optional variable, function, and property names.
 /// </summary>
 public abstract class ExpressionException : Exception
 {

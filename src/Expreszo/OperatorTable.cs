@@ -32,8 +32,9 @@ internal sealed class OperatorTable
 }
 
 /// <summary>
-/// Mutable builder for <see cref="OperatorTable"/>. Phase 5 will pre-populate
-/// the built-in preset into this; consumers can add custom functions on top.
+/// Mutable builder for <see cref="OperatorTable"/>. The <see cref="Parser"/>
+/// constructor prepopulates it with the built-in preset before building the
+/// frozen table.
 /// </summary>
 internal sealed class OperatorTableBuilder
 {

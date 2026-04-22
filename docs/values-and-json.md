@@ -86,7 +86,7 @@ Each top-level key becomes a root-scope binding. If the document's root is anyth
 
 ### Number precision
 
-All numbers convert to `double`. Integers larger than `2^53` lose precision — matching JavaScript's Number semantics and the TypeScript library's behaviour. If your payload has integer IDs that exceed that range, serialise them as strings on the way in.
+All numbers convert to `double`. Integers larger than `2^53` lose precision — matching JavaScript's Number semantics. If your payload has integer IDs that exceed that range, serialise them as strings on the way in.
 
 ## Converting Value → JSON
 

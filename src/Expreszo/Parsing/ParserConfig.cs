@@ -4,19 +4,14 @@ namespace Expreszo.Parsing;
 
 /// <summary>
 /// Static configuration driving both the tokenizer and the Pratt parser:
-/// which names are keywords or named operators, which constants expand to
-/// numeric values, and which operators are currently enabled. In Phase 7
-/// the public <c>Parser</c> class builds one of these from its
-/// <c>ParserOptions</c>.
+/// keywords, named operators, numeric constants, built-in literals, and the
+/// operator-enablement predicate. The public <see cref="Parser"/> builds
+/// one of these from its <see cref="ParserOptions"/>.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Operator enablement is a predicate rather than a flag set because the
-/// original library allows callers to pass arbitrary operator gates via
-/// <c>ParserOptions.operators</c>. The port keeps that extension point for
-/// internal use even though public operator customisation is out of scope.
-/// </para>
-/// <para>Instances are immutable and cheap to share across runs.</para>
+/// Operator enablement is a predicate rather than a flag set so operator
+/// gating can be driven by arbitrary logic without expanding the option
+/// surface. Instances are immutable and cheap to share across runs.
 /// </remarks>
 internal sealed class ParserConfig
 {

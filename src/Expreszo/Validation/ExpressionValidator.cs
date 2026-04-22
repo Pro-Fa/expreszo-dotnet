@@ -6,9 +6,8 @@ namespace Expreszo.Validation;
 /// <summary>
 /// Runtime safety checks applied by the evaluator. Blocks prototype-pollution
 /// style attacks (<c>__proto__</c>, <c>prototype</c>, <c>constructor</c>),
-/// validates array indices, and (in Phase 6) allow-lists callable function
-/// values so only registered implementations can be invoked from an
-/// expression. Mirrors <c>src/validation/expression-validator.ts</c>.
+/// validates array indices, and allow-lists callable function values so only
+/// registered implementations can be invoked from an expression.
 /// </summary>
 public static class ExpressionValidator
 {
