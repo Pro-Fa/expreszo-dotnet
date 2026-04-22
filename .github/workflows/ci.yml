@@ -32,7 +32,9 @@ jobs:
         # TUnit runs on Microsoft Testing Platform (MTP); .NET 10 removed
         # VSTest support from `dotnet test`, so we invoke the test assembly
         # through `dotnet run` which is the MTP-native entry point.
-        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter /*/*/*/*
+        # The treenode-filter pattern is quoted so bash does not glob-expand
+        # `/*/*/*/*` against the runner's filesystem before it reaches TUnit.
+        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*'
 
       - name: Pack
         run: dotnet pack src/Expreszo/Expreszo.csproj --configuration Release --no-build --output ./artifacts

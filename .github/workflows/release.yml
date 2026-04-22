@@ -51,7 +51,9 @@ jobs:
         run: dotnet build Expreszo.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter /*/*/*/*
+        # The treenode-filter pattern is quoted so bash does not glob-expand
+        # `/*/*/*/*` against the runner's filesystem before it reaches TUnit.
+        run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*'
 
       - name: Publish AotCheck (Native AOT)
         # Same safety net as the CI workflow - if anything in the library's
