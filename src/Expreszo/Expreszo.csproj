@@ -15,6 +15,16 @@
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
 
+    <!-- Suppressed analyzer warnings, with justifications:
+         * CA1716 (type name conflicts with reserved keyword): the union variants
+           live as nested types on Value (e.g. Value.String, Value.Function). VB
+           and F# can both reach nested types through the dotted syntax without
+           the reserved-word rule biting, so CA1716 is a false positive here.
+         * CA1720 (identifier contains type name): Value.String and Value.Object
+           are the canonical, documented names for these union variants; the
+           alternatives (Str / Obj) sacrifice clarity for pedantry. -->
+    <NoWarn>$(NoWarn);CA1716;CA1720</NoWarn>
+
     <!-- NuGet package metadata -->
     <IsPackable>true</IsPackable>
     <PackageId>Expreszo</PackageId>
