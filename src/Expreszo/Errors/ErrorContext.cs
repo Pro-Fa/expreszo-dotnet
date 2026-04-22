@@ -1,8 +1,8 @@
-namespace Expreszo.Errors;
+﻿namespace Expreszo.Errors;
 
 /// <summary>
 /// Diagnostic context attached to every <see cref="ExpressionException"/>.
-/// All fields are optional — parsers and evaluators populate only what's
+/// All fields are optional - parsers and evaluators populate only what's
 /// relevant to the failure.
 /// </summary>
 public sealed record ErrorContext
@@ -31,5 +31,6 @@ public readonly record struct ErrorPosition(int Line, int Column)
 public readonly record struct TextSpan(int Start, int End)
 {
     public int Length => End - Start;
+
     public override string ToString() => $"[{Start},{End})";
 }

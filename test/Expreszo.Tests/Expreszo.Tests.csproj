@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>Expreszo.Tests</RootNamespace>
@@ -19,7 +18,7 @@
     <!-- Test names use snake_case_for_readability; CA1707 (underscores in
          member names) is not a useful signal inside a test assembly.
          CA2012 fires on ValueTask.Result access even after an explicit
-         IsCompletedSuccessfully guard — we use it deliberately in a handful
+         IsCompletedSuccessfully guard - we use it deliberately in a handful
          of sync/async tests. -->
     <NoWarn>$(NoWarn);CA1707;CA2012</NoWarn>
 
@@ -38,5 +37,4 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
   </ItemGroup>
-
 </Project>

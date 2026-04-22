@@ -1,11 +1,11 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 
 namespace Expreszo.Ast.Visitors;
 
 /// <summary>
 /// Reconstructs a source-text-like rendering of the AST. Preserves
-/// <see cref="Paren"/> nodes as explicit parentheses — matches the TS
+/// <see cref="Paren"/> nodes as explicit parentheses - matches the TS
 /// library's IEXPR-preserving behaviour so simplified expressions round-trip
 /// predictably.
 /// </summary>
@@ -15,6 +15,7 @@ internal sealed class ToStringVisitor
     {
         var sb = new StringBuilder();
         Emit(root, sb);
+
         return sb.ToString();
     }
 
@@ -73,9 +74,13 @@ internal sealed class ToStringVisitor
             case Call c:
                 Emit(c.Callee, sb);
                 sb.Append('(');
-                for (var i = 0; i < c.Args.Length; i++)
+                for (int i = 0; i < c.Args.Length; i++)
                 {
-                    if (i > 0) sb.Append(", ");
+                    if (i > 0)
+                    {
+                        sb.Append(", ");
+                    }
+
                     Emit(c.Args[i], sb);
                 }
                 sb.Append(')');
@@ -105,9 +110,13 @@ internal sealed class ToStringVisitor
                 break;
             case ArrayLit a:
                 sb.Append('[');
-                for (var i = 0; i < a.Elements.Length; i++)
+                for (int i = 0; i < a.Elements.Length; i++)
                 {
-                    if (i > 0) sb.Append(", ");
+                    if (i > 0)
+                    {
+                        sb.Append(", ");
+                    }
+
                     switch (a.Elements[i])
                     {
                         case ArrayElement el:
@@ -123,9 +132,13 @@ internal sealed class ToStringVisitor
                 break;
             case ObjectLit o:
                 sb.Append('{');
-                for (var i = 0; i < o.Properties.Length; i++)
+                for (int i = 0; i < o.Properties.Length; i++)
                 {
-                    if (i > 0) sb.Append(", ");
+                    if (i > 0)
+                    {
+                        sb.Append(", ");
+                    }
+
                     switch (o.Properties[i])
                     {
                         case ObjectProperty pr:
@@ -149,9 +162,13 @@ internal sealed class ToStringVisitor
                 sb.Append('}');
                 break;
             case Sequence s:
-                for (var i = 0; i < s.Statements.Length; i++)
+                for (int i = 0; i < s.Statements.Length; i++)
                 {
-                    if (i > 0) sb.Append(" ; ");
+                    if (i > 0)
+                    {
+                        sb.Append(" ; ");
+                    }
+
                     Emit(s.Statements[i], sb);
                 }
                 break;
@@ -162,7 +179,7 @@ internal sealed class ToStringVisitor
                     sb.Append(' ');
                     Emit(k.Subject, sb);
                 }
-                foreach (var arm in k.Arms)
+                foreach (CaseArm arm in k.Arms)
                 {
                     sb.Append(" when ");
                     Emit(arm.When, sb);
@@ -189,8 +206,14 @@ internal sealed class ToStringVisitor
             sb.Append("!)");
             return;
         }
+
         sb.Append('(').Append(u.Op);
-        if (IsWordOp(u.Op)) sb.Append(' ');
+
+        if (IsWordOp(u.Op))
+        {
+            sb.Append(' ');
+        }
+
         Emit(u.Operand, sb);
         sb.Append(')');
     }
@@ -205,6 +228,7 @@ internal sealed class ToStringVisitor
             sb.Append(']');
             return;
         }
+
         sb.Append('(');
         Emit(b.Left, sb);
         sb.Append(' ').Append(b.Op).Append(' ');
@@ -215,25 +239,42 @@ internal sealed class ToStringVisitor
     private static bool IsWordOp(string op)
     {
         // Name-form unary ops need whitespace before their operand (e.g. `not x`).
-        if (string.IsNullOrEmpty(op)) return false;
+        if (string.IsNullOrEmpty(op))
+        {
+            return false;
+        }
+
         return char.IsLetter(op[0]);
     }
 
     private static string EscapeString(string s)
     {
         var sb = new StringBuilder(s.Length);
-        foreach (var c in s)
+        foreach (char c in s)
         {
             switch (c)
             {
-                case '\\': sb.Append("\\\\"); break;
-                case '"': sb.Append("\\\""); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\t': sb.Append("\\t"); break;
-                case '\r': sb.Append("\\r"); break;
-                default: sb.Append(c); break;
+                case '\\':
+                    sb.Append("\\\\");
+                    break;
+                case '"':
+                    sb.Append("\\\"");
+                    break;
+                case '\n':
+                    sb.Append("\\n");
+                    break;
+                case '\t':
+                    sb.Append("\\t");
+                    break;
+                case '\r':
+                    sb.Append("\\r");
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
             }
         }
+
         return sb.ToString();
     }
 }

@@ -1,5 +1,4 @@
-using BenchmarkDotNet.Attributes;
-using Expreszo;
+﻿using BenchmarkDotNet.Attributes;
 
 namespace Expreszo.Benchmarks;
 
@@ -7,7 +6,7 @@ namespace Expreszo.Benchmarks;
 /// Measures the cost of parsing expression strings to an
 /// <see cref="Expression"/>. Each benchmark instantiates a fresh
 /// <see cref="Parser"/> inside the measurement to include parser setup time
-/// — the combined "cold start" cost matters for per-request scenarios where
+/// - the combined "cold start" cost matters for per-request scenarios where
 /// a parser is built once and discarded.
 /// </summary>
 [MemoryDiagnoser]
@@ -42,7 +41,9 @@ public class ParsingBenchmarks
 
     [Benchmark(Description = "CASE with 6 arms")]
     public Expression CaseWith6Arms() =>
-        _parser.Parse("case x when 1 then \"one\" when 2 then \"two\" when 3 then \"three\" when 4 then \"four\" when 5 then \"five\" else \"other\" end");
+        _parser.Parse(
+            "case x when 1 then \"one\" when 2 then \"two\" when 3 then \"three\" when 4 then \"four\" when 5 then \"five\" else \"other\" end"
+        );
 
     [Benchmark(Description = "Deep chain: a.b.c.d.e + f[0][1][2]")]
     public Expression DeepChain() => _parser.Parse("a.b.c.d.e + f[0][1][2]");

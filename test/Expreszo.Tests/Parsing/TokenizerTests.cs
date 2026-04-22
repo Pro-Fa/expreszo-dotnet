@@ -1,4 +1,4 @@
-using Expreszo.Parsing;
+﻿using Expreszo.Parsing;
 
 namespace Expreszo.Tests.Parsing;
 
@@ -10,7 +10,7 @@ public class TokenizerTests
         var tokens = new List<Token>();
         while (true)
         {
-            var t = tokenizer.Next();
+            Token t = tokenizer.Next();
             tokens.Add(t);
             if (t.Kind == TokenKind.Eof)
             {
@@ -34,7 +34,12 @@ public class TokenizerTests
     [Arguments("0.1e2", 10d)]
     public async Task Tokenizes_decimal_numbers(string input, double expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens.Length).IsEqualTo(2);
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Number);
         await Assert.That(tokens[0].Number).IsEqualTo(expected);
@@ -48,7 +53,12 @@ public class TokenizerTests
     [Arguments("0b1111", 15d)]
     public async Task Tokenizes_radix_integers(string input, double expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Number);
         await Assert.That(tokens[0].Number).IsEqualTo(expected);
     }
@@ -56,9 +66,14 @@ public class TokenizerTests
     [Test]
     public async Task Invalid_radix_integer_falls_back_to_regular_number()
     {
-        // "0x" without digits is not a valid hex — falls through to regular number (just 0),
+        // Arrange
+
+        // Act
+        // "0x" without digits is not a valid hex - falls through to regular number (just 0),
         // leaving "x" as a name.
-        var tokens = Tokenize("0x");
+        Token[] tokens = Tokenize("0x");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Number);
         await Assert.That(tokens[0].Number).IsEqualTo(0d);
         await Assert.That(tokens[1].Kind).IsEqualTo(TokenKind.Name);
@@ -74,7 +89,12 @@ public class TokenizerTests
     [Arguments("'with spaces'", "with spaces")]
     public async Task Tokenizes_strings(string input, string expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.String);
         await Assert.That(tokens[0].Text).IsEqualTo(expected);
     }
@@ -87,22 +107,38 @@ public class TokenizerTests
     [Arguments("\"a\\u0041b\"", "aAb")]
     public async Task Unescapes_standard_escape_sequences(string input, string expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Text).IsEqualTo(expected);
     }
 
     [Test]
     public async Task Handles_escaped_backslash_before_closing_quote()
     {
+        // Arrange
+
+        // Act
         // "a\\" contains backslash + escaped backslash ; closing quote is not escaped
-        var tokens = Tokenize("\"a\\\\\"");
+        Token[] tokens = Tokenize("\"a\\\\\"");
+
+        // Assert
         await Assert.That(tokens[0].Text).IsEqualTo("a\\");
     }
 
     [Test]
     public async Task Illegal_escape_sequence_throws()
     {
-        await Assert.That(() => Tokenize("\"a\\z\"")).Throws<ParseException>();
+        // Arrange
+
+        // Act
+        Action act = () => Tokenize("\"a\\z\"");
+
+        // Assert
+        await Assert.That(act).Throws<ParseException>();
     }
 
     // ---------- identifiers / keywords / constants ----------
@@ -116,7 +152,12 @@ public class TokenizerTests
     [Arguments("foo123")]
     public async Task Tokenizes_identifiers(string input)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Name);
         await Assert.That(tokens[0].Text).IsEqualTo(input);
     }
@@ -129,7 +170,12 @@ public class TokenizerTests
     [Arguments("end")]
     public async Task Tokenizes_keywords(string input)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Keyword);
         await Assert.That(tokens[0].Text).IsEqualTo(input);
     }
@@ -137,7 +183,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_true_as_const()
     {
-        var tokens = Tokenize("true");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("true");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Const);
         await Assert.That(tokens[0].Const).IsSameReferenceAs(Value.Boolean.True);
     }
@@ -145,7 +196,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_false_as_const()
     {
-        var tokens = Tokenize("false");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("false");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Const);
         await Assert.That(tokens[0].Const).IsSameReferenceAs(Value.Boolean.False);
     }
@@ -153,7 +209,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_null_as_const()
     {
-        var tokens = Tokenize("null");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("null");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Const);
         await Assert.That(tokens[0].Const).IsSameReferenceAs(Value.Null.Instance);
     }
@@ -161,7 +222,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_PI_and_E_as_numeric_constants()
     {
-        var tokens = Tokenize("PI E");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("PI E");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Number);
         await Assert.That(tokens[0].Number).IsEqualTo(Math.PI);
         await Assert.That(tokens[1].Kind).IsEqualTo(TokenKind.Number);
@@ -182,7 +248,12 @@ public class TokenizerTests
     [Arguments("?", "?")]
     public async Task Tokenizes_single_char_operators(string input, string expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[0].Text).IsEqualTo(expected);
     }
@@ -199,7 +270,12 @@ public class TokenizerTests
     [Arguments("...", "...")]
     public async Task Tokenizes_multi_char_operators(string input, string expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[0].Text).IsEqualTo(expected);
     }
@@ -210,7 +286,12 @@ public class TokenizerTests
     [Arguments("in")]
     public async Task Tokenizes_named_binary_operators(string input)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[0].Text).IsEqualTo(input);
     }
@@ -218,7 +299,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_not_in_as_compound_operator()
     {
-        var tokens = Tokenize("x not in y");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("x not in y");
+
+        // Assert
         await Assert.That(tokens[0].Text).IsEqualTo("x");
         await Assert.That(tokens[1].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[1].Text).IsEqualTo("not in");
@@ -228,7 +314,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_bare_not()
     {
-        var tokens = Tokenize("not x");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("not x");
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[0].Text).IsEqualTo("not");
     }
@@ -236,7 +327,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_as_keyword_operator_with_trailing_space()
     {
-        var tokens = Tokenize("x as number");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("x as number");
+
+        // Assert
         await Assert.That(tokens[1].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[1].Text).IsEqualTo("as");
     }
@@ -246,7 +342,12 @@ public class TokenizerTests
     [Arguments("•", "*")]
     public async Task Unicode_multiplication_symbols_become_star(string input, string expected)
     {
-        var tokens = Tokenize(input);
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize(input);
+
+        // Assert
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Op);
         await Assert.That(tokens[0].Text).IsEqualTo(expected);
     }
@@ -254,8 +355,13 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_math_functions_as_op_tokens()
     {
-        var tokens = Tokenize("sin cos sqrt length");
-        foreach (var t in tokens.Take(4))
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("sin cos sqrt length");
+
+        // Assert
+        foreach (Token t in tokens.Take(4))
         {
             await Assert.That(t.Kind).IsEqualTo(TokenKind.Op);
         }
@@ -264,7 +370,13 @@ public class TokenizerTests
     [Test]
     public async Task Ampersand_without_second_ampersand_is_illegal()
     {
-        await Assert.That(() => Tokenize("&x")).Throws<ParseException>();
+        // Arrange
+
+        // Act
+        Action act = () => Tokenize("&x");
+
+        // Assert
+        await Assert.That(act).Throws<ParseException>();
     }
 
     // ---------- punctuation & grouping ----------
@@ -272,7 +384,7 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_parens_brackets_braces_comma_semicolon()
     {
-        var tokens = Tokenize("() [] {} , ;");
+        // Arrange
         var expected = new (TokenKind Kind, string Text)[]
         {
             (TokenKind.Paren, "("),
@@ -285,8 +397,13 @@ public class TokenizerTests
             (TokenKind.Semicolon, ";"),
             (TokenKind.Eof, "EOF"),
         };
+
+        // Act
+        Token[] tokens = Tokenize("() [] {} , ;");
+
+        // Assert
         await Assert.That(tokens.Length).IsEqualTo(expected.Length);
-        for (var i = 0; i < expected.Length; i++)
+        for (int i = 0; i < expected.Length; i++)
         {
             await Assert.That(tokens[i].Kind).IsEqualTo(expected[i].Kind);
             await Assert.That(tokens[i].Text).IsEqualTo(expected[i].Text);
@@ -298,7 +415,12 @@ public class TokenizerTests
     [Test]
     public async Task Skips_block_comments()
     {
-        var tokens = Tokenize("1 /* inline */ + /* multi\nline */ 2");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("1 /* inline */ + /* multi\nline */ 2");
+
+        // Assert
         await Assert.That(tokens[0].Number).IsEqualTo(1d);
         await Assert.That(tokens[1].Text).IsEqualTo("+");
         await Assert.That(tokens[2].Number).IsEqualTo(2d);
@@ -307,7 +429,12 @@ public class TokenizerTests
     [Test]
     public async Task Skips_line_comments()
     {
-        var tokens = Tokenize("1 // ignored\n+ 2");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("1 // ignored\n+ 2");
+
+        // Assert
         await Assert.That(tokens[0].Number).IsEqualTo(1d);
         await Assert.That(tokens[1].Text).IsEqualTo("+");
         await Assert.That(tokens[2].Number).IsEqualTo(2d);
@@ -316,7 +443,12 @@ public class TokenizerTests
     [Test]
     public async Task Eof_token_is_emitted_on_empty_input()
     {
-        var tokens = Tokenize("");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("");
+
+        // Assert
         await Assert.That(tokens.Length).IsEqualTo(1);
         await Assert.That(tokens[0].Kind).IsEqualTo(TokenKind.Eof);
     }
@@ -324,7 +456,12 @@ public class TokenizerTests
     [Test]
     public async Task Whitespace_is_consumed_silently()
     {
-        var tokens = Tokenize("   1   +   2   ");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("   1   +   2   ");
+
+        // Assert
         await Assert.That(tokens.Length).IsEqualTo(4);
         await Assert.That(tokens[0].Number).IsEqualTo(1d);
         await Assert.That(tokens[1].Text).IsEqualTo("+");
@@ -337,7 +474,12 @@ public class TokenizerTests
     [Test]
     public async Task Tokenizes_a_complete_expression()
     {
-        var tokens = Tokenize("max(x, 2 * PI) + 0xFF");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("max(x, 2 * PI) + 0xFF");
+
+        // Assert
         await Assert.That(tokens[0].Text).IsEqualTo("max");
         await Assert.That(tokens[1].Text).IsEqualTo("(");
         await Assert.That(tokens[2].Text).IsEqualTo("x");
@@ -353,13 +495,24 @@ public class TokenizerTests
     [Test]
     public async Task Unknown_character_raises_ParseException()
     {
-        await Assert.That(() => Tokenize("@")).Throws<ParseException>();
+        // Arrange
+
+        // Act
+        Action act = () => Tokenize("@");
+
+        // Assert
+        await Assert.That(act).Throws<ParseException>();
     }
 
     [Test]
     public async Task Index_and_End_cover_token_span()
     {
-        var tokens = Tokenize("  42 ");
+        // Arrange
+
+        // Act
+        Token[] tokens = Tokenize("  42 ");
+
+        // Assert
         await Assert.That(tokens[0].Index).IsEqualTo(2);
         await Assert.That(tokens[0].End).IsEqualTo(4);
     }

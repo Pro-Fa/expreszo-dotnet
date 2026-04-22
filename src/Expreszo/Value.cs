@@ -1,4 +1,4 @@
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -25,10 +25,11 @@ public abstract record Value
     public sealed record Number(double V) : Value
     {
         private static readonly Number[] SmallCache = CreateSmallCache();
+
         private static Number[] CreateSmallCache()
         {
             var arr = new Number[256];
-            for (var i = 0; i < arr.Length; i++)
+            for (int i = 0; i < arr.Length; i++)
             {
                 arr[i] = new Number(i);
             }
@@ -90,12 +91,27 @@ public abstract record Value
 
         public bool Equals(Array? other)
         {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            if (Items.Length != other.Items.Length) return false;
-            for (var i = 0; i < Items.Length; i++)
+            if (other is null)
             {
-                if (!Equals(Items[i], other.Items[i])) return false;
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (Items.Length != other.Items.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < Items.Length; i++)
+            {
+                if (!Equals(Items[i], other.Items[i]))
+                {
+                    return false;
+                }
             }
             return true;
         }
@@ -103,7 +119,7 @@ public abstract record Value
         public override int GetHashCode()
         {
             var hc = new HashCode();
-            foreach (var item in Items)
+            foreach (Value item in Items)
             {
                 hc.Add(item);
             }
@@ -118,20 +134,45 @@ public abstract record Value
         /// <summary>Builds an <see cref="Object"/> from an ordinary dictionary, freezing it for fast reads.</summary>
         public static Object From(IReadOnlyDictionary<string, Value> props)
         {
-            if (props.Count == 0) return Empty;
-            var frozen = props.ToFrozenDictionary(StringComparer.Ordinal);
+            if (props.Count == 0)
+            {
+                return Empty;
+            }
+
+            FrozenDictionary<string, Value> frozen = props.ToFrozenDictionary(
+                StringComparer.Ordinal
+            );
             return new Object(frozen);
         }
 
         public bool Equals(Object? other)
         {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            if (Props.Count != other.Props.Count) return false;
-            foreach (var kv in Props)
+            if (other is null)
             {
-                if (!other.Props.TryGetValue(kv.Key, out var otherValue)) return false;
-                if (!Equals(kv.Value, otherValue)) return false;
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (Props.Count != other.Props.Count)
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<string, Value> kv in Props)
+            {
+                if (!other.Props.TryGetValue(kv.Key, out Value? otherValue))
+                {
+                    return false;
+                }
+
+                if (!Equals(kv.Value, otherValue))
+                {
+                    return false;
+                }
             }
             return true;
         }
@@ -139,7 +180,12 @@ public abstract record Value
         public override int GetHashCode()
         {
             var hc = new HashCode();
-            foreach (var kv in Props.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+            foreach (
+                KeyValuePair<string, Value> kv in Props.OrderBy(
+                    kv => kv.Key,
+                    StringComparer.Ordinal
+                )
+            )
             {
                 hc.Add(kv.Key);
                 hc.Add(kv.Value);
@@ -150,6 +196,15 @@ public abstract record Value
 
     public sealed record Function(ExprFunc Invoke, string? Name = null) : Value
     {
+        /// <summary>
+        /// True when this function was minted by the evaluator (arrow function
+        /// or <c>f(x) = ...</c> definition) rather than supplied by a caller.
+        /// The allow-list check trusts evaluator-minted lambdas because they
+        /// close over AST nodes, not raw CLR code. Forgery is prevented by
+        /// keeping the init-only setter internal.
+        /// </summary>
+        public bool IsExpressionLambda { get; internal init; }
+
         public override string ToString() => Name is null ? "[function]" : $"[function {Name}]";
     }
 
@@ -158,28 +213,30 @@ public abstract record Value
     /// <see cref="Undefined"/>, <c>false</c>, <c>0</c>, <c>NaN</c>, or empty string.
     /// Every other value (including empty arrays and objects, matching JS) is truthy.
     /// </summary>
-    public bool IsTruthy() => this switch
-    {
-        Null or Undefined => false,
-        Boolean b => b.V,
-        Number n => n.V != 0 && !double.IsNaN(n.V),
-        String s => s.V.Length > 0,
-        _ => true,
-    };
+    public bool IsTruthy() =>
+        this switch
+        {
+            Null or Undefined => false,
+            Boolean b => b.V,
+            Number n => n.V != 0 && !double.IsNaN(n.V),
+            String s => s.V.Length > 0,
+            _ => true,
+        };
 
-    /// <summary>Human-readable type tag — JavaScript-style <c>typeof</c> names.</summary>
-    public string TypeName() => this switch
-    {
-        Number => "number",
-        String => "string",
-        Boolean => "boolean",
-        Null => "null",
-        Undefined => "undefined",
-        Array => "array",
-        Object => "object",
-        Function => "function",
-        _ => "unknown",
-    };
+    /// <summary>Human-readable type tag - JavaScript-style <c>typeof</c> names.</summary>
+    public string TypeName() =>
+        this switch
+        {
+            Number => "number",
+            String => "string",
+            Boolean => "boolean",
+            Null => "null",
+            Undefined => "undefined",
+            Array => "array",
+            Object => "object",
+            Function => "function",
+            _ => "unknown",
+        };
 }
 
 /// <summary>
@@ -201,7 +258,9 @@ public delegate VariableResolveResult VariableResolver(string name);
 public abstract record VariableResolveResult
 {
     public sealed record Bound(Value Value) : VariableResolveResult;
+
     public sealed record Alias(string Name) : VariableResolveResult;
+
     public sealed record NotResolvedResult : VariableResolveResult
     {
         public static NotResolvedResult Instance { get; } = new();

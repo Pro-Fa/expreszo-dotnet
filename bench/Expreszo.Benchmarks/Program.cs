@@ -1,4 +1,4 @@
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 
 // Dispatch to any benchmark class by name, or run all when called with no args:
 //   dotnet run -c Release

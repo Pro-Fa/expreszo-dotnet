@@ -1,8 +1,8 @@
 # Parser
 
-> **Audience:** Developers integrating Expreszo into their .NET projects.
+> **Audience:** Developers integrating ExpresZo into their .NET projects.
 
-The `Parser` class is the main entry point. Construct one, reuse it across many calls — `Parser` and the `Expression`s it produces are immutable after construction and safe for concurrent use.
+The `Parser` class is the main entry point. Construct one, reuse it across many calls - `Parser` and the `Expression`s it produces are immutable after construction and safe for concurrent use.
 
 ## Quick Start
 
@@ -43,7 +43,7 @@ var strict = new Parser(new ParserOptions { AllowMemberAccess = false });
 strict.Evaluate("obj.prop");   // throws AccessException
 ```
 
-> Operator toggling (`in` / `as` / `=` individually) is **not** supported in this port — the built-in operator set is fixed. If you need to restrict the language surface, validate the AST after parsing using `Expression.Accept<T>(INodeVisitor<T>)`.
+> Operator toggling (`in` / `as` / `=` individually) is **not** supported in this port - the built-in operator set is fixed. If you need to restrict the language surface, validate the AST after parsing using `Expression.Accept<T>(INodeVisitor<T>)`.
 
 ## Methods
 
@@ -79,7 +79,7 @@ Throws [`AsyncRequiredException`](advanced-features.md#async-evaluation) if any 
 
 ### `EvaluateAsync(string expression, JsonDocument? values = null, VariableResolver? resolver = null, CancellationToken ct = default)`
 
-Asynchronous version. Returns `ValueTask<Value>` — which **completes synchronously** for expressions that only use sync functions, so there's no overhead when async isn't needed.
+Asynchronous version. Returns `ValueTask<Value>` - which **completes synchronously** for expressions that only use sync functions, so there's no overhead when async isn't needed.
 
 ```csharp
 var result = await parser.EvaluateAsync("fetchData(id) * 2", values, ct: ct);
@@ -130,18 +130,18 @@ See [Values & JsonDocument](values-and-json.md) for details on the boundary betw
 
 ## Variable Resolution Order
 
-When an expression references a name, Expreszo looks it up in this order:
+When an expression references a name, ExpresZo looks it up in this order:
 
-1. **Built-in function** — e.g. `max`, `sum`, `map`.
-2. **Unary operator function** — e.g. `sin`, `cos`, `sqrt`, `length`. Lets expressions pass bare `sin` as a function value.
-3. **Local and parent scopes** — variables assigned with `=`, lambda parameters.
-4. **Values from the input `JsonDocument`** — top-level properties become root-scope bindings.
-5. **Per-call `VariableResolver`** — passed to `Evaluate` / `EvaluateAsync`.
-6. **Numeric constants** — `PI`, `E`, `Infinity`, `NaN`.
+1. **Built-in function** - e.g. `max`, `sum`, `map`.
+2. **Unary operator function** - e.g. `sin`, `cos`, `sqrt`, `length`. Lets expressions pass bare `sin` as a function value.
+3. **Local and parent scopes** - variables assigned with `=`, lambda parameters.
+4. **Values from the input `JsonDocument`** - top-level properties become root-scope bindings.
+5. **Per-call `VariableResolver`** - passed to `Evaluate` / `EvaluateAsync`.
+6. **Numeric constants** - `PI`, `E`, `Infinity`, `NaN`.
 
 If none of these resolve the name, a [`VariableException`](security.md#exception-hierarchy) is thrown.
 
-See [Advanced Features — Custom Variable Resolution](advanced-features.md#custom-variable-resolution) for resolver patterns.
+See [Advanced Features - Custom Variable Resolution](advanced-features.md#custom-variable-resolution) for resolver patterns.
 
 ## Built-in Constants
 
@@ -159,7 +159,7 @@ These names are always resolvable:
 
 ## See Also
 
-- [Expression](expression.md) — `Evaluate`, `Simplify`, `Substitute`, `Variables`, `Symbols`, `ToString`, `Accept`.
-- [Expression Syntax](syntax.md) — language reference.
-- [Advanced Features](advanced-features.md) — async, resolvers, coalesce, CASE, object literals.
-- [Values & JsonDocument](values-and-json.md) — I/O boundary details.
+- [Expression](expression.md) - `Evaluate`, `Simplify`, `Substitute`, `Variables`, `Symbols`, `ToString`, `Accept`.
+- [Expression Syntax](syntax.md) - language reference.
+- [Advanced Features](advanced-features.md) - async, resolvers, coalesce, CASE, object literals.
+- [Values & JsonDocument](values-and-json.md) - I/O boundary details.

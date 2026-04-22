@@ -1,6 +1,6 @@
 # AOT & Trimming
 
-> **Audience:** Developers using Native AOT, IL trimming, or single-file publishing — and anyone who wants to understand how Expreszo keeps itself out of your `IL2026` / `IL3050` warning budget.
+> **Audience:** Developers using Native AOT, IL trimming, or single-file publishing - and anyone who wants to understand how ExpresZo keeps itself out of your `IL2026` / `IL3050` warning budget.
 
 ## What the library guarantees
 
@@ -21,7 +21,7 @@ dotnet publish samples/AotCheck --configuration Release \
     --runtime linux-x64 --self-contained -p:PublishAot=true
 ```
 
-and executes the resulting native binary. The canary exercises the Parser, Expression, evaluator, validator, JsonBridge, and every built-in preset — so a regression anywhere in the call graph fails the publish step.
+and executes the resulting native binary. The canary exercises the Parser, Expression, evaluator, validator, JsonBridge, and every built-in preset - so a regression anywhere in the call graph fails the publish step.
 
 There are no `[RequiresUnreferencedCode]` or `[RequiresDynamicCode]` attributes in the production assembly.
 
@@ -49,7 +49,7 @@ dotnet publish -r linux-x64 -c Release
 
 ## What's forbidden in the library source
 
-To maintain the guarantee above, Expreszo's production code **never** uses:
+To maintain the guarantee above, ExpresZo's production code **never** uses:
 
 - `System.Reflection.Emit` (`DynamicMethod`, `ILGenerator`, `TypeBuilder`, etc.)
 - `System.Linq.Expressions.Expression.Compile()`
@@ -60,7 +60,7 @@ To maintain the guarantee above, Expreszo's production code **never** uses:
 - The `dynamic` keyword
 - `MakeGenericType` / `MakeGenericMethod` with user-supplied parameters
 
-In place of these, Expreszo uses:
+In place of these, ExpresZo uses:
 
 - **Explicit descriptor tables** for operators and functions (`OperatorTable`, `OperatorTableBuilder`).
 - **Manual JsonElement traversal** via `GetProperty`, `EnumerateArray`, `EnumerateObject`, `GetDouble`, etc.
@@ -69,11 +69,11 @@ In place of these, Expreszo uses:
 
 ## What this means for your code
 
-- Customs functions you register are plain `ExprFunc` delegates — they're AOT-safe by construction.
+- Customs functions you register are plain `ExprFunc` delegates - they're AOT-safe by construction.
 - A `VariableResolver` is a delegate too; capturing state in a closure is fine.
-- `JsonDocument` / `JsonElement` / `Utf8JsonWriter` are AOT-safe; Expreszo never goes behind them to use reflection.
+- `JsonDocument` / `JsonElement` / `Utf8JsonWriter` are AOT-safe; ExpresZo never goes behind them to use reflection.
 
-If you build an abstraction on top of Expreszo, follow the same rules — anywhere you'd normally reach for `JsonSerializer.Deserialize<T>` to convert a `JsonElement` to a typed .NET object, prefer explicit code paths that walk the element.
+If you build an abstraction on top of ExpresZo, follow the same rules - anywhere you'd normally reach for `JsonSerializer.Deserialize<T>` to convert a `JsonElement` to a typed .NET object, prefer explicit code paths that walk the element.
 
 ## Trimming
 
@@ -88,11 +88,11 @@ No `IL2026` (unreferenced-code) or `IL3050` (dynamic-code) warnings should surfa
 
 ## Single-file publish
 
-Enabling single-file publish (`<PublishSingleFile>true</PublishSingleFile>`) likewise doesn't surface any `IL3000` warnings for Expreszo code — no `Assembly.Location` usage, no `Assembly.CodeBase`, no assembly loading.
+Enabling single-file publish (`<PublishSingleFile>true</PublishSingleFile>`) likewise doesn't surface any `IL3000` warnings for ExpresZo code - no `Assembly.Location` usage, no `Assembly.CodeBase`, no assembly loading.
 
 ## If you hit a warning
 
-If your app's trim / AOT build surfaces a warning that points inside the Expreszo assembly, that's a bug — please [open an issue](https://github.com/pro-fa/expreszo-dotnet/issues) with:
+If your app's trim / AOT build surfaces a warning that points inside the ExpresZo assembly, that's a bug - please [open an issue](https://github.com/pro-fa/expreszo-dotnet/issues) with:
 
 - The warning code (`IL2026`, `IL2070`, `IL3050`, etc.)
 - The call site (stack frame from the analyser message)
@@ -102,6 +102,6 @@ The AOT canary in CI is meant to catch these upstream, but new .NET SDK versions
 
 ## See Also
 
-- [Values & JsonDocument](values-and-json.md) — the AOT-safe JSON bridge.
-- [Security & Validation](security.md) — the "no runtime dynamism" story extends to security too.
+- [Values & JsonDocument](values-and-json.md) - the AOT-safe JSON bridge.
+- [Security & Validation](security.md) - the "no runtime dynamism" story extends to security too.
 - Microsoft's [Native AOT docs](https://learn.microsoft.com/dotnet/core/deploying/native-aot/) for general background.

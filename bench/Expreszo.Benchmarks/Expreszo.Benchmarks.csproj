@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>Expreszo.Benchmarks</RootNamespace>
@@ -12,7 +11,7 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <TieredCompilation>true</TieredCompilation>
 
-    <!-- Benchmarks are not AOT — BenchmarkDotNet uses reflection and runtime
+    <!-- Benchmarks are not AOT - BenchmarkDotNet uses reflection and runtime
          codegen to emit per-benchmark wrappers. Keeping this project out of
          the AOT pipeline isolates the library's AOT promise from the
          measurement harness. -->
@@ -27,5 +26,4 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
   </ItemGroup>
-
 </Project>

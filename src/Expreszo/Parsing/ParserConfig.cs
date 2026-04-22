@@ -1,4 +1,4 @@
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
 
 namespace Expreszo.Parsing;
 
@@ -13,38 +13,27 @@ namespace Expreszo.Parsing;
 /// gating can be driven by arbitrary logic without expanding the option
 /// surface. Instances are immutable and cheap to share across runs.
 /// </remarks>
-internal sealed class ParserConfig
+internal sealed class ParserConfig(
+    FrozenSet<string> keywords,
+    FrozenSet<string> unaryOps,
+    FrozenSet<string> binaryOps,
+    FrozenSet<string> ternaryOps,
+    FrozenDictionary<string, double> numericConstants,
+    FrozenDictionary<string, Value> builtinLiterals,
+    Func<string, bool> isOperatorEnabled,
+    bool allowMemberAccess = true
+)
 {
-    public ParserConfig(
-        FrozenSet<string> keywords,
-        FrozenSet<string> unaryOps,
-        FrozenSet<string> binaryOps,
-        FrozenSet<string> ternaryOps,
-        FrozenDictionary<string, double> numericConstants,
-        FrozenDictionary<string, Value> builtinLiterals,
-        Func<string, bool> isOperatorEnabled,
-        bool allowMemberAccess = true)
-    {
-        Keywords = keywords;
-        UnaryOps = unaryOps;
-        BinaryOps = binaryOps;
-        TernaryOps = ternaryOps;
-        NumericConstants = numericConstants;
-        BuiltinLiterals = builtinLiterals;
-        IsOperatorEnabled = isOperatorEnabled;
-        AllowMemberAccess = allowMemberAccess;
-    }
-
-    public FrozenSet<string> Keywords { get; }
-    public FrozenSet<string> UnaryOps { get; }
-    public FrozenSet<string> BinaryOps { get; }
-    public FrozenSet<string> TernaryOps { get; }
-    public FrozenDictionary<string, double> NumericConstants { get; }
-    public FrozenDictionary<string, Value> BuiltinLiterals { get; }
-    public Func<string, bool> IsOperatorEnabled { get; }
+    public FrozenSet<string> Keywords { get; } = keywords;
+    public FrozenSet<string> UnaryOps { get; } = unaryOps;
+    public FrozenSet<string> BinaryOps { get; } = binaryOps;
+    public FrozenSet<string> TernaryOps { get; } = ternaryOps;
+    public FrozenDictionary<string, double> NumericConstants { get; } = numericConstants;
+    public FrozenDictionary<string, Value> BuiltinLiterals { get; } = builtinLiterals;
+    public Func<string, bool> IsOperatorEnabled { get; } = isOperatorEnabled;
 
     /// <summary>Whether member access (<c>.</c>) is permitted. Defaults to <c>true</c>.</summary>
-    public bool AllowMemberAccess { get; }
+    public bool AllowMemberAccess { get; } = allowMemberAccess;
 
     public bool IsNamedOperator(string name) =>
         UnaryOps.Contains(name) || BinaryOps.Contains(name) || TernaryOps.Contains(name);
@@ -53,31 +42,49 @@ internal sealed class ParserConfig
 
     // Declared BEFORE Default so they're initialized by the time Build() runs.
     // CA1861 flags repeated array allocation; these fields dodge that noise.
-    private static readonly string[] DefaultKeywords =
-        ["case", "when", "then", "else", "end"];
+    private static readonly string[] DefaultKeywords = ["case", "when", "then", "else", "end"];
 
     private static readonly string[] DefaultUnaryOps =
     [
-        // Symbolic prefix unaries — the tokenizer emits these as single-char
+        // Symbolic prefix unaries - the tokenizer emits these as single-char
         // operators; they also need to be in UnaryOps so the Pratt parser's
         // IsPrefixOperator check accepts them.
-        "-", "+", "!",
+        "-",
+        "+",
+        "!",
         "not",
-        "abs", "ceil", "floor", "round", "sign",
-        "sqrt", "cbrt", "trunc",
-        "exp", "expm1",
-        "log", "ln", "log1p", "log2", "log10", "lg",
-        "sin", "cos", "tan",
-        "asin", "acos", "atan",
-        "sinh", "cosh", "tanh",
-        "asinh", "acosh", "atanh",
+        "abs",
+        "ceil",
+        "floor",
+        "round",
+        "sign",
+        "sqrt",
+        "cbrt",
+        "trunc",
+        "exp",
+        "expm1",
+        "log",
+        "ln",
+        "log1p",
+        "log2",
+        "log10",
+        "lg",
+        "sin",
+        "cos",
+        "tan",
+        "asin",
+        "acos",
+        "atan",
+        "sinh",
+        "cosh",
+        "tanh",
+        "asinh",
+        "acosh",
+        "atanh",
         "length",
     ];
 
-    private static readonly string[] DefaultBinaryOps =
-    [
-        "and", "or", "in", "not in", "as",
-    ];
+    private static readonly string[] DefaultBinaryOps = ["and", "or", "in", "not in", "as"];
 
     /// <summary>
     /// Default configuration used during parser tests. Enables every operator,
@@ -88,12 +95,14 @@ internal sealed class ParserConfig
 
     private static ParserConfig Build()
     {
-        var keywords = DefaultKeywords.ToFrozenSet(StringComparer.Ordinal);
-        var unary = DefaultUnaryOps.ToFrozenSet(StringComparer.Ordinal);
-        var binary = DefaultBinaryOps.ToFrozenSet(StringComparer.Ordinal);
+        FrozenSet<string> keywords = DefaultKeywords.ToFrozenSet(StringComparer.Ordinal);
+        FrozenSet<string> unary = DefaultUnaryOps.ToFrozenSet(StringComparer.Ordinal);
+        FrozenSet<string> binary = DefaultBinaryOps.ToFrozenSet(StringComparer.Ordinal);
         var ternary = FrozenSet<string>.Empty;
 
-        var numericConstants = new Dictionary<string, double>(StringComparer.Ordinal)
+        FrozenDictionary<string, double> numericConstants = new Dictionary<string, double>(
+            StringComparer.Ordinal
+        )
         {
             ["PI"] = Math.PI,
             ["E"] = Math.E,
@@ -101,7 +110,9 @@ internal sealed class ParserConfig
             ["NaN"] = double.NaN,
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
-        var literals = new Dictionary<string, Value>(StringComparer.Ordinal)
+        FrozenDictionary<string, Value> literals = new Dictionary<string, Value>(
+            StringComparer.Ordinal
+        )
         {
             ["true"] = Value.Boolean.True,
             ["false"] = Value.Boolean.False,
@@ -116,6 +127,7 @@ internal sealed class ParserConfig
             numericConstants,
             literals,
             _ => true,
-            allowMemberAccess: true);
+            allowMemberAccess: true
+        );
     }
 }

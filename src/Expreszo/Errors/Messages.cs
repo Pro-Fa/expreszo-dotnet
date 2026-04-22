@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace Expreszo.Errors;
 
@@ -23,23 +23,45 @@ internal static class Messages
     internal static string MemberAccessDenied(string property) =>
         string.Format(Culture, "access to member '{0}' is not allowed", property);
 
-    internal static string MemberAccessDisabled() =>
-        "member access is disabled on this parser";
+    internal static string MemberAccessDisabled() => "member access is disabled on this parser";
 
-    internal static string ArrayIndexNotInteger(object? index) =>
-        string.Format(Culture, "array index must be an integer, got: {0}", index ?? "null");
+    /// <summary>
+    /// Numeric indices are user-controlled inputs, safe to echo. The literal
+    /// value helps the caller understand why the index was rejected
+    /// (e.g. <c>NaN</c>, <c>Infinity</c>, <c>1.5</c>).
+    /// </summary>
+    internal static string ArrayIndexNotInteger(double index) =>
+        string.Format(Culture, "array index must be an integer, got: {0}", index);
+
+    /// <summary>
+    /// Non-numeric indices: only echo the type name, never the raw value, so
+    /// sensitive scope bindings (e.g. <c>arr[password]</c>) don't leak into
+    /// error messages or logs.
+    /// </summary>
+    internal static string ArrayIndexNotInteger(Value index) =>
+        string.Format(
+            Culture,
+            "array index must be an integer, got a value of type '{0}'",
+            index.TypeName()
+        );
 
     internal static string WrongArgCount(string function, int expected, int actual) =>
         string.Format(Culture, "{0}: expected {1} arguments, got {2}", function, expected, actual);
 
-    internal static string WrongArgType(string function, int index, string expected, string actual) =>
+    internal static string WrongArgType(
+        string function,
+        int index,
+        string expected,
+        string actual
+    ) =>
         string.Format(
             Culture,
             "{0}: argument {1} expected {2}, got {3}",
             function,
             index,
             expected,
-            actual);
+            actual
+        );
 
     internal static string AsyncRequired() =>
         "expression produced an async result; call EvaluateAsync instead of Evaluate";

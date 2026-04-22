@@ -1,6 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Expreszo.Json;
+using Expreszo.Validation;
 
 namespace Expreszo;
 
@@ -11,7 +12,7 @@ namespace Expreszo;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Assignment (<c>=</c>) writes to the current frame — <see cref="Assign(string, Value)"/>
+/// Assignment (<c>=</c>) writes to the current frame - <see cref="Assign(string, Value)"/>
 /// does not walk up the parent chain looking for an existing binding, so
 /// assignments inside a lambda body stay local to that lambda's scope.
 /// </para>
@@ -55,11 +56,11 @@ public sealed class Scope
 
     /// <summary>
     /// Writes (or overwrites) a binding in the current frame only. This is the
-    /// assignment operator's implementation — it never modifies the parent.
+    /// assignment operator's implementation - it never modifies the parent.
     /// </summary>
     public void Assign(string name, Value value) => _locals[name] = value;
 
-    /// <summary>Alias for <see cref="Assign"/> — named to match lambda-parameter binding at call sites.</summary>
+    /// <summary>Alias for <see cref="Assign"/> - named to match lambda-parameter binding at call sites.</summary>
     public void SetLocal(string name, Value value) => _locals[name] = value;
 
     /// <summary>Removes a binding from the current frame; does not touch the parent.</summary>
@@ -80,13 +81,21 @@ public sealed class Scope
         {
             return scope;
         }
-        var root = document.RootElement;
+        JsonElement root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
         {
             return scope;
         }
-        foreach (var property in root.EnumerateObject())
+        foreach (JsonProperty property in root.EnumerateObject())
         {
+            // Never surface prototype-pollution-style names as scope bindings,
+            // even from caller-supplied JSON. The lookup path blocks them
+            // anyway, so this just trims them earlier and keeps them out of
+            // Scope.ToJsonString() output.
+            if (ExpressionValidator.DangerousProperties.Contains(property.Name))
+            {
+                continue;
+            }
             scope.SetLocal(property.Name, JsonBridge.FromJson(property.Value));
         }
         return scope;

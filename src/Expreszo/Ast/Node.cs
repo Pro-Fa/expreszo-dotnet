@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Expreszo.Errors;
 
 namespace Expreszo.Ast;
@@ -51,10 +51,12 @@ public sealed record ArrayLit(ImmutableArray<ArrayEntry> Elements, TextSpan Span
     {
         var hc = new HashCode();
         hc.Add(Span);
-        foreach (var e in Elements)
+
+        foreach (ArrayEntry e in Elements)
         {
             hc.Add(e);
         }
+
         return hc.ToHashCode();
     }
 }
@@ -68,22 +70,29 @@ public sealed record ObjectLit(ImmutableArray<ObjectEntry> Properties, TextSpan 
     {
         var hc = new HashCode();
         hc.Add(Span);
-        foreach (var p in Properties)
+
+        foreach (ObjectEntry p in Properties)
         {
             hc.Add(p);
         }
+
         return hc.ToHashCode();
     }
 }
 
-/// <summary>Entry in an <see cref="ArrayLit.Elements"/> list — either a regular element or a spread.</summary>
+/// <summary>Entry in an <see cref="ArrayLit.Elements"/> list - either a regular element or a spread.</summary>
 public abstract record ArrayEntry(TextSpan Span);
+
 public sealed record ArrayElement(Node Node, TextSpan Span) : ArrayEntry(Span);
+
 public sealed record ArraySpread(Node Argument, TextSpan Span) : ArrayEntry(Span);
 
-/// <summary>Entry in an <see cref="ObjectLit.Properties"/> list — either a key/value or a spread.</summary>
+/// <summary>Entry in an <see cref="ObjectLit.Properties"/> list - either a key/value or a spread.</summary>
 public abstract record ObjectEntry(TextSpan Span);
-public sealed record ObjectProperty(string Key, Node Value, bool Quoted, TextSpan Span) : ObjectEntry(Span);
+
+public sealed record ObjectProperty(string Key, Node Value, bool Quoted, TextSpan Span)
+    : ObjectEntry(Span);
+
 public sealed record ObjectSpread(Node Argument, TextSpan Span) : ObjectEntry(Span);
 
 // ---------- names & access ----------
@@ -92,7 +101,7 @@ public sealed record ObjectSpread(Node Argument, TextSpan Span) : ObjectEntry(Sp
 public sealed record Ident(string Name, TextSpan Span) : Node(Span);
 
 /// <summary>
-/// Name as a string literal — used as the target of assignments, lambda
+/// Name as a string literal - used as the target of assignments, lambda
 /// parameters, and function definitions. Not dereferenced during evaluation.
 /// </summary>
 public sealed record NameRef(string Name, TextSpan Span) : Node(Span);
@@ -122,10 +131,12 @@ public sealed record Call(Node Callee, ImmutableArray<Node> Args, TextSpan Span)
         var hc = new HashCode();
         hc.Add(Span);
         hc.Add(Callee);
-        foreach (var a in Args)
+
+        foreach (Node a in Args)
         {
             hc.Add(a);
         }
+
         return hc.ToHashCode();
     }
 }
@@ -143,15 +154,22 @@ public sealed record Lambda(ImmutableArray<string> Params, Node Body, TextSpan S
         var hc = new HashCode();
         hc.Add(Span);
         hc.Add(Body);
-        foreach (var p in Params)
+
+        foreach (string p in Params)
         {
             hc.Add(p);
         }
+
         return hc.ToHashCode();
     }
 }
 
-public sealed record FunctionDef(string Name, ImmutableArray<string> Params, Node Body, TextSpan Span) : Node(Span)
+public sealed record FunctionDef(
+    string Name,
+    ImmutableArray<string> Params,
+    Node Body,
+    TextSpan Span
+) : Node(Span)
 {
     public bool Equals(FunctionDef? other) =>
         other is not null
@@ -166,10 +184,12 @@ public sealed record FunctionDef(string Name, ImmutableArray<string> Params, Nod
         hc.Add(Span);
         hc.Add(Name);
         hc.Add(Body);
-        foreach (var p in Params)
+
+        foreach (string p in Params)
         {
             hc.Add(p);
         }
+
         return hc.ToHashCode();
     }
 }
@@ -178,7 +198,8 @@ public sealed record FunctionDef(string Name, ImmutableArray<string> Params, Nod
 
 public sealed record CaseArm(Node When, Node Then);
 
-public sealed record Case(Node? Subject, ImmutableArray<CaseArm> Arms, Node? Else, TextSpan Span) : Node(Span)
+public sealed record Case(Node? Subject, ImmutableArray<CaseArm> Arms, Node? Else, TextSpan Span)
+    : Node(Span)
 {
     public bool Equals(Case? other) =>
         other is not null
@@ -193,10 +214,12 @@ public sealed record Case(Node? Subject, ImmutableArray<CaseArm> Arms, Node? Els
         hc.Add(Span);
         hc.Add(Subject);
         hc.Add(Else);
-        foreach (var a in Arms)
+
+        foreach (CaseArm a in Arms)
         {
             hc.Add(a);
         }
+
         return hc.ToHashCode();
     }
 }
@@ -212,17 +235,19 @@ public sealed record Sequence(ImmutableArray<Node> Statements, TextSpan Span) : 
     {
         var hc = new HashCode();
         hc.Add(Span);
-        foreach (var s in Statements)
+
+        foreach (Node s in Statements)
         {
             hc.Add(s);
         }
+
         return hc.ToHashCode();
     }
 }
 
 /// <summary>
 /// Parenthesised subexpression. Preserved in the AST so <c>ToString()</c> can
-/// round-trip source byte-for-byte; semantically transparent — every other
+/// round-trip source byte-for-byte; semantically transparent - every other
 /// visitor treats it as a pass-through to <see cref="Inner"/>.
 /// </summary>
 public sealed record Paren(Node Inner, TextSpan Span) : Node(Span);

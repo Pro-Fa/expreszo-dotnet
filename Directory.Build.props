@@ -1,5 +1,4 @@
 <Project>
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
@@ -8,8 +7,17 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Doc generation is on everywhere so IDE0005 (unused imports) can run
+         during build. CS1591 is suppressed globally because requiring XML
+         docstrings on test fixtures, benchmark setups and record positional
+         parameters produces boilerplate without adding signal. The top-level
+         public types in the library still carry <summary> prose. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <DebugType>portable</DebugType>
-    <ContinuousIntegrationBuild Condition=" '$(GITHUB_ACTIONS)' == 'true' ">true</ContinuousIntegrationBuild>
+    <ContinuousIntegrationBuild Condition=" '$(GITHUB_ACTIONS)' == 'true' "
+      >true</ContinuousIntegrationBuild
+    >
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata (applied to libraries that opt in)">
@@ -25,5 +33,4 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
-
 </Project>

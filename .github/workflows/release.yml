@@ -35,7 +35,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # MinVer walks the git history for the nearest tag — the default
+          # MinVer walks the git history for the nearest tag - the default
           # fetch-depth of 1 would lose that information.
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
         run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter /*/*/*/*
 
       - name: Publish AotCheck (Native AOT)
-        # Same safety net as the CI workflow — if anything in the library's
+        # Same safety net as the CI workflow - if anything in the library's
         # call graph needs dynamic code generation, this fails here rather
         # than in a consumer's publish pipeline.
         run: |
@@ -84,7 +84,7 @@ jobs:
             --skip-duplicate
 
       - name: Create GitHub Release
-        # Only when this run was triggered by a tag push — skipped on manual
+        # Only when this run was triggered by a tag push - skipped on manual
         # re-runs unless the caller re-tagged.
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2

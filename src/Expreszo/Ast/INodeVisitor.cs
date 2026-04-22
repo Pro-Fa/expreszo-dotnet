@@ -1,4 +1,4 @@
-namespace Expreszo.Ast;
+﻿namespace Expreszo.Ast;
 
 /// <summary>
 /// Visitor pattern over the AST. Each method is called when the corresponding
@@ -40,64 +40,86 @@ public interface INodeVisitor<out T>
 /// <summary>
 /// Base class for typed visitors. Dispatches <see cref="Visit(Node)"/> to the
 /// kind-specific method. Subclasses override only the methods they care about
-/// — the rest can be left abstract or routed through
+/// - the rest can be left abstract or routed through
 /// <see cref="VisitDefault"/>.
 /// </summary>
 public abstract class NodeVisitor<T> : INodeVisitor<T>
 {
-    public virtual T Visit(Node node) => node switch
-    {
-        NumberLit n => VisitNumberLit(n),
-        StringLit n => VisitStringLit(n),
-        BoolLit n => VisitBoolLit(n),
-        NullLit n => VisitNullLit(n),
-        UndefinedLit n => VisitUndefinedLit(n),
-        RawLit n => VisitRawLit(n),
-        ArrayLit n => VisitArrayLit(n),
-        ObjectLit n => VisitObjectLit(n),
-        Ident n => VisitIdent(n),
-        NameRef n => VisitNameRef(n),
-        Member n => VisitMember(n),
-        Unary n => VisitUnary(n),
-        Binary n => VisitBinary(n),
-        Ternary n => VisitTernary(n),
-        Call n => VisitCall(n),
-        Lambda n => VisitLambda(n),
-        FunctionDef n => VisitFunctionDef(n),
-        Case n => VisitCase(n),
-        Sequence n => VisitSequence(n),
-        Paren n => VisitParen(n),
-        _ => throw new NotSupportedException($"Unknown AST node: {node.GetType().Name}"),
-    };
+    public virtual T Visit(Node node) =>
+        node switch
+        {
+            NumberLit n => VisitNumberLit(n),
+            StringLit n => VisitStringLit(n),
+            BoolLit n => VisitBoolLit(n),
+            NullLit n => VisitNullLit(n),
+            UndefinedLit n => VisitUndefinedLit(n),
+            RawLit n => VisitRawLit(n),
+            ArrayLit n => VisitArrayLit(n),
+            ObjectLit n => VisitObjectLit(n),
+            Ident n => VisitIdent(n),
+            NameRef n => VisitNameRef(n),
+            Member n => VisitMember(n),
+            Unary n => VisitUnary(n),
+            Binary n => VisitBinary(n),
+            Ternary n => VisitTernary(n),
+            Call n => VisitCall(n),
+            Lambda n => VisitLambda(n),
+            FunctionDef n => VisitFunctionDef(n),
+            Case n => VisitCase(n),
+            Sequence n => VisitSequence(n),
+            Paren n => VisitParen(n),
+            _ => throw new NotSupportedException($"Unknown AST node: {node.GetType().Name}"),
+        };
 
     /// <summary>Fallback used by all <c>VisitXxx</c> methods by default. Override for catch-all behaviour.</summary>
     protected virtual T VisitDefault(Node node) =>
-        throw new NotImplementedException($"Visitor {GetType().Name} has no override for {node.GetType().Name}");
+        throw new NotImplementedException(
+            $"Visitor {GetType().Name} has no override for {node.GetType().Name}"
+        );
 
     public virtual T VisitNumberLit(NumberLit node) => VisitDefault(node);
+
     public virtual T VisitStringLit(StringLit node) => VisitDefault(node);
+
     public virtual T VisitBoolLit(BoolLit node) => VisitDefault(node);
+
     public virtual T VisitNullLit(NullLit node) => VisitDefault(node);
+
     public virtual T VisitUndefinedLit(UndefinedLit node) => VisitDefault(node);
+
     public virtual T VisitRawLit(RawLit node) => VisitDefault(node);
+
     public virtual T VisitArrayLit(ArrayLit node) => VisitDefault(node);
+
     public virtual T VisitObjectLit(ObjectLit node) => VisitDefault(node);
+
     public virtual T VisitIdent(Ident node) => VisitDefault(node);
+
     public virtual T VisitNameRef(NameRef node) => VisitDefault(node);
+
     public virtual T VisitMember(Member node) => VisitDefault(node);
+
     public virtual T VisitUnary(Unary node) => VisitDefault(node);
+
     public virtual T VisitBinary(Binary node) => VisitDefault(node);
+
     public virtual T VisitTernary(Ternary node) => VisitDefault(node);
+
     public virtual T VisitCall(Call node) => VisitDefault(node);
+
     public virtual T VisitLambda(Lambda node) => VisitDefault(node);
+
     public virtual T VisitFunctionDef(FunctionDef node) => VisitDefault(node);
+
     public virtual T VisitCase(Case node) => VisitDefault(node);
+
     public virtual T VisitSequence(Sequence node) => VisitDefault(node);
+
     public virtual T VisitParen(Paren node) => VisitDefault(node);
 }
 
 /// <summary>
-/// Helpers over AST nodes — currently just <see cref="Walk"/>, a post-order
+/// Helpers over AST nodes - currently just <see cref="Walk"/>, a post-order
 /// traversal that invokes the callback on every node (children first, then the
 /// node itself). Matches the TS <c>walk()</c> helper in
 /// <c>src/ast/visitor.ts</c>.
@@ -119,25 +141,31 @@ public static class Ast
         switch (node)
         {
             case ArrayLit a:
-                foreach (var entry in a.Elements)
+                foreach (ArrayEntry entry in a.Elements)
                 {
-                    WalkInternal(entry switch
-                    {
-                        ArrayElement e => e.Node,
-                        ArraySpread s => s.Argument,
-                        _ => throw new NotSupportedException(),
-                    }, visit);
+                    WalkInternal(
+                        entry switch
+                        {
+                            ArrayElement e => e.Node,
+                            ArraySpread s => s.Argument,
+                            _ => throw new NotSupportedException(),
+                        },
+                        visit
+                    );
                 }
                 break;
             case ObjectLit o:
-                foreach (var entry in o.Properties)
+                foreach (ObjectEntry entry in o.Properties)
                 {
-                    WalkInternal(entry switch
-                    {
-                        ObjectProperty p => p.Value,
-                        ObjectSpread s => s.Argument,
-                        _ => throw new NotSupportedException(),
-                    }, visit);
+                    WalkInternal(
+                        entry switch
+                        {
+                            ObjectProperty p => p.Value,
+                            ObjectSpread s => s.Argument,
+                            _ => throw new NotSupportedException(),
+                        },
+                        visit
+                    );
                 }
                 break;
             case Member m:
@@ -157,7 +185,7 @@ public static class Ast
                 break;
             case Call c:
                 WalkInternal(c.Callee, visit);
-                foreach (var arg in c.Args)
+                foreach (Node arg in c.Args)
                 {
                     WalkInternal(arg, visit);
                 }
@@ -173,7 +201,7 @@ public static class Ast
                 {
                     WalkInternal(k.Subject, visit);
                 }
-                foreach (var arm in k.Arms)
+                foreach (CaseArm arm in k.Arms)
                 {
                     WalkInternal(arm.When, visit);
                     WalkInternal(arm.Then, visit);
@@ -184,7 +212,7 @@ public static class Ast
                 }
                 break;
             case Sequence s:
-                foreach (var stmt in s.Statements)
+                foreach (Node stmt in s.Statements)
                 {
                     WalkInternal(stmt, visit);
                 }

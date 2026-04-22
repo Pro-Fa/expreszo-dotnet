@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace Expreszo.Ast.Visitors;
 
@@ -7,17 +7,14 @@ namespace Expreszo.Ast.Visitors;
 /// <c>a.b.c</c> is collected as a single dotted name rather than three separate
 /// references.
 /// </summary>
-internal sealed class SymbolsVisitor
+internal sealed class SymbolsVisitor(bool withMembers)
 {
-    private readonly bool _withMembers;
-
-    public SymbolsVisitor(bool withMembers) => _withMembers = withMembers;
-
     public IReadOnlyList<string> Collect(Node root)
     {
         var symbols = new List<string>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         Visit(root, symbols, seen);
+
         return symbols;
     }
 
@@ -28,7 +25,7 @@ internal sealed class SymbolsVisitor
             case Ident id:
                 Add(id.Name, symbols, seen);
                 break;
-            case Member m when _withMembers && TryGetMemberChain(m, out var chain):
+            case Member m when withMembers && TryGetMemberChain(m, out string? chain):
                 Add(chain, symbols, seen);
                 break;
             case Member m:
@@ -51,7 +48,11 @@ internal sealed class SymbolsVisitor
                 break;
             case Call c:
                 Visit(c.Callee, symbols, seen);
-                foreach (var arg in c.Args) Visit(arg, symbols, seen);
+                foreach (Node arg in c.Args)
+                {
+                    Visit(arg, symbols, seen);
+                }
+
                 break;
             case Lambda l:
                 Visit(l.Body, symbols, seen);
@@ -60,7 +61,7 @@ internal sealed class SymbolsVisitor
                 Visit(fd.Body, symbols, seen);
                 break;
             case ArrayLit a:
-                foreach (var e in a.Elements)
+                foreach (ArrayEntry e in a.Elements)
                 {
                     Visit(
                         e switch
@@ -69,11 +70,13 @@ internal sealed class SymbolsVisitor
                             ArraySpread sp => sp.Argument,
                             _ => throw new NotSupportedException(),
                         },
-                        symbols, seen);
+                        symbols,
+                        seen
+                    );
                 }
                 break;
             case ObjectLit o:
-                foreach (var p in o.Properties)
+                foreach (ObjectEntry p in o.Properties)
                 {
                     Visit(
                         p switch
@@ -82,20 +85,34 @@ internal sealed class SymbolsVisitor
                             ObjectSpread sp => sp.Argument,
                             _ => throw new NotSupportedException(),
                         },
-                        symbols, seen);
+                        symbols,
+                        seen
+                    );
                 }
                 break;
             case Sequence s:
-                foreach (var stmt in s.Statements) Visit(stmt, symbols, seen);
+                foreach (Node stmt in s.Statements)
+                {
+                    Visit(stmt, symbols, seen);
+                }
+
                 break;
             case Case k:
-                if (k.Subject is not null) Visit(k.Subject, symbols, seen);
-                foreach (var arm in k.Arms)
+                if (k.Subject is not null)
+                {
+                    Visit(k.Subject, symbols, seen);
+                }
+
+                foreach (CaseArm arm in k.Arms)
                 {
                     Visit(arm.When, symbols, seen);
                     Visit(arm.Then, symbols, seen);
                 }
-                if (k.Else is not null) Visit(k.Else, symbols, seen);
+                if (k.Else is not null)
+                {
+                    Visit(k.Else, symbols, seen);
+                }
+
                 break;
         }
     }
@@ -105,31 +122,43 @@ internal sealed class SymbolsVisitor
         var parts = new Stack<string>();
         parts.Push(m.Property);
         Node cursor = m.Object;
+
         while (cursor is Member inner)
         {
             parts.Push(inner.Property);
             cursor = inner.Object;
         }
+
         if (cursor is not Ident head)
         {
             chain = string.Empty;
             return false;
         }
+
         parts.Push(head.Name);
         var sb = new StringBuilder();
-        var first = true;
+        bool first = true;
+
         while (parts.Count > 0)
         {
-            if (!first) sb.Append('.');
+            if (!first)
+            {
+                sb.Append('.');
+            }
+
             sb.Append(parts.Pop());
             first = false;
         }
         chain = sb.ToString();
+
         return true;
     }
 
     private static void Add(string symbol, List<string> symbols, HashSet<string> seen)
     {
-        if (seen.Add(symbol)) symbols.Add(symbol);
+        if (seen.Add(symbol))
+        {
+            symbols.Add(symbol);
+        }
     }
 }

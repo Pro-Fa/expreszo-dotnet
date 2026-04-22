@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Expreszo.Errors;
 
 namespace Expreszo.Parsing;
@@ -12,7 +12,7 @@ namespace Expreszo.Parsing;
 /// The cursor eagerly drains a <see cref="Tokenizer"/> at construction time so
 /// the downstream parser only ever reads an indexed array. Advancing produces
 /// a new <see cref="TokenCursor"/> that shares the token array and only
-/// differs in index — allocation cost per advance is two machine words.
+/// differs in index - allocation cost per advance is two machine words.
 /// </remarks>
 internal sealed class TokenCursor
 {
@@ -35,10 +35,10 @@ internal sealed class TokenCursor
     public static TokenCursor From(ParserConfig config, string expression)
     {
         var tokenizer = new Tokenizer(config, expression);
-        var builder = ImmutableArray.CreateBuilder<Token>();
+        ImmutableArray<Token>.Builder builder = ImmutableArray.CreateBuilder<Token>();
         while (true)
         {
-            var token = tokenizer.Next();
+            Token token = tokenizer.Next();
             builder.Add(token);
             if (token.Kind == TokenKind.Eof)
             {
@@ -53,12 +53,12 @@ internal sealed class TokenCursor
 
     /// <summary>
     /// Token at <paramref name="offset"/> positions past the current cursor.
-    /// Reads past the end clamp to the terminating EOF token — the parser can
+    /// Reads past the end clamp to the terminating EOF token - the parser can
     /// look arbitrarily far ahead without bounds-checking.
     /// </summary>
     public Token PeekAt(int offset)
     {
-        var i = Index + offset;
+        int i = Index + offset;
         if (i < 0)
         {
             return Tokens[0];
@@ -80,7 +80,7 @@ internal sealed class TokenCursor
 
     /// <summary>
     /// Returns a cursor one token ahead. If already parked on EOF, returns
-    /// this same cursor — EOF is the absorbing state.
+    /// this same cursor - EOF is the absorbing state.
     /// </summary>
     public TokenCursor Advance()
     {
@@ -96,7 +96,7 @@ internal sealed class TokenCursor
     /// </summary>
     public bool Check(TokenKind kind, string? text = null)
     {
-        var token = Peek();
+        Token token = Peek();
         if (token.Kind != kind)
         {
             return false;
@@ -124,17 +124,16 @@ internal sealed class TokenCursor
     /// </summary>
     public ErrorPosition GetCoordinates()
     {
-        var pos = Peek().Index;
-        var line = 0;
-        var column = 0;
-        var newline = -1;
+        int pos = Peek().Index;
+        int line = 0;
+        int column = 0;
+        int newline = -1;
         do
         {
             line++;
             column = pos - newline;
             newline = Expression.IndexOf('\n', newline + 1);
-        }
-        while (newline >= 0 && newline < pos);
+        } while (newline >= 0 && newline < pos);
         return new ErrorPosition(line, column);
     }
 }

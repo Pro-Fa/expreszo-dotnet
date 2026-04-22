@@ -1,4 +1,4 @@
-using Expreszo.Errors;
+﻿using Expreszo.Errors;
 
 namespace Expreszo;
 
@@ -15,27 +15,20 @@ namespace Expreszo;
 /// can use <c>ctx.Scope.CreateChild()</c> for lambda bodies or propagate
 /// <c>ctx.CancellationToken</c> into their own async work.
 /// </remarks>
-public sealed class EvalContext
+public sealed class EvalContext(
+    Scope scope,
+    IErrorHandler errorHandler,
+    VariableResolver? resolver = null,
+    CancellationToken cancellationToken = default
+)
 {
-    public EvalContext(
-        Scope scope,
-        IErrorHandler errorHandler,
-        VariableResolver? resolver = null,
-        CancellationToken cancellationToken = default)
-    {
-        Scope = scope;
-        ErrorHandler = errorHandler;
-        Resolver = resolver;
-        CancellationToken = cancellationToken;
-    }
+    public Scope Scope { get; } = scope;
 
-    public Scope Scope { get; }
+    public IErrorHandler ErrorHandler { get; } = errorHandler;
 
-    public IErrorHandler ErrorHandler { get; }
+    public VariableResolver? Resolver { get; } = resolver;
 
-    public VariableResolver? Resolver { get; }
-
-    public CancellationToken CancellationToken { get; }
+    public CancellationToken CancellationToken { get; } = cancellationToken;
 
     /// <summary>
     /// Creates a derived context for a nested call (lambda body, function
@@ -44,10 +37,6 @@ public sealed class EvalContext
     /// </summary>
     public EvalContext WithChildScope()
     {
-        return new EvalContext(
-            Scope.CreateChild(),
-            ErrorHandler,
-            Resolver,
-            CancellationToken);
+        return new EvalContext(Scope.CreateChild(), ErrorHandler, Resolver, CancellationToken);
     }
 }

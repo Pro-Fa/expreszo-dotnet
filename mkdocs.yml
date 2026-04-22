@@ -1,4 +1,4 @@
-site_name: Expreszo .NET
+site_name: ExpresZo .NET
 site_description: Safe, extensible, AOT-friendly expression evaluator for .NET 10.
 site_url: https://pro-fa.github.io/expreszo-dotnet/
 repo_url: https://github.com/pro-fa/expreszo-dotnet
@@ -6,6 +6,8 @@ repo_name: pro-fa/expreszo-dotnet
 
 theme:
   name: material
+  logo: logo_dark.png
+  favicon: logo.png
   palette:
     # Light mode
     - media: "(prefers-color-scheme: light)"

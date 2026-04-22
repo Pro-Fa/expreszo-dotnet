@@ -1,4 +1,4 @@
-namespace Expreszo.Parsing;
+﻿namespace Expreszo.Parsing;
 
 /// <summary>
 /// A single lexical unit produced by the tokenizer. Immutable. The payload
@@ -16,7 +16,8 @@ public sealed record Token(
     int Index,
     int End,
     double Number = 0d,
-    Value? Const = null)
+    Value? Const = null
+)
 {
     public int Length => End - Index;
 

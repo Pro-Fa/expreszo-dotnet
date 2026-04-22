@@ -1,6 +1,25 @@
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
+using System.Runtime.CompilerServices;
 
 namespace Expreszo;
+
+/// <summary>
+/// Reference-identity comparer for <see cref="ExprFunc"/> delegates.
+/// <see cref="ReferenceEqualityComparer.Instance"/> only implements
+/// <c>IEqualityComparer&lt;object&gt;</c>, so it doesn't satisfy the generic
+/// <c>IEqualityComparer&lt;ExprFunc&gt;</c> that <see cref="HashSet{T}"/> and
+/// <c>ToFrozenSet</c> expect.
+/// </summary>
+internal sealed class ExprFuncReferenceComparer : IEqualityComparer<ExprFunc>
+{
+    public static readonly ExprFuncReferenceComparer Instance = new();
+
+    private ExprFuncReferenceComparer() { }
+
+    public bool Equals(ExprFunc? x, ExprFunc? y) => ReferenceEquals(x, y);
+
+    public int GetHashCode(ExprFunc obj) => RuntimeHelpers.GetHashCode(obj);
+}
 
 /// <summary>
 /// Container holding the implementations the evaluator dispatches to: unary
@@ -8,27 +27,28 @@ namespace Expreszo;
 /// the <see cref="Parser"/> constructor and shared across every
 /// <see cref="Expression"/> it produces.
 /// </summary>
-internal sealed class OperatorTable
+internal sealed class OperatorTable(
+    FrozenDictionary<string, ExprFunc> unaryOps,
+    FrozenDictionary<string, ExprFunc> binaryOps,
+    FrozenDictionary<string, ExprFunc> ternaryOps,
+    FrozenDictionary<string, ExprFunc> functions,
+    FrozenSet<string> asyncFunctionNames,
+    FrozenSet<ExprFunc> callableImplementations
+)
 {
-    public OperatorTable(
-        FrozenDictionary<string, ExprFunc> unaryOps,
-        FrozenDictionary<string, ExprFunc> binaryOps,
-        FrozenDictionary<string, ExprFunc> ternaryOps,
-        FrozenDictionary<string, ExprFunc> functions,
-        FrozenSet<string> asyncFunctionNames)
-    {
-        UnaryOps = unaryOps;
-        BinaryOps = binaryOps;
-        TernaryOps = ternaryOps;
-        Functions = functions;
-        AsyncFunctionNames = asyncFunctionNames;
-    }
+    public FrozenDictionary<string, ExprFunc> UnaryOps { get; } = unaryOps;
+    public FrozenDictionary<string, ExprFunc> BinaryOps { get; } = binaryOps;
+    public FrozenDictionary<string, ExprFunc> TernaryOps { get; } = ternaryOps;
+    public FrozenDictionary<string, ExprFunc> Functions { get; } = functions;
+    public FrozenSet<string> AsyncFunctionNames { get; } = asyncFunctionNames;
 
-    public FrozenDictionary<string, ExprFunc> UnaryOps { get; }
-    public FrozenDictionary<string, ExprFunc> BinaryOps { get; }
-    public FrozenDictionary<string, ExprFunc> TernaryOps { get; }
-    public FrozenDictionary<string, ExprFunc> Functions { get; }
-    public FrozenSet<string> AsyncFunctionNames { get; }
+    /// <summary>
+    /// All <see cref="ExprFunc"/> delegates a user expression may invoke via
+    /// <c>Call</c> (regular functions plus unary ops, which resolve to
+    /// first-class function values). Keyed by reference identity so the
+    /// allow-list check runs in O(1) instead of scanning dictionaries.
+    /// </summary>
+    public FrozenSet<ExprFunc> CallableImplementations { get; } = callableImplementations;
 }
 
 /// <summary>
@@ -80,10 +100,28 @@ internal sealed class OperatorTableBuilder
     public static ExprFunc Sync(Func<Value[], Value> impl) =>
         (args, _) => ValueTask.FromResult(impl(args));
 
-    public OperatorTable Build() => new(
-        _unary.ToFrozenDictionary(StringComparer.Ordinal),
-        _binary.ToFrozenDictionary(StringComparer.Ordinal),
-        _ternary.ToFrozenDictionary(StringComparer.Ordinal),
-        _functions.ToFrozenDictionary(StringComparer.Ordinal),
-        _asyncFunctionNames.ToFrozenSet(StringComparer.Ordinal));
+    public OperatorTable Build()
+    {
+        // Only Functions and UnaryOps are reachable from Call AST nodes. Binary
+        // and ternary ops dispatch via their own operators and never flow
+        // through the allow-list check, so don't include them here.
+        HashSet<ExprFunc> callable = new(ExprFuncReferenceComparer.Instance);
+        foreach (ExprFunc v in _functions.Values)
+        {
+            callable.Add(v);
+        }
+        foreach (ExprFunc v in _unary.Values)
+        {
+            callable.Add(v);
+        }
+
+        return new OperatorTable(
+            _unary.ToFrozenDictionary(StringComparer.Ordinal),
+            _binary.ToFrozenDictionary(StringComparer.Ordinal),
+            _ternary.ToFrozenDictionary(StringComparer.Ordinal),
+            _functions.ToFrozenDictionary(StringComparer.Ordinal),
+            _asyncFunctionNames.ToFrozenSet(StringComparer.Ordinal),
+            callable.ToFrozenSet(ExprFuncReferenceComparer.Instance)
+        );
+    }
 }

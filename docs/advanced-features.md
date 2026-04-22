@@ -1,12 +1,12 @@
 # Advanced Features
 
-> **Audience:** Developers integrating Expreszo who need advanced customisation and features.
+> **Audience:** Developers integrating ExpresZo who need advanced customisation and features.
 
 This page covers integration features beyond basic parsing and evaluation. For expression syntax, see [Expression Syntax](syntax.md). For the `Parser` class itself, see [Parser](parser.md).
 
 ## Async Evaluation
 
-Custom functions can return a non-completed `ValueTask<Value>`. When they do, the entire evaluation becomes asynchronous — call `EvaluateAsync` and await the result:
+Custom functions can return a non-completed `ValueTask<Value>`. When they do, the entire evaluation becomes asynchronous - call `EvaluateAsync` and await the result:
 
 ```csharp
 using System.Text.Json;
@@ -31,7 +31,7 @@ var result = await expr.EvaluateAsync(values: null, resolver: resolver);
 
 `Evaluate` and `EvaluateAsync` share a single walker returning `ValueTask<Value>`. When every step completes synchronously:
 
-- `Evaluate` inspects `task.IsCompletedSuccessfully`, reads the result, and returns it — no async state machine allocation.
+- `Evaluate` inspects `task.IsCompletedSuccessfully`, reads the result, and returns it - no async state machine allocation.
 - `EvaluateAsync`'s returned `ValueTask<Value>` is already completed by the time the caller sees it, so `await` is a no-op.
 
 When something along the way returns a non-completed `ValueTask`, `Evaluate` throws `AsyncRequiredException` and the caller should switch to `EvaluateAsync`.
@@ -52,7 +52,7 @@ catch (OperationCanceledException)
 }
 ```
 
-The evaluator checks the token at every `Call` boundary — user-registered async functions that do their own I/O should honour the token themselves too.
+The evaluator checks the token at every `Call` boundary - user-registered async functions that do their own I/O should honour the token themselves too.
 
 ## Custom Variable Resolution
 
@@ -91,9 +91,9 @@ parser.Evaluate("$a + $b", values: null, resolver: valueResolver);   // Value.Nu
 
 **Return shapes:**
 
-- `VariableResolveResult.Bound(Value)` — return the value directly.
-- `VariableResolveResult.Alias(string)` — redirect to another variable; the resolver is re-invoked for the new name.
-- `VariableResolveResult.NotResolved` — fall through to the next resolution layer.
+- `VariableResolveResult.Bound(Value)` - return the value directly.
+- `VariableResolveResult.Alias(string)` - redirect to another variable; the resolver is re-invoked for the new name.
+- `VariableResolveResult.NotResolved` - fall through to the next resolution layer.
 
 ### Per-Expression Resolvers
 
@@ -118,11 +118,11 @@ expr.Evaluate(null, bobResolver);     // "Bob is 25"
 
 The evaluator consults resolvers in this order:
 
-1. **Built-in functions and operators** — e.g. `max`, `sin`.
-2. **Local and parent scopes** — values set with `=`, lambda parameters.
-3. **`JsonDocument` variables** — top-level keys of the document passed to `Evaluate`.
-4. **Per-call resolver** — the `resolver` argument.
-5. **Numeric constants** — `PI`, `E`, `Infinity`, `NaN`.
+1. **Built-in functions and operators** - e.g. `max`, `sin`.
+2. **Local and parent scopes** - values set with `=`, lambda parameters.
+3. **`JsonDocument` variables** - top-level keys of the document passed to `Evaluate`.
+4. **Per-call resolver** - the `resolver` argument.
+5. **Numeric constants** - `PI`, `E`, `Infinity`, `NaN`.
 
 A `VariableException` is thrown if none of these resolve the name.
 
@@ -132,8 +132,8 @@ The `as` operator provides basic type conversion:
 
 ```csharp
 parser.Evaluate("\"1.6\" as \"number\"");   // Value.Number(1.6)
-parser.Evaluate("\"1.6\" as \"int\"");      // Value.Number(2)    — rounded
-parser.Evaluate("\"1.6\" as \"integer\"");  // Value.Number(2)    — synonym
+parser.Evaluate("\"1.6\" as \"int\"");      // Value.Number(2)    - rounded
+parser.Evaluate("\"1.6\" as \"integer\"");  // Value.Number(2)    - synonym
 parser.Evaluate("\"1\" as \"boolean\"");    // Value.Boolean.True
 parser.Evaluate("0 as \"boolean\"");        // Value.Boolean.False
 ```
@@ -144,7 +144,7 @@ Supported targets: `"number"`, `"int"` / `"integer"`, `"boolean"`.
 
 ## Undefined vs Null
 
-`undefined` and `null` are distinct values in Expreszo — this matters for JavaScript-style `??` behaviour and for distinguishing "missing" from "explicit null".
+`undefined` and `null` are distinct values in ExpresZo - this matters for JavaScript-style `??` behaviour and for distinguishing "missing" from "explicit null".
 
 ```
 x > 3 ? undefined : x
@@ -153,9 +153,9 @@ x == undefined ? 1 : 2
 
 - Most operators propagate `undefined`: `2 + undefined` → `undefined`, `undefined < 3` → `undefined`.
 - `?? `treats `undefined`, `null`, `Infinity`, and `NaN` as nullish; everything else passes through.
-- `isNull(undefined)` → `false`, `isUndefined(null)` → `false` — check for whichever one you actually mean.
+- `isNull(undefined)` → `false`, `isUndefined(null)` → `false` - check for whichever one you actually mean.
 
-JSON has no `undefined`, so Expreszo's JSON round-trip drops `undefined` from object outputs and emits `null` for `undefined` inside arrays. See [Values & JsonDocument](values-and-json.md) for the full story.
+JSON has no `undefined`, so ExpresZo's JSON round-trip drops `undefined` from object outputs and emits `null` for `undefined` inside arrays. See [Values & JsonDocument](values-and-json.md) for the full story.
 
 ## Coalesce Operator (`??`)
 
@@ -163,12 +163,12 @@ Returns the right operand when the left is `undefined`, `null`, `Infinity`, or `
 
 ```
 x ?? 0                      // 0 if x is null/undefined
-10 / 0 ?? -1                // would throw before `??` — see the note below
+10 / 0 ?? -1                // would throw before `??` - see the note below
 sqrt(-1) ?? 0               // 0 (sqrt of negative is NaN)
 user.nickname ?? user.name ?? "Anonymous"
 ```
 
-> Unlike JavaScript, Expreszo throws on `x / 0` rather than returning `Infinity`. `??` still catches `NaN` (e.g. `sqrt(-1)`) and explicit `Infinity` values.
+> Unlike JavaScript, ExpresZo throws on `x / 0` rather than returning `Infinity`. `??` still catches `NaN` (e.g. `sqrt(-1)`) and explicit `Infinity` values.
 
 ## Optional Chaining for Property Access
 
@@ -201,11 +201,11 @@ Use the `|` (pipe) operator to concatenate strings or arrays:
 
 ```
 "hello" | " " | "world"     // "hello world"
-"Count: " | 42              // "Count: 42" — coerces either side to string
+"Count: " | 42              // "Count: 42" - coerces either side to string
 [1, 2] | [3, 4]             // [1, 2, 3, 4]
 ```
 
-The `+` operator works only on numbers. Passing strings to `+` throws an `EvaluationException` — use `|`.
+The `+` operator works only on numbers. Passing strings to `+` throws an `EvaluationException` - use `|`.
 
 ## CASE Expressions
 
@@ -274,7 +274,7 @@ If `rest` is `[2, 3, 4]`, the result is `[1, 2, 3, 4, 5]`. Spread works only in 
 
 ## `if()` Lazy Evaluation
 
-The built-in `if` function is special-cased by the evaluator for lazy evaluation — only the selected branch is evaluated. This matches the ternary operator's short-circuit:
+The built-in `if` function is special-cased by the evaluator for lazy evaluation - only the selected branch is evaluated. This matches the ternary operator's short-circuit:
 
 ```
 if(cond, a, b)              // only `a` evaluates when cond is truthy
@@ -296,8 +296,8 @@ Function values and `undefined` follow the same rules as [JsonBridge](values-and
 
 ## See Also
 
-- [Parser](parser.md) — constructor, methods, thread safety.
-- [Expression](expression.md) — `Evaluate`, `Simplify`, `Substitute`, `Variables`, `Symbols`.
-- [Expression Syntax](syntax.md) — complete language reference.
-- [Values & JsonDocument](values-and-json.md) — the I/O boundary.
-- [Security & Validation](security.md) — guardrails and the validator API.
+- [Parser](parser.md) - constructor, methods, thread safety.
+- [Expression](expression.md) - `Evaluate`, `Simplify`, `Substitute`, `Variables`, `Symbols`.
+- [Expression Syntax](syntax.md) - complete language reference.
+- [Values & JsonDocument](values-and-json.md) - the I/O boundary.
+- [Security & Validation](security.md) - guardrails and the validator API.

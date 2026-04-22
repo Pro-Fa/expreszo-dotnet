@@ -1,6 +1,6 @@
 # Expression Syntax
 
-> **Audience:** Users writing expressions in applications powered by Expreszo.
+> **Audience:** Users writing expressions in applications powered by ExpresZo.
 
 The expression language is similar to JavaScript but more math-oriented. For example, the `^` operator is exponentiation, not xor.
 
@@ -75,12 +75,12 @@ The unary `+` and `-` operators are an exception: they always have their normal 
 | `atan x` | Arc tangent (radians) |
 | `atanh x`| Hyperbolic arc tangent |
 | `cbrt x` | Cube root |
-| `ceil x` | Ceiling — smallest integer >= x |
+| `ceil x` | Ceiling - smallest integer >= x |
 | `cos x`  | Cosine (radians) |
 | `cosh x` | Hyperbolic cosine |
 | `exp x`  | e^x |
 | `expm1 x`| e^x - 1 |
-| `floor x`| Floor — largest integer <= x |
+| `floor x`| Floor - largest integer <= x |
 | `length x`| String or array length |
 | `ln x`   | Natural logarithm |
 | `log x`  | Natural logarithm (synonym for `ln`) |
@@ -92,10 +92,10 @@ The unary `+` and `-` operators are an exception: they always have their normal 
 | `sign x` | -1, 0, or 1 |
 | `sin x`  | Sine (radians) |
 | `sinh x` | Hyperbolic sine |
-| `sqrt x` | Square root — returns `NaN` if x is negative |
+| `sqrt x` | Square root - returns `NaN` if x is negative |
 | `tan x`  | Tangent (radians) |
 | `tanh x` | Hyperbolic tangent |
-| `trunc x`| Integer part — floor for positives, ceiling for negatives |
+| `trunc x`| Integer part - floor for positives, ceiling for negatives |
 
 ## Pre-defined Functions
 
@@ -113,7 +113,7 @@ Besides the unary operators, several pre-defined functions are available. Your a
 | `hypot(a, b, ...)` | √(a² + b² + ...) |
 | `pow(x, y)` | x^y. |
 | `gamma(n)` | Gamma function (Lanczos approximation). |
-| `atan2(y, x)` | Arc tangent of y / x — the angle from the origin to `(x, y)` in radians. |
+| `atan2(y, x)` | Arc tangent of y / x - the angle from the origin to `(x, y)` in radians. |
 | `roundTo(x, n)` | Round to `n` decimal places. |
 
 ### Statistics Functions
@@ -123,7 +123,7 @@ Besides the unary operators, several pre-defined functions are available. Your a
 | `sum(a)` | Sum of array elements. |
 | `mean(a)` | Arithmetic mean. |
 | `median(a)` | Median. |
-| `mostFrequent(a)` | Mode — the most frequently occurring value. |
+| `mostFrequent(a)` | Mode - the most frequently occurring value. |
 | `variance(a)` | Population variance. |
 | `stddev(a)` | Population standard deviation. |
 | `percentile(a, p)` | p-th percentile (0–100), linear interpolation. |
@@ -133,7 +133,7 @@ Besides the unary operators, several pre-defined functions are available. Your a
 | Function | Description |
 |:---------|:----------- |
 | `count(a)` | Array length. |
-| `map(a, fn)` | Array map — pass each element (and index) to `fn`, collect results. |
+| `map(a, fn)` | Array map - pass each element (and index) to `fn`, collect results. |
 | `filter(a, fn)` | Keep elements where `fn(x, i)` is truthy. |
 | `fold(a, init, fn)` | Left fold: `acc = fn(acc, x, i)`. |
 | `reduce(a, init, fn)` | Alias for `fold`. |
@@ -159,7 +159,7 @@ Higher-order functions accept both `(array, fn)` and `(fn, array)` argument orde
 
 | Function | Description |
 |:---------|:----------- |
-| `if(c, a, b)` | Function form of `c ? a : b`. **Lazy** — only the matching branch is evaluated. |
+| `if(c, a, b)` | Function form of `c ? a : b`. **Lazy** - only the matching branch is evaluated. |
 | `coalesce(a, b, ...)` | First non-null, non-undefined, non-empty-string value. |
 | `json(value)` | Convert to a JSON string. |
 
@@ -402,13 +402,13 @@ Returns the right operand when the left is `null`, `undefined`, `Infinity`, or `
 ```
 x ?? 0                   → 0 (if x is undefined or null)
 y ?? "default"           → y (if y has a value)
-10 / 0                   // throws — see note below
+10 / 0                   // throws - see note below
 sqrt(-1) ?? 0            → 0 (sqrt of negative is NaN, which is coalesced)
 user.nickname ?? user.name ?? "Anonymous"
 settings.timeout ?? 5000
 ```
 
-> **Note on division:** Unlike JavaScript, Expreszo throws on `x / 0` rather than returning `Infinity`. Use `if(y == 0, fallback, x / y)` if you need a safe-divide.
+> **Note on division:** Unlike JavaScript, ExpresZo throws on `x / 0` rather than returning `Infinity`. Use `if(y == 0, fallback, x / y)` if you need a safe-divide.
 
 ## Optional Property Access
 

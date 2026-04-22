@@ -1,15 +1,15 @@
-# Contributing to Expreszo .NET
+# Contributing to ExpresZo .NET
 
 > **Audience:** Project contributors.
 
-Thank you for your interest in contributing to Expreszo! This guide covers the development setup, project layout, and PR workflow.
+Thank you for your interest in contributing to ExpresZo! This guide covers the development setup, project layout, and PR workflow.
 
 ## Development Setup
 
 ### Prerequisites
 
 - **.NET 10 SDK** (10.0.200 or newer).
-- For the AOT canary locally, you'll also need the platform C/C++ toolchain required by Native AOT — see [Microsoft's prerequisites](https://learn.microsoft.com/dotnet/core/deploying/native-aot/). The canary is optional locally; CI runs it on Linux on every PR.
+- For the AOT canary locally, you'll also need the platform C/C++ toolchain required by Native AOT - see [Microsoft's prerequisites](https://learn.microsoft.com/dotnet/core/deploying/native-aot/). The canary is optional locally; CI runs it on Linux on every PR.
 
 ### Getting Started
 
@@ -64,11 +64,11 @@ expreszo-dotnet/
 dotnet build Expreszo.slnx --configuration Release
 ```
 
-Warnings are treated as errors on the library project (`TreatWarningsAsErrors=true`). The AOT / trim analysers are on — code that needs dynamic code generation or untrimmable reflection will fail the build with `IL2026` / `IL3050`.
+Warnings are treated as errors on the library project (`TreatWarningsAsErrors=true`). The AOT / trim analysers are on - code that needs dynamic code generation or untrimmable reflection will fail the build with `IL2026` / `IL3050`.
 
 ### Tests
 
-Expreszo uses [TUnit](https://github.com/thomhurst/TUnit) on the Microsoft Testing Platform. `.NET 10` removed VSTest backward compat in `dotnet test`, so tests are run by executing the test project directly:
+ExpresZo uses [TUnit](https://github.com/thomhurst/TUnit) on the Microsoft Testing Platform. `.NET 10` removed VSTest backward compat in `dotnet test`, so tests are run by executing the test project directly:
 
 ```bash
 # Run all tests
@@ -123,7 +123,7 @@ dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Evaluati
 dotnet run --project bench/Expreszo.Benchmarks -c Release -- --job dry --filter '*Trivial*'
 ```
 
-The benchmarks project is intentionally **not** AOT-compatible — BenchmarkDotNet itself uses reflection and runtime code generation to emit per-benchmark wrappers. Keeping the harness out of the AOT pipeline isolates the library's AOT guarantee from measurement infrastructure.
+The benchmarks project is intentionally **not** AOT-compatible - BenchmarkDotNet itself uses reflection and runtime code generation to emit per-benchmark wrappers. Keeping the harness out of the AOT pipeline isolates the library's AOT guarantee from measurement infrastructure.
 
 ### Docs
 
@@ -186,7 +186,7 @@ Every public member has `/// <summary>` at minimum. Longer descriptions go in `<
 
 - Test files mirror the source structure: `src/Expreszo/Parsing/*.cs` → `test/Expreszo.Tests/Parsing/*.cs`.
 - Use TUnit's `[Test]` for single cases and `[Arguments(...)]` for parameterised cases.
-- Prefer expression-driven tests (`Parser.Evaluate(...)`) over hand-building AST nodes — they stay readable and double as documentation.
+- Prefer expression-driven tests (`Parser.Evaluate(...)`) over hand-building AST nodes - they stay readable and double as documentation.
 
 ### Example
 
@@ -247,13 +247,13 @@ Test names can use `snake_case_for_readability` (CA1707 is suppressed in the tes
 
    Use [Conventional Commits](https://www.conventionalcommits.org/):
 
-   - `feat:` — new features
-   - `fix:` — bug fixes
-   - `docs:` — documentation
-   - `test:` — tests only
-   - `refactor:` — no behaviour change
-   - `perf:` — performance
-   - `chore:` — tooling / build / ci
+   - `feat:` - new features
+   - `fix:` - bug fixes
+   - `docs:` - documentation
+   - `test:` - tests only
+   - `refactor:` - no behaviour change
+   - `perf:` - performance
+   - `chore:` - tooling / build / ci
 
 5. **Push and open a PR**
 
@@ -265,7 +265,7 @@ Test names can use `snake_case_for_readability` (CA1707 is suppressed in the tes
 2. Register the function via `builder.AddFunction("name", impl)`. Use `OperatorTableBuilder.Sync(args => ...)` for synchronous functions; for async functions, return a `ValueTask<Value>` directly and pass `isAsync: true`.
 3. If the function name is also reachable as a unary operator (e.g. trig functions), register it via `AddUnary` as well.
 4. Add tests in `test/Expreszo.Tests/BuiltinsTests.cs` or the appropriate sub-file.
-5. Document the function in [`docs/syntax.md`](syntax.md) — the user-facing language reference.
+5. Document the function in [`docs/syntax.md`](syntax.md) - the user-facing language reference.
 
 ## Adding an Operator
 
@@ -280,7 +280,7 @@ Test names can use `snake_case_for_readability` (CA1707 is suppressed in the tes
 Package versions are derived from git tags via [MinVer](https://github.com/adamralph/minver). Pushing an annotated tag of the form `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`, `v1.2.0-rc.1`) on `main` triggers the `.github/workflows/release.yml` pipeline, which:
 
 1. Restores, builds, runs the test suite, and runs the Native-AOT canary publish.
-2. Packs the library (`dotnet pack`) — MinVer reads the tag and produces `Expreszo.<version>.nupkg` + matching `.snupkg`.
+2. Packs the library (`dotnet pack`) - MinVer reads the tag and produces `Expreszo.<version>.nupkg` + matching `.snupkg`.
 3. Pushes the package to [NuGet.org](https://www.nuget.org/) using the `NUGET_API_KEY` secret.
 4. Creates a GitHub Release with auto-generated release notes and attaches the `.nupkg` / `.snupkg` files.
 
@@ -294,7 +294,7 @@ git pull --ff-only
 # Create an annotated tag
 git tag -a v1.0.0 -m "v1.0.0"
 
-# Push the tag — this triggers the release workflow
+# Push the tag - this triggers the release workflow
 git push origin v1.0.0
 ```
 
@@ -302,7 +302,7 @@ Untagged builds get a pre-release version (e.g. `0.0.0-alpha.0.42`) so local `do
 
 ### Pre-releases
 
-Tags that contain a hyphen (e.g. `v1.0.0-beta.1`) are published as pre-releases — the workflow passes `prerelease: true` to the GitHub Release and NuGet surfaces them only when "Include prereleases" is enabled.
+Tags that contain a hyphen (e.g. `v1.0.0-beta.1`) are published as pre-releases - the workflow passes `prerelease: true` to the GitHub Release and NuGet surfaces them only when "Include prereleases" is enabled.
 
 ### One-time setup for maintainers
 

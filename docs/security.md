@@ -1,14 +1,14 @@
 # Security & Validation
 
-> **Audience:** Developers integrating Expreszo, especially when expressions come from untrusted input (end users, admin UIs, rule editors).
+> **Audience:** Developers integrating ExpresZo, especially when expressions come from untrusted input (end users, admin UIs, rule editors).
 
-Expreszo is designed to be safe to evaluate untrusted expressions. It does this through a small set of guarantees enforced at every user-reachable access point.
+ExpresZo is designed to be safe to evaluate untrusted expressions. It does this through a small set of guarantees enforced at every user-reachable access point.
 
 ## Guarantees
 
 ### No arbitrary code execution
 
-Expressions can only invoke the functions registered on the parser — the built-in preset (math, string, array, object, utility, type-check) plus any custom functions your application adds. Raw CLR delegates, `MethodInfo` handles, reflection invocations, `System.Linq.Expressions` compilation, and `DynamicMethod` IL emission are all absent from the evaluator. `Value.Function` wraps an `ExprFunc` delegate pointing into a known implementation — nothing else can be invoked.
+Expressions can only invoke the functions registered on the parser - the built-in preset (math, string, array, object, utility, type-check) plus any custom functions your application adds. Raw CLR delegates, `MethodInfo` handles, reflection invocations, `System.Linq.Expressions` compilation, and `DynamicMethod` IL emission are all absent from the evaluator. `Value.Function` wraps an `ExprFunc` delegate pointing into a known implementation - nothing else can be invoked.
 
 ### No prototype pollution
 
@@ -22,11 +22,29 @@ parser.Evaluate("__proto__");               // throws AccessException
 
 ### Array index sanity
 
-Bracket access into arrays requires a finite integer index. Non-integer, NaN, and Infinity indices raise `ExpressionArgumentException`. Out-of-range indices return `undefined` rather than throwing — this matches the "optional chaining" behaviour documented in the syntax reference.
+Bracket access into arrays requires a finite integer index. Non-integer, NaN, and Infinity indices raise `ExpressionArgumentException`. Out-of-range indices return `undefined` rather than throwing - this matches the "optional chaining" behaviour documented in the syntax reference.
 
 ### Recursion depth cap
 
 The Pratt parser enforces a hard cap on nesting depth (256) during parsing. A deeply-nested expression that would blow the stack at evaluation time is rejected with a `ParseException` before the AST is even produced.
+
+The evaluator enforces the same 256 cap on nested `Call` depth at runtime (`EvaluationLimits.MaxCallDepth`). Runaway recursion - e.g. `f(x) = f(x); f(1)` - fails with an `EvaluationException` instead of an uncatchable `StackOverflowException`.
+
+### Resource budgets
+
+Allocation-heavy built-ins cap their output so a single expression can't exhaust host memory:
+
+| Limit | Default | Applied to |
+|---|---|---|
+| `MaxStringLength` | 1,000,000 chars | `repeat`, `padLeft`, `padRight`, `padBoth` |
+| `MaxArrayLength` | 1,000,000 items | `range` |
+| `MaxFactorialInput` | 170 | `fac`, postfix `!` (beyond this, the result exceeds `double.MaxValue`) |
+
+All three are exposed as constants on `Expreszo.EvaluationLimits` for observability.
+
+### Cancellation
+
+`EvaluateAsync` observes its `CancellationToken` at every `Call` boundary and inside every looping built-in (`filter`, `map`, `fold`, `reduce`, `find`, `some`, `every`, `groupBy`, `countBy`, `sort`, `mapValues`). Long-running expressions will surface `OperationCanceledException` within a bounded number of iterations.
 
 ## `ExpressionValidator`
 
@@ -68,14 +86,14 @@ ExpressionValidator.ValidateAllowedFunction(fn, registeredFunctions);
 
 `ValidateAllowedFunction` defends against a scenario where an attacker (or a misconfigured feature) injects a raw `ExprFunc` delegate via a scope binding or custom resolver that points at something it shouldn't. The allow-list check accepts:
 
-- Any `Value.Function` whose `Invoke` delegate is reference-equal to an entry in the registered function table.
-- Any lambda the evaluator itself produced (identified by the `__lambda_` name prefix) — these are closures over AST nodes, not arbitrary CLR code.
+- Any `Value.Function` whose `Invoke` delegate is reference-equal to an entry in the registered function table (functions or unary operators).
+- Any lambda the evaluator itself produced. These carry an internal `IsExpressionLambda` marker whose setter is `internal init` - callers outside the assembly cannot forge it, so the trust boundary is identity-based, not name-based.
 
-Anything else is rejected with a `FunctionException`. This isn't wired into the evaluator by default in the Phase-6 shipping build — it's an opt-in policy check for environments that accept resolver-injected functions.
+Anything else is rejected with a `FunctionException`. **The check runs on every call site in the evaluator by default** - a resolver returning `new Value.Function(untrustedDelegate)` will be rejected the moment the expression invokes it.
 
 ## Exception hierarchy
 
-All Expreszo exceptions derive from `Expreszo.Errors.ExpressionException` and carry an `ErrorContext` with optional expression text, 1-based position, source span, and names:
+All ExpresZo exceptions derive from `Expreszo.Errors.ExpressionException` and carry an `ErrorContext` with optional expression text, 1-based position, source span, and names:
 
 ```csharp
 public abstract class ExpressionException : Exception
@@ -126,17 +144,17 @@ The default `ThrowingErrorHandler` (exposed as `ThrowingErrorHandler.Instance`) 
 
 ## Defence-in-depth checklist
 
-If you're exposing Expreszo to untrusted input, consider the following in addition to what the library does out-of-the-box:
+If you're exposing ExpresZo to untrusted input, consider the following in addition to what the library does out-of-the-box:
 
 1. **Cap expression length.** Reject input past a reasonable size (say, 10 KB) before parsing.
 2. **Cap evaluation time.** Pass a `CancellationToken` with a timeout to `EvaluateAsync`; don't use `Evaluate` for untrusted input unless you're confident every reachable function is bounded.
 3. **Review your custom functions.** Any function registered on the parser is callable from expressions. Review them for unintended side effects (file I/O, network calls, heavy CPU work) just like you would an endpoint.
-4. **Don't smuggle delegates through the scope.** If you build a `Scope` manually for advanced scenarios, don't place raw `Value.Function` entries pointing at arbitrary CLR methods — wire them as registered functions instead so `ValidateAllowedFunction` can cover them.
+4. **Don't smuggle delegates through the scope.** If you build a `Scope` manually for advanced scenarios, don't place raw `Value.Function` entries pointing at arbitrary CLR methods - wire them as registered functions instead so `ValidateAllowedFunction` can cover them.
 5. **Log, don't rethrow blindly.** Catch `ExpressionException` and log the `Expression`, `Position`, and any contextual names; surface a generic error to the caller.
 
 ## See Also
 
-- [Parser](parser.md) — thread safety, variable resolution order.
-- [Expression](expression.md) — the public evaluation methods.
-- [Advanced Features](advanced-features.md) — custom resolvers, async, cancellation.
-- [AOT & Trimming](aot-and-trimming.md) — another layer of the library's "no runtime dynamism" promise.
+- [Parser](parser.md) - thread safety, variable resolution order.
+- [Expression](expression.md) - the public evaluation methods.
+- [Advanced Features](advanced-features.md) - custom resolvers, async, cancellation.
+- [AOT & Trimming](aot-and-trimming.md) - another layer of the library's "no runtime dynamism" promise.

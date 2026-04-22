@@ -1,4 +1,5 @@
-using System.Text.Json;
+﻿using System.Text.Json;
+using Expreszo.Ast;
 using Expreszo.Builtins;
 using Expreszo.Parsing;
 
@@ -13,7 +14,7 @@ public sealed record ParserOptions
 
 /// <summary>
 /// Entry point for parsing and evaluating expressions. Construct once,
-/// reuse across many calls — the parser and the expressions it produces are
+/// reuse across many calls - the parser and the expressions it produces are
 /// immutable and safe for concurrent use.
 /// </summary>
 public sealed class Parser
@@ -44,26 +45,30 @@ public sealed class Parser
             ParserConfig.Default.NumericConstants,
             ParserConfig.Default.BuiltinLiterals,
             ParserConfig.Default.IsOperatorEnabled,
-            allowMemberAccess: options.AllowMemberAccess);
+            allowMemberAccess: options.AllowMemberAccess
+        );
     }
 
     /// <summary>Parses an expression into a reusable <see cref="Expression"/>.</summary>
     public Expression Parse(string expression)
     {
         ArgumentNullException.ThrowIfNull(expression);
-        var ast = PrattParser.Parse(_config, expression);
+        Node ast = PrattParser.Parse(_config, expression);
         return new Expression(ast, _ops, _config);
     }
 
     /// <summary>Parses and evaluates in one step.</summary>
-    public Value Evaluate(string expression, JsonDocument? values = null, VariableResolver? resolver = null) =>
-        Parse(expression).Evaluate(values, resolver);
+    public Value Evaluate(
+        string expression,
+        JsonDocument? values = null,
+        VariableResolver? resolver = null
+    ) => Parse(expression).Evaluate(values, resolver);
 
     /// <summary>Parses and evaluates in one step, asynchronously.</summary>
     public ValueTask<Value> EvaluateAsync(
         string expression,
         JsonDocument? values = null,
         VariableResolver? resolver = null,
-        CancellationToken cancellationToken = default) =>
-        Parse(expression).EvaluateAsync(values, resolver, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => Parse(expression).EvaluateAsync(values, resolver, cancellationToken);
 }

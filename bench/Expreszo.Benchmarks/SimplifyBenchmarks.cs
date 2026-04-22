@@ -1,12 +1,11 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-using Expreszo;
 
 namespace Expreszo.Benchmarks;
 
 /// <summary>
 /// Measures the effect of <see cref="Expression.Simplify"/> on subsequent
-/// evaluation cost — the before / after comparison shows how much constant
+/// evaluation cost - the before / after comparison shows how much constant
 /// folding actually saves when the same expression is evaluated repeatedly.
 /// </summary>
 [MemoryDiagnoser]
@@ -25,7 +24,7 @@ public class SimplifyBenchmarks
         // Expression with a constant-heavy subtree that simplify can fold.
         _original = _parser.Parse("((2 * 3) + (10 / 2)) * x + (7 - 4) * y - (100 - 50)");
 
-        // Simplify with no values — folds every constant subtree.
+        // Simplify with no values - folds every constant subtree.
         _simplified = _original.Simplify();
 
         _values = JsonDocument.Parse("""{"x":7,"y":3}""");

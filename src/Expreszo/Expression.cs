@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Expreszo.Ast;
 using Expreszo.Ast.Visitors;
 using Expreszo.Errors;
@@ -14,7 +14,7 @@ namespace Expreszo;
 /// </summary>
 /// <remarks>
 /// Safe to share across threads. Each concurrent evaluation must supply its
-/// own variable bindings — the internal <see cref="Scope"/> is built per call.
+/// own variable bindings - the internal <see cref="Scope"/> is built per call.
 /// </remarks>
 public sealed class Expression
 {
@@ -38,22 +38,22 @@ public sealed class Expression
     /// <summary>
     /// Synchronous evaluation. Throws <see cref="AsyncRequiredException"/>
     /// when the expression calls a function whose result is not synchronously
-    /// completed — use <see cref="EvaluateAsync"/> instead.
+    /// completed - use <see cref="EvaluateAsync"/> instead.
     /// </summary>
     public Value Evaluate(JsonDocument? values = null, VariableResolver? resolver = null)
     {
-        var task = EvaluateAsync(values, resolver, CancellationToken.None);
+        ValueTask<Value> task = EvaluateAsync(values, resolver, CancellationToken.None);
         if (task.IsCompletedSuccessfully)
         {
             return task.Result;
         }
         if (task.IsCompleted)
         {
-            // Faulted or cancelled synchronously — let the underlying exception
+            // Faulted or cancelled synchronously - let the underlying exception
             // propagate instead of masking it as AsyncRequired.
             return task.GetAwaiter().GetResult();
         }
-        // Still running — the expression needs the async path.
+        // Still running - the expression needs the async path.
         throw new AsyncRequiredException();
     }
 
@@ -61,10 +61,16 @@ public sealed class Expression
     public ValueTask<Value> EvaluateAsync(
         JsonDocument? values = null,
         VariableResolver? resolver = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var scope = Scope.FromJsonDocument(values);
-        var ctx = new EvalContext(scope, ThrowingErrorHandler.Instance, resolver, cancellationToken);
+        Scope scope = Scope.FromJsonDocument(values);
+        var ctx = new EvalContext(
+            scope,
+            ThrowingErrorHandler.Instance,
+            resolver,
+            cancellationToken
+        );
         var evaluator = new Evaluator(_ops, _config);
         return evaluator.EvaluateAsync(_root, ctx);
     }
@@ -73,7 +79,7 @@ public sealed class Expression
     public Expression Simplify(JsonDocument? values = null)
     {
         var visitor = new SimplifyVisitor(_ops, _config, values);
-        var newRoot = visitor.Simplify(_root);
+        Node newRoot = visitor.Simplify(_root);
         return new Expression(newRoot, _ops, _config);
     }
 
@@ -82,14 +88,14 @@ public sealed class Expression
     {
         ArgumentNullException.ThrowIfNull(expr);
         var visitor = new SubstituteVisitor(variable, expr._root);
-        var newRoot = visitor.Substitute(_root);
+        Node newRoot = visitor.Substitute(_root);
         return new Expression(newRoot, _ops, _config);
     }
 
     /// <summary>Parses <paramref name="expression"/> and substitutes it for every matching variable.</summary>
     public Expression Substitute(string variable, string expression)
     {
-        var parsed = Parsing.PrattParser.Parse(_config, expression);
+        Node parsed = Parsing.PrattParser.Parse(_config, expression);
         return Substitute(variable, new Expression(parsed, _ops, _config));
     }
 
@@ -106,12 +112,20 @@ public sealed class Expression
     /// <summary>Subset of <see cref="Symbols"/> that aren't registered as functions or operators.</summary>
     public IReadOnlyList<string> Variables(bool withMembers = false)
     {
-        var all = Symbols(withMembers);
+        IReadOnlyList<string> all = Symbols(withMembers);
         var result = new List<string>(all.Count);
-        foreach (var s in all)
+        foreach (string s in all)
         {
-            if (_ops.Functions.ContainsKey(s)) continue;
-            if (_ops.UnaryOps.ContainsKey(s)) continue;
+            if (_ops.Functions.ContainsKey(s))
+            {
+                continue;
+            }
+
+            if (_ops.UnaryOps.ContainsKey(s))
+            {
+                continue;
+            }
+
             result.Add(s);
         }
         return result;

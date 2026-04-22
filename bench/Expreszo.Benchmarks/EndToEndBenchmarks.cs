@@ -1,11 +1,10 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-using Expreszo;
 
 namespace Expreszo.Benchmarks;
 
 /// <summary>
-/// One-shot parse + evaluate cycles — the worst-case pattern for scenarios
+/// One-shot parse + evaluate cycles - the worst-case pattern for scenarios
 /// where an expression is received, evaluated once, and discarded.
 /// Compare these numbers with <see cref="ParsingBenchmarks"/> plus
 /// <see cref="EvaluationBenchmarks"/> to see the parse-once saving.
@@ -39,7 +38,9 @@ public class EndToEndBenchmarks
     public Value HigherOrder() => _parser.Evaluate("sum(map(xs, x => x * 2))", _array);
 
     [Benchmark(Description = "Parse + evaluate: case with 3 arms")]
-    public Value Case() => _parser.Evaluate(
-        "case x when 1 then \"one\" when 10 then \"ten\" else \"other\" end",
-        _scalar);
+    public Value Case() =>
+        _parser.Evaluate(
+            "case x when 1 then \"one\" when 10 then \"ten\" else \"other\" end",
+            _scalar
+        );
 }

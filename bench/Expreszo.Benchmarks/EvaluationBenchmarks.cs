@@ -1,11 +1,10 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using BenchmarkDotNet.Attributes;
-using Expreszo;
 
 namespace Expreszo.Benchmarks;
 
 /// <summary>
-/// Measures repeated evaluation of pre-parsed expressions — the hot path for
+/// Measures repeated evaluation of pre-parsed expressions - the hot path for
 /// rule engines and per-row evaluation. Each benchmark parses once in
 /// <see cref="Setup"/> and evaluates inside the measured loop.
 /// </summary>
@@ -33,14 +32,17 @@ public class EvaluationBenchmarks
         _arithmetic = _parser.Parse("(x + y) * (a - b) / c");
         _ternary = _parser.Parse("x > 0 ? x * 2 : -x");
         _higherOrder = _parser.Parse("sum(map(xs, x => x * 2))");
-        _member = _parser.Parse("user.profile.name | \" (\" | (user.profile.age as \"integer\") | \")\"");
+        _member = _parser.Parse(
+            "user.profile.name | \" (\" | (user.profile.age as \"integer\") | \")\""
+        );
         _booleanExpr = _parser.Parse("(age >= 18 and country == \"NL\") or override");
         _statisticsExpr = _parser.Parse("mean(xs) + stddev(xs) * 2");
 
         _smallValues = JsonDocument.Parse("""{"x":10,"y":20,"a":50,"b":5,"c":3}""");
         _arrayValues = JsonDocument.Parse("""{"xs":[1,2,3,4,5,6,7,8,9,10]}""");
         _nestedValues = JsonDocument.Parse(
-            """{"user":{"profile":{"name":"Alice","age":30}},"age":30,"country":"NL","override":false}""");
+            """{"user":{"profile":{"name":"Alice","age":30}},"age":30,"country":"NL","override":false}"""
+        );
     }
 
     [GlobalCleanup]

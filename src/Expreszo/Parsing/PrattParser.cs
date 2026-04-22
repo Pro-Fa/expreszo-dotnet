@@ -1,10 +1,10 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Expreszo.Ast;
 using Expreszo.Errors;
 
 // CA1859 asks us to tighten private method return types to concrete records.
 // The parser caller always upcasts to Node, so the concrete type doesn't help
-// at the call site — and tightening would force covariant-return dance or
+// at the call site - and tightening would force covariant-return dance or
 // method duplication. The perf suggestion is not worth the clarity loss for
 // a parser that runs once per expression.
 #pragma warning disable CA1859
@@ -13,7 +13,7 @@ namespace Expreszo.Parsing;
 
 /// <summary>
 /// Pratt-style AST-emitting parser. Uses the immutable
-/// <see cref="TokenCursor"/> for state — "save / restore" around speculative
+/// <see cref="TokenCursor"/> for state - "save / restore" around speculative
 /// parses (arrow functions, prefix-op-vs-call disambiguation) is a local
 /// variable assignment.
 /// </summary>
@@ -37,7 +37,10 @@ internal sealed class PrattParser
     // Sentinel RawLit used inside finalizeStatements to mark a `;` boundary
     // within the statement accumulator. Never leaks into the returned AST.
     private static readonly Value EndStatementMarker = new Value.String("__pratt_end_statement__");
-    private static readonly Node EndStatementSentinel = new RawLit(EndStatementMarker, new TextSpan(-1, -1));
+    private static readonly Node EndStatementSentinel = new RawLit(
+        EndStatementMarker,
+        new TextSpan(-1, -1)
+    );
 
     private readonly ParserConfig _config;
     private TokenCursor _cursor;
@@ -52,9 +55,9 @@ internal sealed class PrattParser
     public static Node Parse(ParserConfig config, string expression)
     {
         ArgumentNullException.ThrowIfNull(config);
-        var cursor = TokenCursor.From(config, expression ?? string.Empty);
+        TokenCursor cursor = TokenCursor.From(config, expression ?? string.Empty);
         var parser = new PrattParser(config, cursor);
-        var node = parser.ParseExpression();
+        Node node = parser.ParseExpression();
         if (!parser._cursor.AtEnd)
         {
             parser.Error("Expected EOF");
@@ -65,43 +68,71 @@ internal sealed class PrattParser
     // ---------- cursor helpers ----------
 
     private Token Peek() => _cursor.Peek();
+
     private Token PeekAt(int offset) => _cursor.PeekAt(offset);
+
     private bool AtEnd => _cursor.AtEnd;
+
     private int PeekStart() => _cursor.Peek().Index;
+
     private int PeekEnd() => _cursor.PeekEnd();
+
     private int PrevEnd() => _cursor.PreviousEnd();
 
     private bool Check(TokenKind kind, string? text = null)
     {
-        var t = Peek();
-        if (t.Kind != kind) return false;
+        Token t = Peek();
+        if (t.Kind != kind)
+        {
+            return false;
+        }
+
         return text is null || t.Text == text;
     }
 
     private bool CheckAny(TokenKind kind, params string[] texts)
     {
-        var t = Peek();
-        if (t.Kind != kind) return false;
-        foreach (var tx in texts)
+        Token t = Peek();
+        if (t.Kind != kind)
         {
-            if (t.Text == tx) return true;
+            return false;
+        }
+
+        foreach (string tx in texts)
+        {
+            if (t.Text == tx)
+            {
+                return true;
+            }
         }
         return false;
     }
 
     private bool Accept(TokenKind kind, string? text = null)
     {
-        var t = Peek();
-        if (t.Kind != kind) return false;
-        if (text is not null && t.Text != text) return false;
+        Token t = Peek();
+        if (t.Kind != kind)
+        {
+            return false;
+        }
+
+        if (text is not null && t.Text != text)
+        {
+            return false;
+        }
+
         _cursor = _cursor.Advance();
         return true;
     }
 
     private Token Expect(TokenKind kind, string? text = null)
     {
-        var t = Peek();
-        if (Accept(kind, text)) return t;
+        Token t = Peek();
+        if (Accept(kind, text))
+        {
+            return t;
+        }
+
         Error($"Expected {text ?? kind.ToString()}");
         return t; // unreachable
     }
@@ -109,8 +140,8 @@ internal sealed class PrattParser
     [System.Diagnostics.CodeAnalysis.DoesNotReturn]
     private void Error(string message)
     {
-        var coords = _cursor.GetCoordinates();
-        var t = Peek();
+        ErrorPosition coords = _cursor.GetCoordinates();
+        Token t = Peek();
         throw new ParseException(
             message,
             new ErrorContext
@@ -118,7 +149,8 @@ internal sealed class PrattParser
                 Expression = _cursor.Expression,
                 Position = coords,
                 Token = t.Text,
-            });
+            }
+        );
     }
 
     private bool IsPrefixOperatorToken(Token t) =>
@@ -133,9 +165,14 @@ internal sealed class PrattParser
     }
 
     private static TextSpan SpanBetween(int start, int end) => new(start, end);
+
     private static TextSpan UnionSpans(IReadOnlyList<Node> nodes)
     {
-        if (nodes.Count == 0) return default;
+        if (nodes.Count == 0)
+        {
+            return default;
+        }
+
         return new TextSpan(nodes[0].Span.Start, nodes[^1].Span.End);
     }
 
@@ -149,14 +186,14 @@ internal sealed class PrattParser
         EnterRecursion();
         var instr = new List<Node>();
 
-        // Attempt a leading `;` (empty leading statement — rare but allowed).
+        // Attempt a leading `;` (empty leading statement - rare but allowed).
         if (ParseUntilEndStatement(instr))
         {
             _depth--;
             return FinalizeStatements(instr);
         }
 
-        var first = ParseVariableAssignmentExpression();
+        Node first = ParseVariableAssignmentExpression();
         instr.Add(first);
 
         if (ParseUntilEndStatement(instr))
@@ -171,7 +208,7 @@ internal sealed class PrattParser
 
     private static Node FinalizeStatements(IReadOnlyList<Node> instr)
     {
-        var inner = BuildFromInstr(instr);
+        Node inner = BuildFromInstr(instr);
         return new Paren(inner, inner.Span);
     }
 
@@ -181,7 +218,11 @@ internal sealed class PrattParser
         var accum = new List<Node>();
         void Flush()
         {
-            if (accum.Count == 0) return;
+            if (accum.Count == 0)
+            {
+                return;
+            }
+
             if (accum.Count == 1)
             {
                 statements.Add(accum[0]);
@@ -192,7 +233,7 @@ internal sealed class PrattParser
             }
             accum.Clear();
         }
-        foreach (var n in instr)
+        foreach (Node n in instr)
         {
             if (IsEndStatementSentinel(n))
             {
@@ -204,14 +245,26 @@ internal sealed class PrattParser
             }
         }
         Flush();
-        if (statements.Count == 0) return new UndefinedLit(Node.NoSpan);
-        if (statements.Count == 1) return statements[0];
+        if (statements.Count == 0)
+        {
+            return new UndefinedLit(Node.NoSpan);
+        }
+
+        if (statements.Count == 1)
+        {
+            return statements[0];
+        }
+
         return new Sequence([.. statements], UnionSpans(statements));
     }
 
     private bool ParseUntilEndStatement(List<Node> instr)
     {
-        if (!Accept(TokenKind.Semicolon)) return false;
+        if (!Accept(TokenKind.Semicolon))
+        {
+            return false;
+        }
+
         if (ShouldAddEndStatement())
         {
             instr.Add(EndStatementSentinel);
@@ -229,9 +282,17 @@ internal sealed class PrattParser
 
     private bool ShouldAddEndStatement()
     {
-        var t = Peek();
-        if (t.Kind == TokenKind.Eof) return false;
-        if (t.Kind == TokenKind.Paren && t.Text == ")") return false;
+        Token t = Peek();
+        if (t.Kind == TokenKind.Eof)
+        {
+            return false;
+        }
+
+        if (t.Kind == TokenKind.Paren && t.Text == ")")
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -240,13 +301,13 @@ internal sealed class PrattParser
     private Node ParseVariableAssignmentExpression()
     {
         EnterRecursion();
-        var left = ParseConditionalExpression();
+        Node left = ParseConditionalExpression();
 
         while (Accept(TokenKind.Op, "="))
         {
-            var rhs = ParseVariableAssignmentExpression();
+            Node rhs = ParseVariableAssignmentExpression();
             var wrappedRhs = new Paren(rhs, rhs.Span);
-            var sp = SpanBetween(left.Span.Start, rhs.Span.End);
+            TextSpan sp = SpanBetween(left.Span.Start, rhs.Span.End);
 
             if (left is Call call)
             {
@@ -256,11 +317,15 @@ internal sealed class PrattParser
                 }
                 if (call.Callee is not Ident calleeIdent)
                 {
-                    Error("Function name must be an identifier in definition. Example: f(x) = x * 2");
+                    Error(
+                        "Function name must be an identifier in definition. Example: f(x) = x * 2"
+                    );
                     return null!;
                 }
-                var paramsBuilder = ImmutableArray.CreateBuilder<string>(call.Args.Length);
-                foreach (var arg in call.Args)
+                ImmutableArray<string>.Builder paramsBuilder = ImmutableArray.CreateBuilder<string>(
+                    call.Args.Length
+                );
+                foreach (Node arg in call.Args)
                 {
                     if (arg is not Ident pIdent)
                     {
@@ -269,7 +334,12 @@ internal sealed class PrattParser
                     }
                     paramsBuilder.Add(pIdent.Name);
                 }
-                left = new FunctionDef(calleeIdent.Name, paramsBuilder.ToImmutable(), wrappedRhs, sp);
+                left = new FunctionDef(
+                    calleeIdent.Name,
+                    paramsBuilder.ToImmutable(),
+                    wrappedRhs,
+                    sp
+                );
             }
             else if (left is Ident idLeft)
             {
@@ -283,9 +353,15 @@ internal sealed class PrattParser
                 left = new Sequence(
                     [
                         memLeft.Object,
-                        new Binary("=", new NameRef(memLeft.Property, memLeft.Span), wrappedRhs, sp),
+                        new Binary(
+                            "=",
+                            new NameRef(memLeft.Property, memLeft.Span),
+                            wrappedRhs,
+                            sp
+                        ),
                     ],
-                    sp);
+                    sp
+                );
             }
             else
             {
@@ -302,20 +378,21 @@ internal sealed class PrattParser
     private Node ParseConditionalExpression()
     {
         EnterRecursion();
-        var expr = ParseOrExpression();
+        Node expr = ParseOrExpression();
 
         while (Accept(TokenKind.Op, "?"))
         {
-            var trueBranch = ParseConditionalExpression();
+            Node trueBranch = ParseConditionalExpression();
             Expect(TokenKind.Op, ":");
-            var falseBranch = ParseConditionalExpression();
-            var sp = SpanBetween(expr.Span.Start, falseBranch.Span.End);
+            Node falseBranch = ParseConditionalExpression();
+            TextSpan sp = SpanBetween(expr.Span.Start, falseBranch.Span.End);
             expr = new Ternary(
                 "?",
                 expr,
                 new Paren(trueBranch, trueBranch.Span),
                 new Paren(falseBranch, falseBranch.Span),
-                sp);
+                sp
+            );
         }
 
         _depth--;
@@ -326,13 +403,13 @@ internal sealed class PrattParser
 
     private Node ParseOrExpression()
     {
-        var left = ParseAndExpression();
+        Node left = ParseAndExpression();
         while (CheckAny(TokenKind.Op, "or", "||"))
         {
-            var op = Peek().Text;
+            string op = Peek().Text;
             _cursor = _cursor.Advance();
-            var right = ParseAndExpression();
-            var sp = SpanBetween(left.Span.Start, right.Span.End);
+            Node right = ParseAndExpression();
+            TextSpan sp = SpanBetween(left.Span.Start, right.Span.End);
             left = new Binary(op, left, new Paren(right, right.Span), sp);
         }
         return left;
@@ -340,13 +417,13 @@ internal sealed class PrattParser
 
     private Node ParseAndExpression()
     {
-        var left = ParseComparison();
+        Node left = ParseComparison();
         while (CheckAny(TokenKind.Op, "and", "&&"))
         {
-            var op = Peek().Text;
+            string op = Peek().Text;
             _cursor = _cursor.Advance();
-            var right = ParseComparison();
-            var sp = SpanBetween(left.Span.Start, right.Span.End);
+            Node right = ParseComparison();
+            TextSpan sp = SpanBetween(left.Span.Start, right.Span.End);
             left = new Binary(op, left, new Paren(right, right.Span), sp);
         }
         return left;
@@ -354,68 +431,95 @@ internal sealed class PrattParser
 
     // ---------- comparison / add-sub / term / coalesce ----------
 
-    private static readonly HashSet<string> ComparisonOps =
-        new(StringComparer.Ordinal) { "==", "!=", "<", "<=", ">=", ">", "in", "not in" };
+    private static readonly HashSet<string> ComparisonOps = new(StringComparer.Ordinal)
+    {
+        "==",
+        "!=",
+        "<",
+        "<=",
+        ">=",
+        ">",
+        "in",
+        "not in",
+    };
 
     private Node ParseComparison()
     {
-        var left = ParseAddSub();
+        Node left = ParseAddSub();
         while (Peek().Kind == TokenKind.Op && ComparisonOps.Contains(Peek().Text))
         {
-            var op = Peek().Text;
+            string op = Peek().Text;
             _cursor = _cursor.Advance();
-            var right = ParseAddSub();
+            Node right = ParseAddSub();
             left = new Binary(op, left, right, SpanBetween(left.Span.Start, right.Span.End));
         }
         return left;
     }
 
-    private static readonly HashSet<string> AddSubOps =
-        new(StringComparer.Ordinal) { "+", "-", "|" };
+    private static readonly HashSet<string> AddSubOps = new(StringComparer.Ordinal)
+    {
+        "+",
+        "-",
+        "|",
+    };
 
     private Node ParseAddSub()
     {
-        var left = ParseTerm();
+        Node left = ParseTerm();
         while (true)
         {
-            var t = Peek();
-            if (t.Kind != TokenKind.Op) break;
-            if (!AddSubOps.Contains(t.Text)) break;
-            if (t.Text == "||") break; // || handled by ParseOrExpression
+            Token t = Peek();
+            if (t.Kind != TokenKind.Op)
+            {
+                break;
+            }
+
+            if (!AddSubOps.Contains(t.Text))
+            {
+                break;
+            }
+
+            if (t.Text == "||")
+            {
+                break; // || handled by ParseOrExpression
+            }
+
             _cursor = _cursor.Advance();
-            var right = ParseTerm();
+            Node right = ParseTerm();
             left = new Binary(t.Text, left, right, SpanBetween(left.Span.Start, right.Span.End));
         }
         return left;
     }
 
-    private static readonly HashSet<string> TermOps =
-        new(StringComparer.Ordinal) { "*", "/", "%" };
+    private static readonly HashSet<string> TermOps = new(StringComparer.Ordinal) { "*", "/", "%" };
 
     private Node ParseTerm()
     {
-        var left = ParseCoalesceExpression();
+        Node left = ParseCoalesceExpression();
         while (Peek().Kind == TokenKind.Op && TermOps.Contains(Peek().Text))
         {
-            var op = Peek().Text;
+            string op = Peek().Text;
             _cursor = _cursor.Advance();
-            var right = ParseFactor();
+            Node right = ParseFactor();
             left = new Binary(op, left, right, SpanBetween(left.Span.Start, right.Span.End));
         }
         return left;
     }
 
-    private static readonly HashSet<string> CoalesceOps =
-        new(StringComparer.Ordinal) { "??", "as" };
+    private static readonly HashSet<string> CoalesceOps = new(StringComparer.Ordinal)
+    {
+        "??",
+        "as",
+    };
 
     private Node ParseCoalesceExpression()
     {
-        var left = ParseFactor();
+        Node left = ParseFactor();
         while (Peek().Kind == TokenKind.Op && CoalesceOps.Contains(Peek().Text))
         {
-            var op = Peek().Text;
+            string op = Peek().Text;
             _cursor = _cursor.Advance();
-            var right = ParseFactor();
+            Node right = ParseFactor();
             left = new Binary(op, left, right, SpanBetween(left.Span.Start, right.Span.End));
         }
         return left;
@@ -426,36 +530,38 @@ internal sealed class PrattParser
     private Node ParseFactor()
     {
         EnterRecursion();
-        var saved = _cursor;
-        var t = Peek();
+        TokenCursor saved = _cursor;
+        Token t = Peek();
 
         if (IsPrefixOperatorToken(t))
         {
-            var tStart = t.Index;
+            int tStart = t.Index;
             _cursor = _cursor.Advance();
-            var v = t.Text;
+            string v = t.Text;
             if (v != "-" && v != "+")
             {
-                var next = Peek();
+                Token next = Peek();
                 if (next.Kind == TokenKind.Paren && next.Text == "(")
                 {
-                    // `sin(x)` — treat as function call, not prefix.
+                    // `sin(x)` - treat as function call, not prefix.
                     _cursor = saved;
                     _depth--;
                     return ParseExponential();
                 }
-                if (next.Kind == TokenKind.Semicolon
+                if (
+                    next.Kind == TokenKind.Semicolon
                     || next.Kind == TokenKind.Comma
                     || next.Kind == TokenKind.Eof
-                    || (next.Kind == TokenKind.Paren && next.Text == ")"))
+                    || (next.Kind == TokenKind.Paren && next.Text == ")")
+                )
                 {
-                    // Bare identifier — parse as atom.
+                    // Bare identifier - parse as atom.
                     _cursor = saved;
                     _depth--;
                     return ParseAtom();
                 }
             }
-            var operand = ParseFactor();
+            Node operand = ParseFactor();
             _depth--;
             return new Unary(v, operand, SpanBetween(tStart, operand.Span.End));
         }
@@ -468,10 +574,10 @@ internal sealed class PrattParser
 
     private Node ParseExponential()
     {
-        var left = ParsePostfixExpression();
+        Node left = ParsePostfixExpression();
         while (Accept(TokenKind.Op, "^"))
         {
-            var right = ParseFactor();
+            Node right = ParseFactor();
             left = new Binary("^", left, right, SpanBetween(left.Span.Start, right.Span.End));
         }
         return left;
@@ -481,10 +587,10 @@ internal sealed class PrattParser
 
     private Node ParsePostfixExpression()
     {
-        var expr = ParseFunctionCall();
+        Node expr = ParseFunctionCall();
         while (Accept(TokenKind.Op, "!"))
         {
-            var end = PrevEnd();
+            int end = PrevEnd();
             expr = new Unary("!", expr, SpanBetween(expr.Span.Start, end));
         }
         return expr;
@@ -494,21 +600,21 @@ internal sealed class PrattParser
 
     private Node ParseFunctionCall()
     {
-        var t = Peek();
+        Token t = Peek();
         if (IsPrefixOperatorToken(t))
         {
             // `sin(x)` restored path: consume the prefix op and parse atom.
-            var tStart = t.Index;
+            int tStart = t.Index;
             _cursor = _cursor.Advance();
-            var operand = ParseAtom();
+            Node operand = ParseAtom();
             return new Unary(t.Text, operand, SpanBetween(tStart, operand.Span.End));
         }
 
-        var expr = ParseMemberExpression();
+        Node expr = ParseMemberExpression();
 
         while (Accept(TokenKind.Paren, "("))
         {
-            var argsBuilder = ImmutableArray.CreateBuilder<Node>();
+            ImmutableArray<Node>.Builder argsBuilder = ImmutableArray.CreateBuilder<Node>();
             if (!Check(TokenKind.Paren, ")"))
             {
                 argsBuilder.Add(ParseExpression());
@@ -518,7 +624,7 @@ internal sealed class PrattParser
                 }
             }
             Expect(TokenKind.Paren, ")");
-            var end = PrevEnd();
+            int end = PrevEnd();
             expr = new Call(expr, argsBuilder.ToImmutable(), SpanBetween(expr.Span.Start, end));
         }
         return expr;
@@ -528,7 +634,7 @@ internal sealed class PrattParser
 
     private Node ParseMemberExpression()
     {
-        var expr = ParseAtom();
+        Node expr = ParseAtom();
         while (true)
         {
             if (Accept(TokenKind.Op, "."))
@@ -537,10 +643,11 @@ internal sealed class PrattParser
                 {
                     throw new AccessException(
                         "Member access (dot notation) is not permitted. Enable it with: new Parser(new ParserOptions { AllowMemberAccess = true }).",
-                        context: new ErrorContext { Expression = _cursor.Expression });
+                        context: new ErrorContext { Expression = _cursor.Expression }
+                    );
                 }
-                var name = Expect(TokenKind.Name);
-                var end = PrevEnd();
+                Token name = Expect(TokenKind.Name);
+                int end = PrevEnd();
                 expr = new Member(expr, name.Text, SpanBetween(expr.Span.Start, end));
             }
             else if (Accept(TokenKind.Bracket, "["))
@@ -549,11 +656,12 @@ internal sealed class PrattParser
                 {
                     throw new AccessException(
                         "Array/bracket access is disabled.",
-                        context: new ErrorContext { Expression = _cursor.Expression });
+                        context: new ErrorContext { Expression = _cursor.Expression }
+                    );
                 }
-                var index = ParseExpression();
+                Node index = ParseExpression();
                 Expect(TokenKind.Bracket, "]");
-                var end = PrevEnd();
+                int end = PrevEnd();
                 expr = new Binary("[", expr, index, SpanBetween(expr.Span.Start, end));
             }
             else
@@ -568,13 +676,13 @@ internal sealed class PrattParser
 
     private Node ParseAtom()
     {
-        var t = Peek();
+        Token t = Peek();
 
         // Names and prefix-op identifiers (with arrow-function lookahead).
         if (t.Kind == TokenKind.Name || IsPrefixOperatorToken(t))
         {
-            var tStart = t.Index;
-            var tEnd = PeekEnd();
+            int tStart = t.Index;
+            int tEnd = PeekEnd();
             _cursor = _cursor.Advance();
 
             if (t.Text == "undefined")
@@ -582,7 +690,7 @@ internal sealed class PrattParser
                 return new UndefinedLit(SpanBetween(tStart, tEnd));
             }
 
-            var next = Peek();
+            Token next = Peek();
             if (next.Kind == TokenKind.Op && next.Text == "=>")
             {
                 return ParseArrowFunctionFromParameter(t.Text, tStart);
@@ -593,23 +701,23 @@ internal sealed class PrattParser
 
         if (t.Kind == TokenKind.Number)
         {
-            var start = t.Index;
-            var end = PeekEnd();
+            int start = t.Index;
+            int end = PeekEnd();
             _cursor = _cursor.Advance();
             return new NumberLit(t.Number, SpanBetween(start, end));
         }
         if (t.Kind == TokenKind.String)
         {
-            var start = t.Index;
-            var end = PeekEnd();
+            int start = t.Index;
+            int end = PeekEnd();
             _cursor = _cursor.Advance();
             return new StringLit(t.Text, SpanBetween(start, end));
         }
         if (t.Kind == TokenKind.Const)
         {
-            var start = t.Index;
-            var end = PeekEnd();
-            var sp = SpanBetween(start, end);
+            int start = t.Index;
+            int end = PeekEnd();
+            TextSpan sp = SpanBetween(start, end);
             _cursor = _cursor.Advance();
             return t.Const switch
             {
@@ -625,12 +733,15 @@ internal sealed class PrattParser
         // Parenthesized expression or multi-param arrow function.
         if (Check(TokenKind.Paren, "("))
         {
-            var openStart = PeekStart();
+            int openStart = PeekStart();
             _cursor = _cursor.Advance();
-            var arrow = TryParseArrowFunction(openStart);
-            if (arrow is not null) return arrow;
+            Node? arrow = TryParseArrowFunction(openStart);
+            if (arrow is not null)
+            {
+                return arrow;
+            }
 
-            var inner = ParseExpression();
+            Node inner = ParseExpression();
             Expect(TokenKind.Paren, ")");
             return inner;
         }
@@ -638,7 +749,7 @@ internal sealed class PrattParser
         // Object literal.
         if (Check(TokenKind.Brace, "{"))
         {
-            var openStart = PeekStart();
+            int openStart = PeekStart();
             _cursor = _cursor.Advance();
             return ParseObjectLiteral(openStart);
         }
@@ -652,7 +763,7 @@ internal sealed class PrattParser
         // Keyword expression (case/when).
         if (Check(TokenKind.Keyword))
         {
-            var kwStart = PeekStart();
+            int kwStart = PeekStart();
             _cursor = _cursor.Advance();
             return ParseKeywordExpression(t, kwStart);
         }
@@ -663,40 +774,40 @@ internal sealed class PrattParser
 
     private Node ParseArrayLiteral()
     {
-        var openStart = PeekStart();
+        int openStart = PeekStart();
         _cursor = _cursor.Advance();
-        var elements = ImmutableArray.CreateBuilder<ArrayEntry>();
+        ImmutableArray<ArrayEntry>.Builder elements = ImmutableArray.CreateBuilder<ArrayEntry>();
         while (!Accept(TokenKind.Bracket, "]"))
         {
             if (Check(TokenKind.Op, "..."))
             {
-                var spreadStart = PeekStart();
+                int spreadStart = PeekStart();
                 _cursor = _cursor.Advance();
-                var arg = ParseConditionalExpression();
+                Node arg = ParseConditionalExpression();
                 elements.Add(new ArraySpread(arg, SpanBetween(spreadStart, arg.Span.End)));
             }
             else
             {
-                var n = ParseExpression();
+                Node n = ParseExpression();
                 elements.Add(new ArrayElement(n, n.Span));
             }
             while (Accept(TokenKind.Comma))
             {
                 if (Check(TokenKind.Op, "..."))
                 {
-                    var spreadStart = PeekStart();
+                    int spreadStart = PeekStart();
                     _cursor = _cursor.Advance();
-                    var arg = ParseConditionalExpression();
+                    Node arg = ParseConditionalExpression();
                     elements.Add(new ArraySpread(arg, SpanBetween(spreadStart, arg.Span.End)));
                 }
                 else
                 {
-                    var n = ParseExpression();
+                    Node n = ParseExpression();
                     elements.Add(new ArrayElement(n, n.Span));
                 }
             }
         }
-        var closeEnd = PrevEnd();
+        int closeEnd = PrevEnd();
         return new ArrayLit(elements.ToImmutable(), SpanBetween(openStart, closeEnd));
     }
 
@@ -709,14 +820,14 @@ internal sealed class PrattParser
             Error("Arrow function syntax is not permitted");
         }
         Expect(TokenKind.Op, "=>");
-        var body = ParseConditionalExpression();
-        var sp = SpanBetween(startPos, body.Span.End);
+        Node body = ParseConditionalExpression();
+        TextSpan sp = SpanBetween(startPos, body.Span.End);
         return new Lambda(ImmutableArray.Create(paramName), new Paren(body, body.Span), sp);
     }
 
     private Node? TryParseArrowFunction(int openStart)
     {
-        var saved = _cursor;
+        TokenCursor saved = _cursor;
 
         // Empty parameter list: () => body
         if (Accept(TokenKind.Paren, ")"))
@@ -731,12 +842,12 @@ internal sealed class PrattParser
                 _cursor = saved;
                 return null;
             }
-            var body = ParseExpression();
-            var sp = SpanBetween(openStart, body.Span.End);
+            Node body = ParseExpression();
+            TextSpan sp = SpanBetween(openStart, body.Span.End);
             return new Lambda(ImmutableArray<string>.Empty, new Paren(body, body.Span), sp);
         }
 
-        var paramsBuilder = ImmutableArray.CreateBuilder<string>();
+        ImmutableArray<string>.Builder paramsBuilder = ImmutableArray.CreateBuilder<string>();
         if (!Check(TokenKind.Name))
         {
             _cursor = saved;
@@ -771,11 +882,12 @@ internal sealed class PrattParser
             Error("Arrow function syntax is not permitted");
         }
 
-        var fnBody = ParseConditionalExpression();
+        Node fnBody = ParseConditionalExpression();
         return new Lambda(
             paramsBuilder.ToImmutable(),
             new Paren(fnBody, fnBody.Span),
-            SpanBetween(openStart, fnBody.Span.End));
+            SpanBetween(openStart, fnBody.Span.End)
+        );
     }
 
     // ---------- case / when / then / else / end ----------
@@ -792,24 +904,24 @@ internal sealed class PrattParser
 
     private Node ParseCaseWhen(int startPos)
     {
-        var caseWithInput = !Check(TokenKind.Keyword);
+        bool caseWithInput = !Check(TokenKind.Keyword);
         Node? subject = null;
         if (caseWithInput)
         {
             subject = ParseConditionalExpression();
         }
 
-        var arms = ImmutableArray.CreateBuilder<CaseArm>();
+        ImmutableArray<CaseArm>.Builder arms = ImmutableArray.CreateBuilder<CaseArm>();
         Node? elseNode = null;
 
         while (Accept(TokenKind.Keyword, "when"))
         {
-            var when = ParseConditionalExpression();
+            Node when = ParseConditionalExpression();
             if (!Accept(TokenKind.Keyword, "then"))
             {
                 Error("Expected 'then' after 'when' condition in case block");
             }
-            var then = ParseConditionalExpression();
+            Node then = ParseConditionalExpression();
             arms.Add(new CaseArm(when, then));
         }
 
@@ -823,7 +935,7 @@ internal sealed class PrattParser
             Error("Case block must be closed with 'end'");
         }
 
-        var endPos = PrevEnd();
+        int endPos = PrevEnd();
         return new Case(subject, arms.ToImmutable(), elseNode, SpanBetween(startPos, endPos));
     }
 
@@ -831,13 +943,14 @@ internal sealed class PrattParser
 
     private Node ParseObjectLiteral(int openStart)
     {
-        var properties = ImmutableArray.CreateBuilder<ObjectEntry>();
+        ImmutableArray<ObjectEntry>.Builder properties =
+            ImmutableArray.CreateBuilder<ObjectEntry>();
         if (Accept(TokenKind.Brace, "}"))
         {
             return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
         }
 
-        var first = true;
+        bool first = true;
         while (true)
         {
             if (!first)
@@ -848,28 +961,34 @@ internal sealed class PrattParser
                 }
                 if (Accept(TokenKind.Brace, "}"))
                 {
-                    return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
+                    return new ObjectLit(
+                        properties.ToImmutable(),
+                        SpanBetween(openStart, PrevEnd())
+                    );
                 }
             }
             first = false;
 
             if (Check(TokenKind.Op, "..."))
             {
-                var spreadStart = PeekStart();
+                int spreadStart = PeekStart();
                 _cursor = _cursor.Advance();
-                var arg = ParseConditionalExpression();
+                Node arg = ParseConditionalExpression();
                 properties.Add(new ObjectSpread(arg, SpanBetween(spreadStart, arg.Span.End)));
                 if (Accept(TokenKind.Brace, "}"))
                 {
-                    return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
+                    return new ObjectLit(
+                        properties.ToImmutable(),
+                        SpanBetween(openStart, PrevEnd())
+                    );
                 }
                 continue;
             }
 
-            var nameToken = Peek();
+            Token nameToken = Peek();
             string key;
-            var quoted = false;
-            var entryStart = PeekStart();
+            bool quoted = false;
+            int entryStart = PeekStart();
 
             if (Accept(TokenKind.Name))
             {
@@ -891,8 +1010,10 @@ internal sealed class PrattParser
                 Error($"Expected ':' after property name '{key}'");
             }
 
-            var value = ParseExpression();
-            properties.Add(new ObjectProperty(key, value, quoted, SpanBetween(entryStart, value.Span.End)));
+            Node value = ParseExpression();
+            properties.Add(
+                new ObjectProperty(key, value, quoted, SpanBetween(entryStart, value.Span.End))
+            );
 
             if (Accept(TokenKind.Brace, "}"))
             {

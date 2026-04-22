@@ -1,4 +1,4 @@
-namespace Expreszo.Errors;
+﻿namespace Expreszo.Errors;
 
 /// <summary>
 /// Customisable policy for what happens when the parser or evaluator fails.
@@ -20,9 +20,11 @@ public sealed class ThrowingErrorHandler : IErrorHandler
 {
     public static ThrowingErrorHandler Instance { get; } = new();
 
-    public ErrorDisposition OnParseError(ParseException exception) => ErrorDisposition.Rethrow.Instance;
+    public ErrorDisposition OnParseError(ParseException exception) =>
+        ErrorDisposition.Rethrow.Instance;
 
-    public ErrorDisposition OnEvaluationError(ExpressionException exception) => ErrorDisposition.Rethrow.Instance;
+    public ErrorDisposition OnEvaluationError(ExpressionException exception) =>
+        ErrorDisposition.Rethrow.Instance;
 
     public void OnWarning(string message, ErrorContext context) { }
 }

@@ -1,8 +1,8 @@
 # Expression
 
-> **Audience:** Developers integrating Expreszo into their .NET projects.
+> **Audience:** Developers integrating ExpresZo into their .NET projects.
 
-`parser.Parse(string)` returns an `Expression` object. Expressions are similar to compiled functions — call them with different variable bindings to get different results. Instances are immutable and safe to share across threads.
+`parser.Parse(string)` returns an `Expression` object. Expressions are similar to compiled functions - call them with different variable bindings to get different results. Instances are immutable and safe to share across threads.
 
 ## `Evaluate(JsonDocument? values, VariableResolver? resolver)`
 
@@ -39,15 +39,15 @@ expr.Evaluate(values: null, resolver: resolveAlice);
 
 Return values:
 
-- `new VariableResolveResult.Bound(Value value)` — supply the value directly.
-- `new VariableResolveResult.Alias(string name)` — redirect to another variable.
-- `VariableResolveResult.NotResolved` — fall through to the next resolution layer.
+- `new VariableResolveResult.Bound(Value value)` - supply the value directly.
+- `new VariableResolveResult.Alias(string name)` - redirect to another variable.
+- `VariableResolveResult.NotResolved` - fall through to the next resolution layer.
 
-See [Advanced Features — Custom Variable Resolution](advanced-features.md#custom-variable-resolution) for end-to-end examples.
+See [Advanced Features - Custom Variable Resolution](advanced-features.md#custom-variable-resolution) for end-to-end examples.
 
 ## `EvaluateAsync(JsonDocument? values, VariableResolver? resolver, CancellationToken ct)`
 
-Asynchronous evaluation. Returns `ValueTask<Value>`. Synchronous completions don't allocate a state machine — so for expressions that use only built-in synchronous functions, the cost is effectively the same as `Evaluate`.
+Asynchronous evaluation. Returns `ValueTask<Value>`. Synchronous completions don't allocate a state machine - so for expressions that use only built-in synchronous functions, the cost is effectively the same as `Evaluate`.
 
 ```csharp
 var result = await expr.EvaluateAsync(doc, ct: cancellationToken);
@@ -74,8 +74,8 @@ var result = simplified.Evaluate(full);
 
 Simplify is intentionally conservative:
 
-- **Assignment** (`=`) is never folded — it has a side effect on the scope.
-- **Short-circuit operators** (`and` / `or` / `&&` / `||`) aren't folded — their evaluation order is significant.
+- **Assignment** (`=`) is never folded - it has a side effect on the scope.
+- **Short-circuit operators** (`and` / `or` / `&&` / `||`) aren't folded - their evaluation order is significant.
 - **Function calls** aren't pre-evaluated (except pure operator functions) because user functions may be non-deterministic.
 - **Member access** is folded only when the base expression simplifies to a literal object.
 
@@ -85,7 +85,7 @@ The result is a new `Expression`; the original is untouched.
 
 ## `Substitute(string variable, string expr)`
 
-Returns a new `Expression` with every `Ident` matching `variable` replaced by the given replacement tree. This is function composition — think of it as "inline this expression wherever `variable` appears." Parameter shadowing inside lambdas and function definitions is respected, so `x` inside `(x => x + 1)` is never substituted.
+Returns a new `Expression` with every `Ident` matching `variable` replaced by the given replacement tree. This is function composition - think of it as "inline this expression wherever `variable` appears." Parameter shadowing inside lambdas and function definitions is respected, so `x` inside `(x => x + 1)` is never substituted.
 
 ```csharp
 var expr = parser.Parse("2 * x + 1");
@@ -112,7 +112,7 @@ using var partial = JsonDocument.Parse("""{"y":4}""");
 expr.Simplify(partial).Variables();       // ["x"]
 ```
 
-By default, member access chains show only their root — `parser.Parse("x.y.z").Variables()` returns `["x"]`. Pass `withMembers: true` to get the whole dotted chain:
+By default, member access chains show only their root - `parser.Parse("x.y.z").Variables()` returns `["x"]`. Pass `withMembers: true` to get the whole dotted chain:
 
 ```csharp
 parser.Parse("x.y.z").Variables(withMembers: true);
@@ -137,7 +137,7 @@ Like `Variables`, `Symbols` accepts `withMembers: true` to group dotted chains.
 
 ## `ToString()`
 
-Converts the expression back to source text. Surrounds every sub-expression with parentheses (except literals, variables, and function calls) so precedence is always explicit — handy when diagnosing parse issues.
+Converts the expression back to source text. Surrounds every sub-expression with parentheses (except literals, variables, and function calls) so precedence is always explicit - handy when diagnosing parse issues.
 
 ```csharp
 parser.Parse("1 + 2 * 3").ToString();
@@ -172,7 +172,7 @@ var depth = expr.Accept(new DepthVisitor());
 
 ## See Also
 
-- [Parser](parser.md) — creating a parser and invoking it.
-- [Expression Syntax](syntax.md) — what can appear in an expression.
-- [Advanced Features](advanced-features.md) — async, resolvers, CASE, object literals, type casts.
-- [Values & JsonDocument](values-and-json.md) — how `Value` instances map to JSON.
+- [Parser](parser.md) - creating a parser and invoking it.
+- [Expression Syntax](syntax.md) - what can appear in an expression.
+- [Advanced Features](advanced-features.md) - async, resolvers, CASE, object literals, type casts.
+- [Values & JsonDocument](values-and-json.md) - how `Value` instances map to JSON.

@@ -1,13 +1,13 @@
-# Expreszo .NET
+# ExpresZo .NET
 
-A safe, extensible expression evaluator for .NET — a configurable alternative to `eval()`. Parses and evaluates the same expression language as [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript).
+A safe, extensible expression evaluator for .NET - a configurable alternative to `eval()`. Parses and evaluates the same expression language as [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript).
 
 ## Highlights
 
-- Pratt parser, immutable AST, 36 operators, 71 built-in functions.
-- **JsonDocument-based I/O** — variables in, results out, using `System.Text.Json` primitives.
+- Pratt parser, immutable AST, 27 operators, 82 built-in functions.
+- **JsonDocument-based I/O** - variables in, results out, using `System.Text.Json` primitives.
 - Single async-capable evaluator with a synchronous fast path (`ValueTask<Value>` under the hood).
-- **Native AOT and trim compatible** — zero reflection, zero runtime code generation. CI verifies on every PR.
+- **Native AOT and trim compatible** - zero reflection, zero runtime code generation. CI verifies on every PR.
 - `net10.0` target.
 
 ## Install
@@ -16,13 +16,14 @@ A safe, extensible expression evaluator for .NET — a configurable alternative 
 dotnet add package Expreszo
 ```
 
-Targets `net10.0`. Packages are published to [NuGet.org](https://www.nuget.org/packages/Expreszo) automatically on every `v*.*.*` tag — see the [releases page](https://github.com/pro-fa/expreszo-dotnet/releases) for changelogs.
+Targets `net10.0`. Packages are published to [NuGet.org](https://www.nuget.org/packages/Expreszo) automatically on every `v*.*.*` tag - see the [releases page](https://github.com/pro-fa/expreszo-dotnet/releases) for changelogs.
 
 ## Quick start
 
 ```csharp
 using System.Text.Json;
 using Expreszo;
+using Expreszo.Json;
 
 var parser = new Parser();
 
@@ -42,9 +43,33 @@ Console.WriteLine(expr.Evaluate(v));                 // 90
 // Higher-order: lambdas and array callbacks.
 using var data = JsonDocument.Parse("""{"items":[10,20,30,40]}""");
 Console.WriteLine(parser.Evaluate("sum(filter(items, x => x > 15))", data));  // 90
+
+// JSON in → JSON out. The result is a Value, which JsonBridge serialises
+// back to System.Text.Json primitives with no reflection.
+using var order = JsonDocument.Parse("""{"price":25,"qty":4,"tax":0.21}""");
+var totals = parser.Evaluate(
+    "{ subtotal: price * qty, total: price * qty * (1 + tax) }",
+    order);
+Console.WriteLine(JsonBridge.ToJsonString(totals));
+// {"subtotal":100,"total":121}
+
+// Dynamic variable resolver - called per reference, only for names the
+// scope didn't already bind. Return NotResolved to fall through.
+var env = new Dictionary<string, string>
+{
+    ["REGION"] = "eu-west-1",
+    ["USER"] = "alice",
+};
+VariableResolver resolveFromEnv = name => env.TryGetValue(name, out var value)
+    ? new VariableResolveResult.Bound(new Value.String(value))
+    : VariableResolveResult.NotResolved;
+Console.WriteLine(parser.Evaluate(
+    "USER | \" @ \" | REGION",
+    resolver: resolveFromEnv));
+// alice @ eu-west-1
 ```
 
-## Expression language — cheat sheet
+## Expression language - cheat sheet
 
 | Category | Examples |
 |---|---|
@@ -69,7 +94,7 @@ Console.WriteLine(parser.Evaluate("sum(filter(items, x => x > 15))", data));  //
 
 **Array** (20): `count`, `filter`, `fold`, `reduce`, `find`, `some`, `every`, `unique`, `distinct`, `indexOf`, `join`, `map`, `range`, `chunk`, `union`, `intersect`, `groupBy`, `countBy`, `sort`, `flatten`
 
-**String** (27): `length`, `isEmpty`, `contains`, `startsWith`, `endsWith`, `searchCount`, `trim`, `toUpper`, `toLower`, `toTitle`, `split`, `repeat`, `reverse`, `left`, `right`, `replace`, `replaceFirst`, `naturalSort`, `toNumber`, `toBoolean`, `padLeft`, `padRight`, `padBoth`, `slice`, `urlEncode`, `base64Encode`, `base64Decode`, `coalesce`
+**String** (28): `length`, `isEmpty`, `contains`, `startsWith`, `endsWith`, `searchCount`, `trim`, `toUpper`, `toLower`, `toTitle`, `split`, `repeat`, `reverse`, `left`, `right`, `replace`, `replaceFirst`, `naturalSort`, `toNumber`, `toBoolean`, `padLeft`, `padRight`, `padBoth`, `slice`, `urlEncode`, `base64Encode`, `base64Decode`, `coalesce`
 
 **Object** (7): `merge`, `keys`, `values`, `mapValues`, `pick`, `omit`, `flattenObject`
 
@@ -81,17 +106,20 @@ Console.WriteLine(parser.Evaluate("sum(filter(items, x => x > 15))", data));  //
 
 Three behaviours to know about:
 
-- **`Undefined` is distinct from `Null`.** Missing members and uninitialized variables return `Value.Undefined`; explicit JSON nulls return `Value.Null`. The `??` operator, the `isUndefined`/`isNull` functions, and short-circuit semantics all depend on this distinction.
+- **`Undefined` is distinct from `Null`.** Missing members (`obj.nope`) and lambda parameters you didn't pass return `Value.Undefined`; explicit JSON nulls return `Value.Null`. Reading a completely unknown identifier is a hard error - it throws `VariableException` rather than returning `Undefined`, so typos don't silently evaluate to nothing. The `??` operator, `isUndefined` / `isNull`, and short-circuit semantics all depend on the Null/Undefined distinction.
 - **Assignments don't propagate back to your input `JsonDocument`.** The evaluator copies the document into an internal scope on entry. Assignments mutate that scope only; the caller's document is untouched. (`JsonDocument` is immutable in System.Text.Json.)
-- **Numbers are IEEE 754 `double`** — same semantics as JavaScript. Very large integers in your JSON lose precision; serialise them as strings if you need exact round-tripping. There is no `decimal` mode.
+- **Numbers are IEEE 754 `double`** - same semantics as JavaScript. Very large integers in your JSON lose precision; serialise them as strings if you need exact round-tripping. There is no `decimal` mode.
 
 ## Security
 
 The library validates every access point before evaluating it:
 
-- Properties named `__proto__`, `prototype`, or `constructor` are always rejected — both via dot access and via bracket-string access.
+- Properties named `__proto__`, `prototype`, or `constructor` are always rejected - both via dot access and via bracket-string access. The same names are filtered out of JSON I/O and scope bindings for defence-in-depth.
 - Array indices must be finite non-negative integers.
-- Only registered functions (built-ins + any you add via a future `OperatorTableBuilder` API) can be invoked. Raw CLR delegates smuggled through a custom resolver are rejected.
+- Only registered functions (built-ins + any you add via a future `OperatorTableBuilder` API) can be invoked. Raw CLR delegates smuggled in through a custom `VariableResolver` or `Scope` binding are rejected at the call site via an identity-based allow-list.
+- Recursion is capped at 256 levels of nested calls and 256 levels of parse depth - runaway recursion (`f(x) = f(x); f(1)`) throws an `EvaluationException` instead of a `StackOverflowException`.
+- Resource-heavy built-ins (`repeat`, `padLeft`/`Right`/`Both`, `range`, `fac`, postfix `!`) enforce output-size and input-range budgets published as `Expreszo.EvaluationLimits` constants.
+- `EvaluateAsync`'s `CancellationToken` is observed on every call boundary and inside every looping built-in, so timeouts are honoured in bounded time.
 
 ## AOT-safe
 
