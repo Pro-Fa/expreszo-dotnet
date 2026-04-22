@@ -31,6 +31,12 @@ public sealed class Parser
 
         var builder = new OperatorTableBuilder();
         CorePreset.RegisterInto(builder);
+        MathPreset.RegisterInto(builder);
+        StringPreset.RegisterInto(builder);
+        ArrayPreset.RegisterInto(builder);
+        ObjectPreset.RegisterInto(builder);
+        UtilityPreset.RegisterInto(builder);
+        TypeCheckPreset.RegisterInto(builder);
         _ops = builder.Build();
 
         _config = new ParserConfig(
