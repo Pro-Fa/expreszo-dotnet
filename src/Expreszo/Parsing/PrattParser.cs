@@ -308,70 +308,70 @@ internal sealed class PrattParser
             Node rhs = ParseVariableAssignmentExpression();
             var wrappedRhs = new Paren(rhs, rhs.Span);
             TextSpan sp = SpanBetween(left.Span.Start, rhs.Span.End);
-
-            if (left is Call call)
-            {
-                if (!_config.IsOperatorEnabled("()="))
-                {
-                    Error("function definition is not permitted");
-                }
-                if (call.Callee is not Ident calleeIdent)
-                {
-                    Error(
-                        "Function name must be an identifier in definition. Example: f(x) = x * 2"
-                    );
-                    return null!;
-                }
-                ImmutableArray<string>.Builder paramsBuilder = ImmutableArray.CreateBuilder<string>(
-                    call.Args.Length
-                );
-                foreach (Node arg in call.Args)
-                {
-                    if (arg is not Ident pIdent)
-                    {
-                        Error("Function parameters must be identifiers. Example: f(x, y) = x + y");
-                        return null!;
-                    }
-                    paramsBuilder.Add(pIdent.Name);
-                }
-                left = new FunctionDef(
-                    calleeIdent.Name,
-                    paramsBuilder.ToImmutable(),
-                    wrappedRhs,
-                    sp
-                );
-            }
-            else if (left is Ident idLeft)
-            {
-                left = new Binary("=", new NameRef(idLeft.Name, idLeft.Span), wrappedRhs, sp);
-            }
-            else if (left is Member memLeft)
-            {
-                // Member assignment: evaluate the object for side effects,
-                // then bind the value as a top-level variable named after the
-                // property. The evaluator diagnoses the non-standard shape.
-                left = new Sequence(
-                    [
-                        memLeft.Object,
-                        new Binary(
-                            "=",
-                            new NameRef(memLeft.Property, memLeft.Span),
-                            wrappedRhs,
-                            sp
-                        ),
-                    ],
-                    sp
-                );
-            }
-            else
-            {
-                Error("Left side of assignment must be a variable name. Example: x = 5");
-            }
+            left = BuildAssignment(left, wrappedRhs, sp);
         }
 
         _depth--;
         return left;
     }
+
+    private Node BuildAssignment(Node left, Paren wrappedRhs, TextSpan sp) =>
+        left switch
+        {
+            Call call => BuildFunctionDefinition(call, wrappedRhs, sp),
+            Ident id => new Binary("=", new NameRef(id.Name, id.Span), wrappedRhs, sp),
+            Member member => BuildMemberAssignment(member, wrappedRhs, sp),
+            _ => FailAssignment(),
+        };
+
+    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    private Node FailAssignment()
+    {
+        Error("Left side of assignment must be a variable name. Example: x = 5");
+        return null!; // unreachable - Error throws
+    }
+
+    private Node BuildFunctionDefinition(Call call, Paren wrappedRhs, TextSpan sp)
+    {
+        if (!_config.IsOperatorEnabled("()="))
+        {
+            Error("function definition is not permitted");
+        }
+        if (call.Callee is not Ident calleeIdent)
+        {
+            Error("Function name must be an identifier in definition. Example: f(x) = x * 2");
+            return null!;
+        }
+        ImmutableArray<string> paramNames = ExtractParameterNames(call.Args);
+        return new FunctionDef(calleeIdent.Name, paramNames, wrappedRhs, sp);
+    }
+
+    private ImmutableArray<string> ExtractParameterNames(ImmutableArray<Node> args)
+    {
+        ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>(args.Length);
+        foreach (Node arg in args)
+        {
+            if (arg is not Ident ident)
+            {
+                Error("Function parameters must be identifiers. Example: f(x, y) = x + y");
+                return default; // unreachable
+            }
+            builder.Add(ident.Name);
+        }
+        return builder.ToImmutable();
+    }
+
+    // Member assignment: evaluate the object for side effects, then bind the
+    // value as a top-level variable named after the property. The evaluator
+    // diagnoses the non-standard shape.
+    private static Node BuildMemberAssignment(Member member, Paren wrappedRhs, TextSpan sp) =>
+        new Sequence(
+            [
+                member.Object,
+                new Binary("=", new NameRef(member.Property, member.Span), wrappedRhs, sp),
+            ],
+            sp
+        );
 
     // ---------- ternary ----------
 
@@ -779,36 +779,27 @@ internal sealed class PrattParser
         ImmutableArray<ArrayEntry>.Builder elements = ImmutableArray.CreateBuilder<ArrayEntry>();
         while (!Accept(TokenKind.Bracket, "]"))
         {
-            if (Check(TokenKind.Op, "..."))
-            {
-                int spreadStart = PeekStart();
-                _cursor = _cursor.Advance();
-                Node arg = ParseConditionalExpression();
-                elements.Add(new ArraySpread(arg, SpanBetween(spreadStart, arg.Span.End)));
-            }
-            else
-            {
-                Node n = ParseExpression();
-                elements.Add(new ArrayElement(n, n.Span));
-            }
+            elements.Add(ParseArrayEntry());
             while (Accept(TokenKind.Comma))
             {
-                if (Check(TokenKind.Op, "..."))
-                {
-                    int spreadStart = PeekStart();
-                    _cursor = _cursor.Advance();
-                    Node arg = ParseConditionalExpression();
-                    elements.Add(new ArraySpread(arg, SpanBetween(spreadStart, arg.Span.End)));
-                }
-                else
-                {
-                    Node n = ParseExpression();
-                    elements.Add(new ArrayElement(n, n.Span));
-                }
+                elements.Add(ParseArrayEntry());
             }
         }
-        int closeEnd = PrevEnd();
-        return new ArrayLit(elements.ToImmutable(), SpanBetween(openStart, closeEnd));
+        return new ArrayLit(elements.ToImmutable(), SpanBetween(openStart, PrevEnd()));
+    }
+
+    private ArrayEntry ParseArrayEntry()
+    {
+        if (Check(TokenKind.Op, "..."))
+        {
+            int spreadStart = PeekStart();
+            _cursor = _cursor.Advance();
+            Node arg = ParseConditionalExpression();
+            return new ArraySpread(arg, SpanBetween(spreadStart, arg.Span.End));
+        }
+
+        Node node = ParseExpression();
+        return new ArrayElement(node, node.Span);
     }
 
     // ---------- arrow functions ----------
@@ -945,80 +936,66 @@ internal sealed class PrattParser
     {
         ImmutableArray<ObjectEntry>.Builder properties =
             ImmutableArray.CreateBuilder<ObjectEntry>();
+
         if (Accept(TokenKind.Brace, "}"))
         {
             return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
         }
 
-        bool first = true;
         while (true)
         {
-            if (!first)
-            {
-                if (!Accept(TokenKind.Comma))
-                {
-                    Error("Expected comma between object properties");
-                }
-                if (Accept(TokenKind.Brace, "}"))
-                {
-                    return new ObjectLit(
-                        properties.ToImmutable(),
-                        SpanBetween(openStart, PrevEnd())
-                    );
-                }
-            }
-            first = false;
-
-            if (Check(TokenKind.Op, "..."))
-            {
-                int spreadStart = PeekStart();
-                _cursor = _cursor.Advance();
-                Node arg = ParseConditionalExpression();
-                properties.Add(new ObjectSpread(arg, SpanBetween(spreadStart, arg.Span.End)));
-                if (Accept(TokenKind.Brace, "}"))
-                {
-                    return new ObjectLit(
-                        properties.ToImmutable(),
-                        SpanBetween(openStart, PrevEnd())
-                    );
-                }
-                continue;
-            }
-
-            Token nameToken = Peek();
-            string key;
-            bool quoted = false;
-            int entryStart = PeekStart();
-
-            if (Accept(TokenKind.Name))
-            {
-                key = nameToken.Text;
-            }
-            else if (Accept(TokenKind.String))
-            {
-                key = nameToken.Text;
-                quoted = true;
-            }
-            else
-            {
-                Error("Object property key must be an identifier or quoted string");
-                return null!;
-            }
-
-            if (!Accept(TokenKind.Op, ":"))
-            {
-                Error($"Expected ':' after property name '{key}'");
-            }
-
-            Node value = ParseExpression();
-            properties.Add(
-                new ObjectProperty(key, value, quoted, SpanBetween(entryStart, value.Span.End))
-            );
+            properties.Add(ParseObjectEntry());
 
             if (Accept(TokenKind.Brace, "}"))
             {
                 return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
             }
+            if (!Accept(TokenKind.Comma))
+            {
+                Error("Expected comma between object properties");
+            }
+            // Trailing comma: allow "{a: 1, }".
+            if (Accept(TokenKind.Brace, "}"))
+            {
+                return new ObjectLit(properties.ToImmutable(), SpanBetween(openStart, PrevEnd()));
+            }
         }
+    }
+
+    private ObjectEntry ParseObjectEntry()
+    {
+        if (Check(TokenKind.Op, "..."))
+        {
+            int spreadStart = PeekStart();
+            _cursor = _cursor.Advance();
+            Node arg = ParseConditionalExpression();
+            return new ObjectSpread(arg, SpanBetween(spreadStart, arg.Span.End));
+        }
+
+        int entryStart = PeekStart();
+        (string key, bool quoted) = ReadObjectKey();
+
+        if (!Accept(TokenKind.Op, ":"))
+        {
+            Error($"Expected ':' after property name '{key}'");
+        }
+
+        Node value = ParseExpression();
+        return new ObjectProperty(key, value, quoted, SpanBetween(entryStart, value.Span.End));
+    }
+
+    private (string Key, bool Quoted) ReadObjectKey()
+    {
+        Token token = Peek();
+        if (Accept(TokenKind.Name))
+        {
+            return (token.Text, false);
+        }
+        if (Accept(TokenKind.String))
+        {
+            return (token.Text, true);
+        }
+        Error("Object property key must be an identifier or quoted string");
+        return default; // unreachable
     }
 }

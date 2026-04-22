@@ -48,13 +48,10 @@ internal sealed class ToStringVisitor
                 sb.Append(nr.Name);
                 break;
             case Member m:
-                Emit(m.Object, sb);
-                sb.Append('.').Append(m.Property);
+                EmitMember(m, sb);
                 break;
             case Paren p:
-                sb.Append('(');
-                Emit(p.Inner, sb);
-                sb.Append(')');
+                EmitParen(p, sb);
                 break;
             case Unary u:
                 EmitUnary(u, sb);
@@ -63,137 +60,183 @@ internal sealed class ToStringVisitor
                 EmitBinary(b, sb);
                 break;
             case Ternary t:
-                sb.Append('(');
-                Emit(t.A, sb);
-                sb.Append(' ').Append(t.Op).Append(' ');
-                Emit(t.B, sb);
-                sb.Append(" : ");
-                Emit(t.C, sb);
-                sb.Append(')');
+                EmitTernary(t, sb);
                 break;
             case Call c:
-                Emit(c.Callee, sb);
-                sb.Append('(');
-                for (int i = 0; i < c.Args.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        sb.Append(", ");
-                    }
-
-                    Emit(c.Args[i], sb);
-                }
-                sb.Append(')');
+                EmitCall(c, sb);
                 break;
             case Lambda l:
-                sb.Append('(');
-                if (l.Params.Length == 1)
+                EmitLambda(l, sb);
+                break;
+            case FunctionDef fd:
+                EmitFunctionDef(fd, sb);
+                break;
+            case ArrayLit a:
+                EmitArrayLit(a, sb);
+                break;
+            case ObjectLit o:
+                EmitObjectLit(o, sb);
+                break;
+            case Sequence s:
+                EmitSequence(s, sb);
+                break;
+            case Case k:
+                EmitCase(k, sb);
+                break;
+        }
+    }
+
+    private static void EmitMember(Member m, StringBuilder sb)
+    {
+        Emit(m.Object, sb);
+        sb.Append('.').Append(m.Property);
+    }
+
+    private static void EmitParen(Paren p, StringBuilder sb)
+    {
+        sb.Append('(');
+        Emit(p.Inner, sb);
+        sb.Append(')');
+    }
+
+    private static void EmitTernary(Ternary t, StringBuilder sb)
+    {
+        sb.Append('(');
+        Emit(t.A, sb);
+        sb.Append(' ').Append(t.Op).Append(' ');
+        Emit(t.B, sb);
+        sb.Append(" : ");
+        Emit(t.C, sb);
+        sb.Append(')');
+    }
+
+    private static void EmitCall(Call c, StringBuilder sb)
+    {
+        Emit(c.Callee, sb);
+        EmitCommaSeparated(c.Args, sb, '(', ')', Emit);
+    }
+
+    private static void EmitLambda(Lambda l, StringBuilder sb)
+    {
+        sb.Append('(');
+        if (l.Params.Length == 1)
+        {
+            sb.Append(l.Params[0]);
+        }
+        else
+        {
+            sb.Append('(').Append(string.Join(", ", l.Params)).Append(')');
+        }
+        sb.Append(" => ");
+        Emit(l.Body, sb);
+        sb.Append(')');
+    }
+
+    private static void EmitFunctionDef(FunctionDef fd, StringBuilder sb)
+    {
+        sb.Append('(').Append(fd.Name).Append('(');
+        sb.Append(string.Join(", ", fd.Params));
+        sb.Append(") = ");
+        Emit(fd.Body, sb);
+        sb.Append(')');
+    }
+
+    private static void EmitArrayLit(ArrayLit a, StringBuilder sb) =>
+        EmitCommaSeparated(a.Elements, sb, '[', ']', EmitArrayEntry);
+
+    private static void EmitArrayEntry(ArrayEntry entry, StringBuilder sb)
+    {
+        switch (entry)
+        {
+            case ArrayElement el:
+                Emit(el.Node, sb);
+                break;
+            case ArraySpread sp:
+                sb.Append("...");
+                Emit(sp.Argument, sb);
+                break;
+        }
+    }
+
+    private static void EmitObjectLit(ObjectLit o, StringBuilder sb) =>
+        EmitCommaSeparated(o.Properties, sb, '{', '}', EmitObjectEntry);
+
+    private static void EmitObjectEntry(ObjectEntry entry, StringBuilder sb)
+    {
+        switch (entry)
+        {
+            case ObjectProperty pr:
+                if (pr.Quoted)
                 {
-                    sb.Append(l.Params[0]);
+                    sb.Append('"').Append(pr.Key).Append('"');
                 }
                 else
                 {
-                    sb.Append('(');
-                    sb.Append(string.Join(", ", l.Params));
-                    sb.Append(')');
+                    sb.Append(pr.Key);
                 }
-                sb.Append(" => ");
-                Emit(l.Body, sb);
-                sb.Append(')');
+                sb.Append(": ");
+                Emit(pr.Value, sb);
                 break;
-            case FunctionDef fd:
-                sb.Append('(').Append(fd.Name).Append('(');
-                sb.Append(string.Join(", ", fd.Params));
-                sb.Append(") = ");
-                Emit(fd.Body, sb);
-                sb.Append(')');
-                break;
-            case ArrayLit a:
-                sb.Append('[');
-                for (int i = 0; i < a.Elements.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        sb.Append(", ");
-                    }
-
-                    switch (a.Elements[i])
-                    {
-                        case ArrayElement el:
-                            Emit(el.Node, sb);
-                            break;
-                        case ArraySpread sp:
-                            sb.Append("...");
-                            Emit(sp.Argument, sb);
-                            break;
-                    }
-                }
-                sb.Append(']');
-                break;
-            case ObjectLit o:
-                sb.Append('{');
-                for (int i = 0; i < o.Properties.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        sb.Append(", ");
-                    }
-
-                    switch (o.Properties[i])
-                    {
-                        case ObjectProperty pr:
-                            if (pr.Quoted)
-                            {
-                                sb.Append('"').Append(pr.Key).Append('"');
-                            }
-                            else
-                            {
-                                sb.Append(pr.Key);
-                            }
-                            sb.Append(": ");
-                            Emit(pr.Value, sb);
-                            break;
-                        case ObjectSpread sp:
-                            sb.Append("...");
-                            Emit(sp.Argument, sb);
-                            break;
-                    }
-                }
-                sb.Append('}');
-                break;
-            case Sequence s:
-                for (int i = 0; i < s.Statements.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        sb.Append(" ; ");
-                    }
-
-                    Emit(s.Statements[i], sb);
-                }
-                break;
-            case Case k:
-                sb.Append("case");
-                if (k.Subject is not null)
-                {
-                    sb.Append(' ');
-                    Emit(k.Subject, sb);
-                }
-                foreach (CaseArm arm in k.Arms)
-                {
-                    sb.Append(" when ");
-                    Emit(arm.When, sb);
-                    sb.Append(" then ");
-                    Emit(arm.Then, sb);
-                }
-                if (k.Else is not null)
-                {
-                    sb.Append(" else ");
-                    Emit(k.Else, sb);
-                }
-                sb.Append(" end");
+            case ObjectSpread sp:
+                sb.Append("...");
+                Emit(sp.Argument, sb);
                 break;
         }
+    }
+
+    private static void EmitSequence(Sequence s, StringBuilder sb)
+    {
+        for (int i = 0; i < s.Statements.Length; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(" ; ");
+            }
+            Emit(s.Statements[i], sb);
+        }
+    }
+
+    private static void EmitCase(Case k, StringBuilder sb)
+    {
+        sb.Append("case");
+        if (k.Subject is not null)
+        {
+            sb.Append(' ');
+            Emit(k.Subject, sb);
+        }
+        foreach (CaseArm arm in k.Arms)
+        {
+            sb.Append(" when ");
+            Emit(arm.When, sb);
+            sb.Append(" then ");
+            Emit(arm.Then, sb);
+        }
+        if (k.Else is not null)
+        {
+            sb.Append(" else ");
+            Emit(k.Else, sb);
+        }
+        sb.Append(" end");
+    }
+
+    private static void EmitCommaSeparated<T>(
+        IReadOnlyList<T> items,
+        StringBuilder sb,
+        char open,
+        char close,
+        Action<T, StringBuilder> emitOne
+    )
+    {
+        sb.Append(open);
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(", ");
+            }
+            emitOne(items[i], sb);
+        }
+        sb.Append(close);
     }
 
     private static void EmitUnary(Unary u, StringBuilder sb)

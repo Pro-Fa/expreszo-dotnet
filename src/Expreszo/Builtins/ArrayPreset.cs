@@ -443,37 +443,43 @@ internal static class ArrayPreset
             name,
             async (args, ctx) =>
             {
-                // Either (array, init, fn) or (fn, init, array).
                 if (args.Length < 3)
                 {
                     throw new ExpressionArgumentException($"{name} requires 3 arguments", name);
                 }
 
-                Value.Array arr;
-                Value init;
-                Value.Function fn;
-                if (args[0] is Value.Array a0 && args[2] is Value.Function f2)
-                {
-                    arr = a0;
-                    init = args[1];
-                    fn = f2;
-                }
-                else if (args[0] is Value.Function f0 && args[2] is Value.Array a2)
-                {
-                    fn = f0;
-                    init = args[1];
-                    arr = a2;
-                }
-                else
-                {
-                    throw new ExpressionArgumentException(
+                (Value.Array arr, Value.Function fn) =
+                    TryResolveArrayFunctionPair(args[0], args[2])
+                    ?? throw new ExpressionArgumentException(
                         $"{name} expects (array, init, fn) or (fn, init, array)",
                         name
                     );
-                }
-                return await impl(arr.Items, init, fn, ctx).ConfigureAwait(false);
+
+                return await impl(arr.Items, args[1], fn, ctx).ConfigureAwait(false);
             }
         );
+    }
+
+    /// <summary>
+    /// Accepts either (array, function) or (function, array) and returns them
+    /// canonically; returns null when neither shape matches. Used by the 2-arg
+    /// HOFs, the (a, init, f) / (f, init, a) 3-arg HOFs, and sort's optional
+    /// comparator shape.
+    /// </summary>
+    private static (Value.Array Arr, Value.Function Fn)? TryResolveArrayFunctionPair(
+        Value left,
+        Value right
+    )
+    {
+        if (left is Value.Array la && right is Value.Function rf)
+        {
+            return (la, rf);
+        }
+        if (left is Value.Function lf && right is Value.Array ra)
+        {
+            return (ra, lf);
+        }
+        return null;
     }
 
     private static (Value.Array Arr, Value.Function Fn) ResolveArrayAndFunction(
@@ -486,41 +492,17 @@ internal static class ArrayPreset
             throw new ExpressionArgumentException($"{fnName} requires 2 arguments", fnName);
         }
 
-        if (args[0] is Value.Array a0 && args[1] is Value.Function f1)
-        {
-            return (a0, f1);
-        }
-
-        if (args[0] is Value.Function f0 && args[1] is Value.Array a1)
-        {
-            return (a1, f0);
-        }
-
-        throw new ExpressionArgumentException(
-            $"{fnName} expects (array, fn) or (fn, array)",
-            fnName
-        );
+        return TryResolveArrayFunctionPair(args[0], args[1])
+            ?? throw new ExpressionArgumentException(
+                $"{fnName} expects (array, fn) or (fn, array)",
+                fnName
+            );
     }
 
     private static async ValueTask<Value> SortAsync(Value[] args, EvalContext ctx)
     {
-        Value.Array arr;
-        Value.Function? cmp = null;
-        if (args.Length == 1 && args[0] is Value.Array a1)
-        {
-            arr = a1;
-        }
-        else if (args.Length >= 2 && args[0] is Value.Array a2 && args[1] is Value.Function f2)
-        {
-            arr = a2;
-            cmp = f2;
-        }
-        else if (args.Length >= 2 && args[0] is Value.Function f0 && args[1] is Value.Array a0)
-        {
-            arr = a0;
-            cmp = f0;
-        }
-        else
+        (Value.Array? arr, Value.Function? cmp) = ResolveSortArguments(args);
+        if (arr is null)
         {
             return Value.Undefined.Instance;
         }
@@ -540,6 +522,19 @@ internal static class ArrayPreset
         }
 
         return new Value.Array([.. items]);
+    }
+
+    private static (Value.Array? Arr, Value.Function? Cmp) ResolveSortArguments(Value[] args)
+    {
+        if (args.Length == 1 && args[0] is Value.Array solo)
+        {
+            return (solo, null);
+        }
+        if (args.Length >= 2 && TryResolveArrayFunctionPair(args[0], args[1]) is { } pair)
+        {
+            return (pair.Arr, pair.Fn);
+        }
+        return (null, null);
     }
 
     private static async ValueTask MergeSortAsync(

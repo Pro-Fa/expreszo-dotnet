@@ -101,30 +101,14 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
         throw new VariableException(name);
     }
 
-    private Value? FromResolve(VariableResolveResult? r, EvalContext ctx)
-    {
-        if (r is null)
+    private Value? FromResolve(VariableResolveResult? r, EvalContext ctx) =>
+        r switch
         {
-            return null;
-        }
-
-        if (r is VariableResolveResult.NotResolvedResult)
-        {
-            return null;
-        }
-
-        if (r is VariableResolveResult.Bound b)
-        {
-            return b.Value;
-        }
-
-        if (r is VariableResolveResult.Alias a)
-        {
-            return ResolveIdent(a.Name, ctx);
-        }
-
-        return null;
-    }
+            null => null,
+            VariableResolveResult.Bound b => b.Value,
+            VariableResolveResult.Alias a => ResolveIdent(a.Name, ctx),
+            _ => null, // NotResolvedResult and any future unknowns
+        };
 
     // ---------- member / unary / binary / ternary ----------
 
@@ -152,45 +136,46 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
         return await fn([operand], ctx).ConfigureAwait(false);
     }
 
-    private async ValueTask<Value> EvalBinary(Binary b, EvalContext ctx)
+    private ValueTask<Value> EvalBinary(Binary b, EvalContext ctx)
     {
-        // Assignment: LHS must be NameRef; store in scope.
         if (b.Op == "=")
         {
-            if (b.Left is not NameRef nr)
-            {
-                throw new EvaluationException(Messages.AssignmentToNonIdentifier());
-            }
-            Value value = await EvalNode(b.Right, ctx).ConfigureAwait(false);
-            ctx.Scope.Assign(nr.Name, value);
-            return value;
+            return EvalAssignment(b, ctx);
         }
-
-        // Short-circuit and / && / or / ||. RHS is wrapped in Paren by the
-        // parser but the inner evaluation is gated here.
-        if (b.Op is "and" or "&&")
+        if (b.Op is "and" or "&&" or "or" or "||")
         {
-            Value left = await EvalNode(b.Left, ctx).ConfigureAwait(false);
-            if (!left.IsTruthy())
-            {
-                return Value.Boolean.False;
-            }
-
-            Value right = await EvalNode(b.Right, ctx).ConfigureAwait(false);
-            return Value.Boolean.Of(right.IsTruthy());
+            return EvalShortCircuit(b, ctx);
         }
-        if (b.Op is "or" or "||")
+        return EvalGenericBinary(b, ctx);
+    }
+
+    private async ValueTask<Value> EvalAssignment(Binary b, EvalContext ctx)
+    {
+        if (b.Left is not NameRef nr)
         {
-            Value left = await EvalNode(b.Left, ctx).ConfigureAwait(false);
-            if (left.IsTruthy())
-            {
-                return Value.Boolean.True;
-            }
-
-            Value right = await EvalNode(b.Right, ctx).ConfigureAwait(false);
-            return Value.Boolean.Of(right.IsTruthy());
+            throw new EvaluationException(Messages.AssignmentToNonIdentifier());
         }
+        Value value = await EvalNode(b.Right, ctx).ConfigureAwait(false);
+        ctx.Scope.Assign(nr.Name, value);
+        return value;
+    }
 
+    private async ValueTask<Value> EvalShortCircuit(Binary b, EvalContext ctx)
+    {
+        // The parser wraps RHS in Paren; we gate the RHS evaluation here so
+        // the right operand never runs when the left already decides the result.
+        bool isAnd = b.Op is "and" or "&&";
+        Value left = await EvalNode(b.Left, ctx).ConfigureAwait(false);
+        if (left.IsTruthy() != isAnd)
+        {
+            return isAnd ? Value.Boolean.False : Value.Boolean.True;
+        }
+        Value right = await EvalNode(b.Right, ctx).ConfigureAwait(false);
+        return Value.Boolean.Of(right.IsTruthy());
+    }
+
+    private async ValueTask<Value> EvalGenericBinary(Binary b, EvalContext ctx)
+    {
         Value l = await EvalNode(b.Left, ctx).ConfigureAwait(false);
         Value r = await EvalNode(b.Right, ctx).ConfigureAwait(false);
         if (!ops.BinaryOps.TryGetValue(b.Op, out ExprFunc? fn))
@@ -234,36 +219,45 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
         }
         try
         {
-            // Lazy `if(cond, t, f)` - only the selected branch is evaluated.
-            if (c.Callee is Ident idf && idf.Name == "if" && c.Args.Length == 3)
+            if (IsLazyIf(c))
             {
-                Value cond = await EvalNode(c.Args[0], ctx).ConfigureAwait(false);
-                return cond.IsTruthy()
-                    ? await EvalNode(c.Args[1], ctx).ConfigureAwait(false)
-                    : await EvalNode(c.Args[2], ctx).ConfigureAwait(false);
+                return await EvalLazyIf(c, ctx).ConfigureAwait(false);
             }
-
-            Value callee = await EvalNode(c.Callee, ctx).ConfigureAwait(false);
-            if (callee is not Value.Function fn)
-            {
-                throw new FunctionException(
-                    c.Callee is Ident id ? id.Name : "<expression>",
-                    message: Messages.NotCallable(c.Callee is Ident nid ? nid.Name : "<expression>")
-                );
-            }
-            ExpressionValidator.ValidateAllowedFunction(fn, ops.CallableImplementations);
-
-            var args = new Value[c.Args.Length];
-            for (int i = 0; i < c.Args.Length; i++)
-            {
-                args[i] = await EvalNode(c.Args[i], ctx).ConfigureAwait(false);
-            }
-            return await fn.Invoke(args, ctx).ConfigureAwait(false);
+            return await InvokeCall(c, ctx).ConfigureAwait(false);
         }
         finally
         {
             _callDepth--;
         }
+    }
+
+    // Lazy `if(cond, t, f)` - only the selected branch is evaluated.
+    private static bool IsLazyIf(Call c) =>
+        c.Callee is Ident { Name: "if" } && c.Args.Length == 3;
+
+    private async ValueTask<Value> EvalLazyIf(Call c, EvalContext ctx)
+    {
+        Value cond = await EvalNode(c.Args[0], ctx).ConfigureAwait(false);
+        Node chosen = cond.IsTruthy() ? c.Args[1] : c.Args[2];
+        return await EvalNode(chosen, ctx).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Value> InvokeCall(Call c, EvalContext ctx)
+    {
+        Value callee = await EvalNode(c.Callee, ctx).ConfigureAwait(false);
+        if (callee is not Value.Function fn)
+        {
+            string name = c.Callee is Ident id ? id.Name : "<expression>";
+            throw new FunctionException(name, message: Messages.NotCallable(name));
+        }
+        ExpressionValidator.ValidateAllowedFunction(fn, ops.CallableImplementations);
+
+        var args = new Value[c.Args.Length];
+        for (int i = 0; i < c.Args.Length; i++)
+        {
+            args[i] = await EvalNode(c.Args[i], ctx).ConfigureAwait(false);
+        }
+        return await fn.Invoke(args, ctx).ConfigureAwait(false);
     }
 
     private Value EvalLambda(Lambda l, EvalContext ctx)
@@ -306,34 +300,27 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
 
     private async ValueTask<Value> EvalCase(Case k, EvalContext ctx)
     {
-        if (k.Subject is not null)
+        // `case` with a subject matches by strict equality; without a subject
+        // it picks the first truthy `when`.
+        Value? subject = k.Subject is null
+            ? null
+            : await EvalNode(k.Subject, ctx).ConfigureAwait(false);
+
+        foreach (CaseArm arm in k.Arms)
         {
-            Value subject = await EvalNode(k.Subject, ctx).ConfigureAwait(false);
-            foreach (CaseArm arm in k.Arms)
+            Value when = await EvalNode(arm.When, ctx).ConfigureAwait(false);
+            bool matches = subject is null
+                ? when.IsTruthy()
+                : CorePreset.StrictEquals(subject, when);
+            if (matches)
             {
-                Value when = await EvalNode(arm.When, ctx).ConfigureAwait(false);
-                if (CorePreset.StrictEquals(subject, when))
-                {
-                    return await EvalNode(arm.Then, ctx).ConfigureAwait(false);
-                }
+                return await EvalNode(arm.Then, ctx).ConfigureAwait(false);
             }
         }
-        else
-        {
-            foreach (CaseArm arm in k.Arms)
-            {
-                Value when = await EvalNode(arm.When, ctx).ConfigureAwait(false);
-                if (when.IsTruthy())
-                {
-                    return await EvalNode(arm.Then, ctx).ConfigureAwait(false);
-                }
-            }
-        }
-        if (k.Else is not null)
-        {
-            return await EvalNode(k.Else, ctx).ConfigureAwait(false);
-        }
-        return Value.Undefined.Instance;
+
+        return k.Else is null
+            ? Value.Undefined.Instance
+            : await EvalNode(k.Else, ctx).ConfigureAwait(false);
     }
 
     private async ValueTask<Value> EvalSequence(Sequence s, EvalContext ctx)
@@ -355,27 +342,33 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
         );
         foreach (ArrayEntry entry in a.Elements)
         {
-            switch (entry)
-            {
-                case ArrayElement e:
-                    builder.Add(await EvalNode(e.Node, ctx).ConfigureAwait(false));
-                    break;
-                case ArraySpread sp:
-                    Value v = await EvalNode(sp.Argument, ctx).ConfigureAwait(false);
-                    if (v is Value.Array arr)
-                    {
-                        builder.AddRange(arr.Items);
-                    }
-                    else
-                    {
-                        throw new EvaluationException(
-                            "spread target in array literal must be an array"
-                        );
-                    }
-                    break;
-            }
+            await AppendArrayEntry(builder, entry, ctx).ConfigureAwait(false);
         }
         return new Value.Array(builder.ToImmutable());
+    }
+
+    private async ValueTask AppendArrayEntry(
+        ImmutableArray<Value>.Builder builder,
+        ArrayEntry entry,
+        EvalContext ctx
+    )
+    {
+        switch (entry)
+        {
+            case ArrayElement e:
+                builder.Add(await EvalNode(e.Node, ctx).ConfigureAwait(false));
+                return;
+            case ArraySpread sp:
+                Value v = await EvalNode(sp.Argument, ctx).ConfigureAwait(false);
+                if (v is not Value.Array arr)
+                {
+                    throw new EvaluationException(
+                        "spread target in array literal must be an array"
+                    );
+                }
+                builder.AddRange(arr.Items);
+                return;
+        }
     }
 
     private async ValueTask<Value> EvalObjectLit(ObjectLit o, EvalContext ctx)
@@ -383,30 +376,36 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
         var dict = new Dictionary<string, Value>(StringComparer.Ordinal);
         foreach (ObjectEntry entry in o.Properties)
         {
-            switch (entry)
-            {
-                case ObjectProperty p:
-                    dict[p.Key] = await EvalNode(p.Value, ctx).ConfigureAwait(false);
-                    break;
-                case ObjectSpread sp:
-                    Value v = await EvalNode(sp.Argument, ctx).ConfigureAwait(false);
-                    if (v is Value.Object obj)
-                    {
-                        foreach (KeyValuePair<string, Value> kv in obj.Props)
-                        {
-                            dict[kv.Key] = kv.Value;
-                        }
-                    }
-                    else
-                    {
-                        throw new EvaluationException(
-                            "spread target in object literal must be an object"
-                        );
-                    }
-                    break;
-            }
+            await MergeObjectEntry(dict, entry, ctx).ConfigureAwait(false);
         }
         return Value.Object.From(dict);
+    }
+
+    private async ValueTask MergeObjectEntry(
+        Dictionary<string, Value> dict,
+        ObjectEntry entry,
+        EvalContext ctx
+    )
+    {
+        switch (entry)
+        {
+            case ObjectProperty p:
+                dict[p.Key] = await EvalNode(p.Value, ctx).ConfigureAwait(false);
+                return;
+            case ObjectSpread sp:
+                Value v = await EvalNode(sp.Argument, ctx).ConfigureAwait(false);
+                if (v is not Value.Object obj)
+                {
+                    throw new EvaluationException(
+                        "spread target in object literal must be an object"
+                    );
+                }
+                foreach (KeyValuePair<string, Value> kv in obj.Props)
+                {
+                    dict[kv.Key] = kv.Value;
+                }
+                return;
+        }
     }
 
     // ---------- post-processing ----------

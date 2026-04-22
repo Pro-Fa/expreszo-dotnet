@@ -288,102 +288,97 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
 
     private bool IsNumber()
     {
-        int pos = _pos;
-        int startPos = pos;
-        int resetPos = pos;
+        int startPos = _pos;
+        (int mantissaEnd, bool hasDigits) = ScanMantissa(startPos);
+        if (!hasDigits)
+        {
+            // Leave the cursor where it was so the caller can try other rules.
+            return false;
+        }
+
+        int end = CharAt(mantissaEnd) is 'e' or 'E'
+            ? ScanExponent(mantissaEnd, fallback: mantissaEnd)
+            : mantissaEnd;
+
+        string slice = _expression[startPos..end];
+        if (
+            !double.TryParse(
+                slice,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out double number
+            )
+        )
+        {
+            throw new ParseException(
+                $"malformed numeric literal: {slice}",
+                new ErrorContext
+                {
+                    Expression = _expression,
+                    Position = GetCoordinatesAt(startPos),
+                }
+            );
+        }
+        _current = NewToken(TokenKind.Number, slice, startPos, end, number: number);
+        _pos = end;
+        return true;
+    }
+
+    /// <summary>
+    /// Scans digits and at most one '.'; returns the end position and whether
+    /// at least one digit was consumed. A lone leading '.' is consumed here
+    /// but still reports HasDigits=false so the caller can reject the literal.
+    /// </summary>
+    private (int End, bool HasDigits) ScanMantissa(int startPos)
+    {
+        int pos = startPos;
         bool foundDot = false;
         bool foundDigits = false;
-        bool valid = false;
-        char c = '\0';
-
         while (pos < _expression.Length)
         {
-            c = _expression[pos];
-            if ((c >= '0' && c <= '9') || (!foundDot && c == '.'))
+            char c = _expression[pos];
+            bool isDigit = c >= '0' && c <= '9';
+            bool isFirstDot = !foundDot && c == '.';
+            if (!isDigit && !isFirstDot)
             {
-                if (c == '.')
-                {
-                    foundDot = true;
-                }
-                else
-                {
-                    foundDigits = true;
-                }
-                pos++;
-                valid = foundDigits;
+                break;
+            }
+            foundDot |= isFirstDot;
+            foundDigits |= isDigit;
+            pos++;
+        }
+        return (pos, foundDigits);
+    }
+
+    /// <summary>
+    /// Scans an exponent clause starting at the 'e' or 'E' at <paramref name="markerPos"/>.
+    /// Returns the position past the exponent when at least one digit was
+    /// found, otherwise <paramref name="fallback"/> to signal "no exponent here".
+    /// </summary>
+    private int ScanExponent(int markerPos, int fallback)
+    {
+        int pos = markerPos + 1;
+        bool acceptSign = true;
+        bool seenDigit = false;
+        while (pos < _expression.Length)
+        {
+            char c = _expression[pos];
+            if (acceptSign && (c == '+' || c == '-'))
+            {
+                acceptSign = false;
+            }
+            else if (c >= '0' && c <= '9')
+            {
+                seenDigit = true;
+                acceptSign = false;
             }
             else
             {
                 break;
             }
-        }
-
-        if (valid)
-        {
-            resetPos = pos;
-        }
-
-        // Peek the trailing char. (In TS `c!` is used to reference the last
-        // loop char; here we carry it forward explicitly.)
-        char trailing = pos < _expression.Length ? _expression[pos] : c;
-        if (trailing is 'e' or 'E')
-        {
             pos++;
-            bool acceptSign = true;
-            bool validExponent = false;
-            while (pos < _expression.Length)
-            {
-                char ec = _expression[pos];
-                if (acceptSign && (ec == '+' || ec == '-'))
-                {
-                    acceptSign = false;
-                }
-                else if (ec >= '0' && ec <= '9')
-                {
-                    validExponent = true;
-                    acceptSign = false;
-                }
-                else
-                {
-                    break;
-                }
-                pos++;
-            }
-            if (!validExponent)
-            {
-                pos = resetPos;
-            }
         }
-
-        if (valid)
-        {
-            string slice = _expression[startPos..pos];
-            if (
-                !double.TryParse(
-                    slice,
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out double number
-                )
-            )
-            {
-                throw new ParseException(
-                    $"malformed numeric literal: {slice}",
-                    new ErrorContext
-                    {
-                        Expression = _expression,
-                        Position = GetCoordinatesAt(startPos),
-                    }
-                );
-            }
-            _current = NewToken(TokenKind.Number, slice, startPos, pos, number: number);
-            _pos = pos;
-        }
-        else
-        {
-            _pos = resetPos;
-        }
-        return valid;
+        return seenDigit ? pos : fallback;
     }
 
     // ---------------- strings ----------------
@@ -457,51 +452,41 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
         return sb.ToString();
     }
 
-    private (string Char, int Skip) ProcessEscapeChar(char c, string v, int currentIndex)
-    {
-        switch (c)
+    private (string Char, int Skip) ProcessEscapeChar(char c, string v, int currentIndex) =>
+        c switch
         {
-            case '\'':
-                return ("'", 0);
-            case '"':
-                return ("\"", 0);
-            case '\\':
-                return ("\\", 0);
-            case '/':
-                return ("/", 0);
-            case 'b':
-                return ("\b", 0);
-            case 'f':
-                return ("\f", 0);
-            case 'n':
-                return ("\n", 0);
-            case 'r':
-                return ("\r", 0);
-            case 't':
-                return ("\t", 0);
-            case 'u':
-            {
-                if (currentIndex + 4 >= v.Length)
-                {
-                    throw ParseError("Illegal unicode escape sequence");
-                }
-                string hex = v.Substring(currentIndex + 1, 4);
-                if (
-                    !ushort.TryParse(
-                        hex,
-                        NumberStyles.HexNumber,
-                        CultureInfo.InvariantCulture,
-                        out ushort code
-                    )
-                )
-                {
-                    throw ParseError($"Illegal escape sequence: \\u{hex}");
-                }
-                return (((char)code).ToString(), 4);
-            }
-            default:
-                throw ParseError($"Illegal escape sequence: \"\\{c}\"");
+            '\'' => ("'", 0),
+            '"' => ("\"", 0),
+            '\\' => ("\\", 0),
+            '/' => ("/", 0),
+            'b' => ("\b", 0),
+            'f' => ("\f", 0),
+            'n' => ("\n", 0),
+            'r' => ("\r", 0),
+            't' => ("\t", 0),
+            'u' => ProcessUnicodeEscape(v, currentIndex),
+            _ => throw ParseError($"Illegal escape sequence: \"\\{c}\""),
+        };
+
+    private (string Char, int Skip) ProcessUnicodeEscape(string v, int currentIndex)
+    {
+        if (currentIndex + 4 >= v.Length)
+        {
+            throw ParseError("Illegal unicode escape sequence");
         }
+        string hex = v.Substring(currentIndex + 1, 4);
+        if (
+            !ushort.TryParse(
+                hex,
+                NumberStyles.HexNumber,
+                CultureInfo.InvariantCulture,
+                out ushort code
+            )
+        )
+        {
+            throw ParseError($"Illegal escape sequence: \\u{hex}");
+        }
+        return (((char)code).ToString(), 4);
     }
 
     // ---------------- identifiers / constants / named operators ----------------
@@ -509,45 +494,22 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
     private bool IsConst()
     {
         int startPos = _pos;
-        int i = startPos;
-        for (; i < _expression.Length; i++)
-        {
-            char c = _expression[i];
-            if (!IsLetter(c))
-            {
-                if (i == _pos || (c != '_' && c != '.' && (c < '0' || c > '9')))
-                {
-                    break;
-                }
-            }
-        }
-        if (i <= startPos)
+        int end = ScanWord(startPos, allowDot: true);
+        if (end == startPos)
         {
             return false;
         }
-        string str = _expression[startPos..i];
+        string str = _expression[startPos..end];
         if (config.NumericConstants.TryGetValue(str, out double number))
         {
-            _current = NewToken(
-                TokenKind.Number,
-                str,
-                startPos,
-                startPos + str.Length,
-                number: number
-            );
-            _pos += str.Length;
+            _current = NewToken(TokenKind.Number, str, startPos, end, number: number);
+            _pos = end;
             return true;
         }
         if (config.BuiltinLiterals.TryGetValue(str, out Value? literal))
         {
-            _current = NewToken(
-                TokenKind.Const,
-                str,
-                startPos,
-                startPos + str.Length,
-                constValue: literal
-            );
-            _pos += str.Length;
+            _current = NewToken(TokenKind.Const, str, startPos, end, constValue: literal);
+            _pos = end;
             return true;
         }
         return false;
@@ -556,31 +518,20 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
     private bool IsNamedOp()
     {
         int startPos = _pos;
-        int i = startPos;
-        for (; i < _expression.Length; i++)
-        {
-            char c = _expression[i];
-            if (!IsLetter(c))
-            {
-                if (i == _pos || (c != '_' && (c < '0' || c > '9')))
-                {
-                    break;
-                }
-            }
-        }
-        if (i <= startPos)
+        int end = ScanWord(startPos, allowDot: false);
+        if (end == startPos)
         {
             return false;
         }
-        string str = _expression[startPos..i];
-        if (str == "not")
+        string str = _expression[startPos..end];
+
+        // The named operator 'not in' is two words separated by a single space;
+        // detect it by peeking past the first word.
+        if (str == "not" && StartsWithAt(startPos, "not in"))
         {
-            // Look ahead for the compound 'not in' named op.
-            if (StartsWithAt(startPos, "not in"))
-            {
-                str = "not in";
-            }
+            str = "not in";
         }
+
         if (config.IsOperatorEnabled(str) && config.IsNamedOperator(str))
         {
             _current = NewToken(TokenKind.Op, str, startPos, startPos + str.Length);
@@ -590,201 +541,208 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
         return false;
     }
 
+    /// <summary>
+    /// Scans a word: first char must be a letter, subsequent chars may be
+    /// letters, digits, '_', or (when <paramref name="allowDot"/>) '.'.
+    /// Returns <paramref name="startPos"/> if no word was matched.
+    /// </summary>
+    private int ScanWord(int startPos, bool allowDot)
+    {
+        int pos = startPos;
+        if (pos >= _expression.Length || !IsLetter(_expression[pos]))
+        {
+            return startPos;
+        }
+        pos++;
+        while (pos < _expression.Length)
+        {
+            char c = _expression[pos];
+            bool isContinuation =
+                IsLetter(c)
+                || c == '_'
+                || (c >= '0' && c <= '9')
+                || (allowDot && c == '.');
+            if (!isContinuation)
+            {
+                break;
+            }
+            pos++;
+        }
+        return pos;
+    }
+
+    /// <summary>
+    /// Identifier grammar:
+    ///   Name := Start (Continue)*
+    ///   Start := letter | '_' | '$' ('$')?
+    ///   Continue := letter | digit | '_'
+    /// A leading '$' does not by itself make the token an identifier; at
+    /// least one letter (or leading '_') must appear, so bare '$' / '$$' are
+    /// rejected but '$x' / '$$x' / '_' are accepted.
+    /// </summary>
     private bool IsName()
     {
         int startPos = _pos;
-        int i = startPos;
-        bool hasLetter = false;
-        bool leadingDollar = false;
-        for (; i < _expression.Length; i++)
-        {
-            char c = _expression[i];
-            if (!IsLetter(c))
-            {
-                if (i == _pos && (c == '$' || c == '_'))
-                {
-                    if (c == '_')
-                    {
-                        hasLetter = true;
-                    }
-                    else
-                    {
-                        leadingDollar = true;
-                    }
-                    continue;
-                }
-                if (i == startPos + 1 && leadingDollar && c == '$')
-                {
-                    // allow $$name tokens
-                    continue;
-                }
-                if (i == _pos || !hasLetter || (c != '_' && (c < '0' || c > '9')))
-                {
-                    break;
-                }
-            }
-            else
-            {
-                hasLetter = true;
-            }
-        }
-        if (!hasLetter)
+        if (startPos >= _expression.Length)
         {
             return false;
         }
-        string str = _expression[startPos..i];
-        TokenKind kind = config.Keywords.Contains(str) ? TokenKind.Keyword : TokenKind.Name;
-        _current = NewToken(kind, str, startPos, startPos + str.Length);
-        _pos += str.Length;
-        return true;
-    }
 
-    // ---------------- operators ----------------
-
-    private bool IsOperator()
-    {
-        int startPos = _pos;
-        char c = CharAt(_pos);
-
-        // Spread '...' before single-char '.'
-        if (c == '.' && CharAt(_pos + 1) == '.' && CharAt(_pos + 2) == '.')
+        int pos = startPos;
+        bool hasLetter;
+        bool leadingDollar;
+        char first = _expression[pos];
+        if (IsLetter(first) || first == '_')
         {
-            _current = NewToken(TokenKind.Op, "...", startPos, startPos + 3);
-            _pos += 2;
-            // falls through to the shared increment below
+            hasLetter = true;
+            leadingDollar = false;
         }
-        else if (SingleCharOperators.Contains(c))
+        else if (first == '$')
         {
-            _current = NewToken(TokenKind.Op, c.ToString(), startPos, startPos + 1);
-        }
-        else if (MultiplicationSymbols.Contains(c))
-        {
-            _current = NewToken(TokenKind.Op, "*", startPos, startPos + 1);
-        }
-        else if (c == '?')
-        {
-            if (CharAt(_pos + 1) == '?')
-            {
-                if (!config.IsOperatorEnabled("??"))
-                {
-                    return false;
-                }
-                _current = NewToken(TokenKind.Op, "??", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, "?", startPos, startPos + 1);
-            }
-        }
-        else if (c == '>')
-        {
-            if (CharAt(_pos + 1) == '=')
-            {
-                _current = NewToken(TokenKind.Op, ">=", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, ">", startPos, startPos + 1);
-            }
-        }
-        else if (c == '<')
-        {
-            if (CharAt(_pos + 1) == '=')
-            {
-                _current = NewToken(TokenKind.Op, "<=", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, "<", startPos, startPos + 1);
-            }
-        }
-        else if (c == '=')
-        {
-            if (CharAt(_pos + 1) == '>')
-            {
-                if (!config.IsOperatorEnabled("=>"))
-                {
-                    return false;
-                }
-                _current = NewToken(TokenKind.Op, "=>", startPos, startPos + 2);
-                _pos++;
-            }
-            else if (CharAt(_pos + 1) == '=')
-            {
-                _current = NewToken(TokenKind.Op, "==", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, "=", startPos, startPos + 1);
-            }
-        }
-        else if (c == '!')
-        {
-            if (CharAt(_pos + 1) == '=')
-            {
-                _current = NewToken(TokenKind.Op, "!=", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, "!", startPos, startPos + 1);
-            }
-        }
-        else if (c == '|')
-        {
-            if (CharAt(_pos + 1) == '|')
-            {
-                _current = NewToken(TokenKind.Op, "||", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                _current = NewToken(TokenKind.Op, "|", startPos, startPos + 1);
-            }
-        }
-        else if (c == '&')
-        {
-            if (CharAt(_pos + 1) == '&')
-            {
-                _current = NewToken(TokenKind.Op, "&&", startPos, startPos + 2);
-                _pos++;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else if (c == 'a' && StartsWithAt(_pos, "as "))
-        {
-            if (!config.IsOperatorEnabled("as"))
-            {
-                return false;
-            }
-            _current = NewToken(TokenKind.Op, "as", startPos, startPos + 2);
-            // 'as' is two characters; bump now, the shared ++ below adds the
-            // second one.
-            _pos++;
+            hasLetter = false;
+            leadingDollar = true;
         }
         else
         {
             return false;
         }
+        pos++;
 
-        _pos++;
-
-        // Final enablement gate. '...' and named ops we already gated; everything else checks now.
-        if (_current!.Text == "..." || config.IsOperatorEnabled(_current.Text))
+        // Optional second '$' after a leading '$' - allows '$$name'.
+        if (leadingDollar && pos < _expression.Length && _expression[pos] == '$')
         {
-            return true;
+            pos++;
         }
 
-        _pos = startPos;
-        _current = null;
+        while (pos < _expression.Length)
+        {
+            char c = _expression[pos];
+            if (IsLetter(c))
+            {
+                hasLetter = true;
+            }
+            else if (hasLetter && (c == '_' || (c >= '0' && c <= '9')))
+            {
+                // valid continuation
+            }
+            else
+            {
+                break;
+            }
+            pos++;
+        }
+
+        if (!hasLetter)
+        {
+            return false;
+        }
+
+        string str = _expression[startPos..pos];
+        TokenKind kind = config.Keywords.Contains(str) ? TokenKind.Keyword : TokenKind.Name;
+        _current = NewToken(kind, str, startPos, pos);
+        _pos = pos;
+        return true;
+    }
+
+    // ---------------- operators ----------------
+
+    // Single-char operator glyphs that are always their own token when enabled.
+    // '?' / '=' / '<' / '>' / '!' / '|' are also single-char ops but they
+    // double as the first char of a compound and are covered via TryOneCharOp.
+    // '&' is intentionally excluded: a bare '&' is not a valid operator.
+    private static readonly HashSet<char> CompoundAmbiguousOps =
+    [
+        '?',
+        '=',
+        '<',
+        '>',
+        '!',
+        '|',
+    ];
+
+    /// <summary>
+    /// Tokenises the operator starting at <c>_pos</c> using a longest-match
+    /// rule: try the 3-char form ('...') first, then any 2-char compound,
+    /// then a 1-char op, then the keyword-op 'as'. Every non-'...' form is
+    /// gated by <see cref="ParserConfig.IsOperatorEnabled"/>; a disabled form
+    /// does not fall back to a shorter form (matches the original behaviour).
+    /// </summary>
+    private bool IsOperator()
+    {
+        int startPos = _pos;
+
+        if (StartsWithAt(startPos, "..."))
+        {
+            return EmitOperatorUnchecked(startPos, "...", 3);
+        }
+
+        string? compound = TryTwoCharOperator(CharAt(startPos), CharAt(startPos + 1));
+        if (compound is not null)
+        {
+            return EmitOperator(startPos, compound, 2);
+        }
+
+        string? single = TryOneCharOperator(CharAt(startPos));
+        if (single is not null)
+        {
+            return EmitOperator(startPos, single, 1);
+        }
+
+        // 'as' keyword-operator; requires trailing whitespace so it doesn't
+        // swallow the prefix of identifiers like 'aspect'.
+        if (StartsWithAt(startPos, "as "))
+        {
+            return EmitOperator(startPos, "as", 2);
+        }
+
         return false;
+    }
+
+    private static string? TryTwoCharOperator(char first, char second) =>
+        (first, second) switch
+        {
+            ('?', '?') => "??",
+            ('>', '=') => ">=",
+            ('<', '=') => "<=",
+            ('=', '>') => "=>",
+            ('=', '=') => "==",
+            ('!', '=') => "!=",
+            ('|', '|') => "||",
+            ('&', '&') => "&&",
+            _ => null,
+        };
+
+    private static string? TryOneCharOperator(char c)
+    {
+        if (SingleCharOperators.Contains(c))
+        {
+            return c.ToString();
+        }
+        if (MultiplicationSymbols.Contains(c))
+        {
+            return "*";
+        }
+        if (CompoundAmbiguousOps.Contains(c))
+        {
+            return c.ToString();
+        }
+        return null;
+    }
+
+    private bool EmitOperator(int startPos, string text, int length)
+    {
+        if (!config.IsOperatorEnabled(text))
+        {
+            return false;
+        }
+        return EmitOperatorUnchecked(startPos, text, length);
+    }
+
+    private bool EmitOperatorUnchecked(int startPos, string text, int length)
+    {
+        _current = NewToken(TokenKind.Op, text, startPos, startPos + length);
+        _pos = startPos + length;
+        return true;
     }
 
     // ---------------- error surface ----------------
