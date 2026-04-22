@@ -1,4 +1,13 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo_dark.png">
+  <img src="docs/logo.png" alt="ExpresZo" width="420">
+</picture>
+
 # ExpresZo .NET
+
+[![NuGet](https://img.shields.io/nuget/v/Expreszo.svg?maxAge=3600)](https://www.nuget.org/packages/Expreszo)
+[![CI](https://github.com/Pro-Fa/expreszo-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/Pro-Fa/expreszo-dotnet/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Pro-Fa/expreszo-dotnet/branch/main/graph/badge.svg)](https://codecov.io/gh/Pro-Fa/expreszo-dotnet)
 
 A safe, extensible expression evaluator for .NET - a configurable alternative to `eval()`. Parses and evaluates the same expression language as [`expreszo-typescript`](https://github.com/Pro-Fa/expreszo-typescript).
 
