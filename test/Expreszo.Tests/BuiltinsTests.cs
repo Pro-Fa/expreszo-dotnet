@@ -23,7 +23,10 @@ public class BuiltinsTests
         Value result = Parser.Evaluate(expr);
 
         // Assert
-        await Assert.That(((Value.Number)result).V).IsEqualTo(expected);
+        // Tolerance covers libm divergences across platforms (e.g. glibc's
+        // cbrt(27) returns 3.0000000000000004 while Windows' CRT returns 3).
+        // The exact-integer cases (abs, ceil, floor, ...) still pass.
+        await Assert.That(((Value.Number)result).V).IsEqualTo(expected).Within(1e-10);
     }
 
     [Test]
