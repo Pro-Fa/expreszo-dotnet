@@ -275,6 +275,40 @@ Test names can use `snake_case_for_readability` (CA1707 is suppressed in the tes
 4. Add AST-, parser-, and evaluator-level tests.
 5. Document the operator in [`docs/syntax.md`](syntax.md).
 
+## Releases
+
+Package versions are derived from git tags via [MinVer](https://github.com/adamralph/minver). Pushing an annotated tag of the form `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`, `v1.2.0-rc.1`) on `main` triggers the `.github/workflows/release.yml` pipeline, which:
+
+1. Restores, builds, runs the test suite, and runs the Native-AOT canary publish.
+2. Packs the library (`dotnet pack`) — MinVer reads the tag and produces `Expreszo.<version>.nupkg` + matching `.snupkg`.
+3. Pushes the package to [NuGet.org](https://www.nuget.org/) using the `NUGET_API_KEY` secret.
+4. Creates a GitHub Release with auto-generated release notes and attaches the `.nupkg` / `.snupkg` files.
+
+### Cutting a release
+
+```bash
+# Make sure main is green and pulled
+git checkout main
+git pull --ff-only
+
+# Create an annotated tag
+git tag -a v1.0.0 -m "v1.0.0"
+
+# Push the tag — this triggers the release workflow
+git push origin v1.0.0
+```
+
+Untagged builds get a pre-release version (e.g. `0.0.0-alpha.0.42`) so local `dotnet pack` runs are easy to distinguish from published releases.
+
+### Pre-releases
+
+Tags that contain a hyphen (e.g. `v1.0.0-beta.1`) are published as pre-releases — the workflow passes `prerelease: true` to the GitHub Release and NuGet surfaces them only when "Include prereleases" is enabled.
+
+### One-time setup for maintainers
+
+1. Generate an API key at [nuget.org/account/apikeys](https://www.nuget.org/account/apikeys) scoped to the `Expreszo` package (or the whole account for a first publish).
+2. In GitHub repo settings → Environments, create an environment called `nuget` and add `NUGET_API_KEY` as an environment secret. Optionally add required reviewers so pushes require approval.
+
 ## Questions?
 
 - File an issue on [GitHub](https://github.com/pro-fa/expreszo-dotnet/issues).

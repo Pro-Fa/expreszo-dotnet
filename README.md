@@ -16,6 +16,8 @@ A safe, extensible expression evaluator for .NET — a configurable alternative 
 dotnet add package Expreszo
 ```
 
+Targets `net10.0`. Packages are published to [NuGet.org](https://www.nuget.org/packages/Expreszo) automatically on every `v*.*.*` tag — see the [releases page](https://github.com/pro-fa/expreszo-dotnet/releases) for changelogs.
+
 ## Quick start
 
 ```csharp

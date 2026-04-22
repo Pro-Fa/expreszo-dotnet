@@ -32,6 +32,13 @@
     <Description>Safe, extensible expression evaluator for .NET — a configurable alternative to eval. Pratt parser, immutable AST, JsonDocument-based I/O, Native AOT compatible.</Description>
     <PackageTags>expression;evaluator;parser;json;aot;trimming;expreszo</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- MinVer computes version from the nearest git tag of the form vX.Y.Z.
+         Between tags, it appends a pre-release suffix so local packs are
+         distinguishable from tagged releases. Build-time only; no runtime
+         reflection, no effect on the AOT guarantee. -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -40,6 +47,13 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Expreszo.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
