@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-24
+
+Splits the language-server analyser out of the OmniSharp-coupled server
+project into a new `Expreszo.Analysis` NuGet package. Tooling consumers
+that want type inference, the built-in catalogue, and symbol / cursor
+lookup can now take a single AOT-safe package without the OmniSharp +
+MediatR transitive stack the LSP server requires. The server itself is
+also NuGet-published this release for editor integrators who want to
+embed it in-process.
+
+### Added
+
+- **New package `Expreszo.Analysis`** — AOT-compatible, `IsTrimmable=true`.
+  Public surface promoted from language-server internals:
+  - `BuiltinMetadata` + `BuiltinEntry` + `BuiltinKind` — catalogue of 27
+    operators, 82 built-in functions, and 9 keyword / literal names,
+    each annotated with return kind, min/max arity, and parameter-kind
+    hints where the signature is precise enough to matter.
+  - `TypeInference` — literal-driven, flow-insensitive per-node
+    `ValueKind` annotation. Stays conservative: free identifiers and
+    short-circuit operators resolve to `Unknown` so the validator only
+    fires on genuinely concrete kinds.
+  - `TypeValidator` — emits `SemanticException` diagnostics for
+    non-numeric `+`, unsupported `as` targets, literal divide-by-zero,
+    built-in arity mismatches, wrong-kind arguments, and dead-branch
+    `isXxx(literal)` predicates.
+  - `SymbolIndex` — name-keyed definition / reference spans from one
+    AST walk.
+  - `AstLocator` + `LocateResult` — deepest-node-at-offset lookup with
+    ancestor chain.
+  - `LineIndex` — offset ↔ (line, character) conversion; LSP-compatible
+    position encoding.
+- **New package `Expreszo.LanguageServer`** — the existing
+  OmniSharp-based server promoted from project-only to a NuGet package.
+  Public entry point is `ExpreszoLanguageServer.RunAsync(Stream, Stream,
+  CancellationToken)`. Not AOT-compatible; use `Expreszo.Analysis`
+  instead when you only want the analyser.
+- Release workflow now packs all three publishable projects in one
+  step; the existing `dotnet nuget push ./artifacts/*.nupkg` glob picks
+  up every `.nupkg` / `.snupkg`.
+
+### Changed
+
+- The analyser source files (`BuiltinMetadata`, `TypeOverrides`,
+  `TypeInference`, `TypeValidator`, `SymbolIndex`, `AstLocator`,
+  `LineIndex`) moved from `Expreszo.LanguageServer` to the new
+  `Expreszo.Analysis` assembly and switched namespace from
+  `Expreszo.LanguageServer` to `Expreszo.Analysis`. The LSP server
+  continues to consume them via a project reference.
+- Handler source files add `using Expreszo.Analysis;`. No functional
+  change; the LSP transport behaviour is unchanged.
+
+### Notes
+
+The core `Expreszo` package's AOT / trim guarantees are unchanged; the
+`AotCheck` sample still publishes and runs natively on every tag. The
+new `Expreszo.Analysis` package joins the AOT-safe tier. Only
+`Expreszo.LanguageServer` is AOT-incompatible, which is by design given
+the OmniSharp framework it embeds.
+
 ## [0.3.0] - 2026-04-24
 
 The "tooling" release. A full Language Server Protocol implementation
@@ -130,7 +190,8 @@ Initial public release.
 - GitHub Actions workflows: `ci.yml` (build + test + AOT canary + pack) and
   `release.yml` (tag-driven NuGet publish with MinVer + GitHub Release).
 
-[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.1.0...v0.2.0
