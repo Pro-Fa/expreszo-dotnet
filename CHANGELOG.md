@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Release workflow now publishes to NuGet.org via Trusted Publishing
+  (OIDC token exchange) instead of a long-lived `NUGET_API_KEY` secret.
+
 ## [0.2.1] - 2026-04-22
 
 Release-pipeline validation version. No library changes over 0.2.0.
