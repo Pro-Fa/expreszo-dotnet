@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using Expreszo.Errors;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace Expreszo.LanguageServer;
@@ -22,16 +24,40 @@ internal sealed class DocumentCache
     /// </summary>
     public ExpreszoTextDocument Update(DocumentUri uri, string text, int version)
     {
-        ParseResult result = _parser.TryParse(text ?? string.Empty);
-
-        var doc = new ExpreszoTextDocument(
-            text ?? string.Empty,
-            version,
-            result.Expression.Root,
-            result.Errors
+        string source = text ?? string.Empty;
+        ParseResult parse = _parser.TryParse(source);
+        TypeInference inference = TypeInference.Run(parse.Expression.Root);
+        ImmutableArray<ExpressionException> semantic = TypeValidator.Validate(
+            parse.Expression.Root,
+            inference,
+            source
         );
+
+        ImmutableArray<ExpressionException> errors = Concat(parse.Errors, semantic);
+
+        var doc = new ExpreszoTextDocument(source, version, parse.Expression.Root, errors);
         _documents[uri] = doc;
         return doc;
+    }
+
+    private static ImmutableArray<ExpressionException> Concat(
+        ImmutableArray<ExpressionException> a,
+        ImmutableArray<ExpressionException> b
+    )
+    {
+        if (a.IsDefaultOrEmpty)
+        {
+            return b.IsDefault ? [] : b;
+        }
+        if (b.IsDefaultOrEmpty)
+        {
+            return a;
+        }
+
+        var builder = ImmutableArray.CreateBuilder<ExpressionException>(a.Length + b.Length);
+        builder.AddRange(a);
+        builder.AddRange(b);
+        return builder.ToImmutable();
     }
 
     /// <summary>Removes the entry for <paramref name="uri"/>.</summary>

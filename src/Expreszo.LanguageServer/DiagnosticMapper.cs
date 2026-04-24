@@ -48,6 +48,7 @@ internal static class DiagnosticMapper
             AccessException => DiagnosticSeverity.Error,
             VariableException => DiagnosticSeverity.Warning,
             FunctionException => DiagnosticSeverity.Warning,
+            SemanticException => DiagnosticSeverity.Warning,
             _ => DiagnosticSeverity.Error,
         };
 

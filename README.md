@@ -156,9 +156,9 @@ dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Eval*'  
 
 ## Tooling
 
-A Language Server Protocol (LSP) implementation lives in `src/Expreszo.LanguageServer` and `src/Expreszo.LanguageServer.Host`. The host is a stdio server consumable from any LSP-aware editor (VS Code, Neovim, Zed, JetBrains, Emacs). Current coverage: diagnostics (statement-level error recovery, so one broken statement doesn't silence diagnostics elsewhere), hover, completion, signature help, document symbols, goto-definition, find-references, rename, and semantic tokens. A VS Code extension and published host binaries are the next things on the roadmap.
+A Language Server Protocol (LSP) implementation lives in `src/Expreszo.LanguageServer` and `src/Expreszo.LanguageServer.Host`. The host is a stdio server consumable from any LSP-aware editor (VS Code, Neovim, Zed, JetBrains, Emacs). Current coverage: diagnostics (syntax + statically-detectable type issues), hover, completion, signature help, document symbols, goto-definition, find-references, rename, and semantic tokens. A VS Code extension and published host binaries are the next things on the roadmap.
 
-Error-recovering parsing is exposed on the library API too — `Parser.TryParse(string)` returns a `ParseResult` with a best-effort expression plus an `ImmutableArray<ExpressionException>`, so callers that want diagnostics without try/catch plumbing can use it directly.
+Error-recovering parsing and the type-tag enum are exposed on the library API — `Parser.TryParse(string)` returns a `ParseResult` with a best-effort expression plus an `ImmutableArray<ExpressionException>`, and `Expreszo.ValueKind` is the coarse type tag used by the language server's literal-driven validator. Library callers that want the same diagnostics flow are free to wire those pieces together without the server.
 
 ## Out of scope
 

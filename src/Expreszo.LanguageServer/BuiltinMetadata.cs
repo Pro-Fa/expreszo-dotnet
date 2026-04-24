@@ -42,6 +42,31 @@ internal static class BuiltinMetadata
 
     private static BuiltinEntry[] BuildEntries()
     {
+        BuiltinEntry[] raw = BuildRawEntries();
+
+        // Apply type overrides. Builtins not listed here keep the default
+        // (return Unknown, 0..int.MaxValue arity, empty parameter kinds).
+        ImmutableDictionary<string, TypeOverride> overrides = TypeOverrides.All;
+
+        for (int i = 0; i < raw.Length; i++)
+        {
+            if (overrides.TryGetValue(raw[i].Name, out TypeOverride o))
+            {
+                raw[i] = raw[i] with
+                {
+                    ReturnKind = o.ReturnKind,
+                    MinArity = o.MinArity,
+                    MaxArity = o.MaxArity,
+                    ParameterKinds = o.ParameterKinds,
+                };
+            }
+        }
+
+        return raw;
+    }
+
+    private static BuiltinEntry[] BuildRawEntries()
+    {
         List<BuiltinEntry> list =
         [
             // --- keywords / constants -------------------------------------
@@ -279,6 +304,26 @@ internal sealed record BuiltinEntry(
     ImmutableArray<string> Parameters
 )
 {
+    /// <summary>Return type of the built-in, or <see cref="ValueKind.Unknown"/> when unspecified.</summary>
+    public ValueKind ReturnKind { get; init; } = ValueKind.Unknown;
+
+    /// <summary>Minimum positional argument count the call site must supply.</summary>
+    public int MinArity { get; init; }
+
+    /// <summary>
+    /// Maximum positional argument count the call site may supply.
+    /// <see cref="int.MaxValue"/> means variadic / unconstrained.
+    /// </summary>
+    public int MaxArity { get; init; } = int.MaxValue;
+
+    /// <summary>
+    /// Expected kind for each positional argument. When shorter than the
+    /// actual argument count, trailing arguments are treated as
+    /// <see cref="ValueKind.Unknown"/>. <see cref="ValueKind.Unknown"/>
+    /// entries are ignored (no check performed).
+    /// </summary>
+    public ImmutableArray<ValueKind> ParameterKinds { get; init; } = [];
+
     /// <summary>Markdown-formatted hover content: code block with the signature plus a one-line summary.</summary>
     public string ToMarkdown() => $"```expreszo\n{Signature}\n```\n{Summary}";
 }

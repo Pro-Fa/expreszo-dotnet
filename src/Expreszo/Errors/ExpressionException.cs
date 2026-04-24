@@ -123,3 +123,16 @@ public sealed class ExpressionArgumentException(
 /// </summary>
 public sealed class AsyncRequiredException(ErrorContext? context = null)
     : ExpressionException(Messages.AsyncRequired(), context);
+
+/// <summary>
+/// Flags a statically-detectable runtime-type problem: an operator applied
+/// to operands the evaluator would reject, a cast with an unsupported
+/// target, a built-in call with the wrong number of arguments, and so on.
+/// Produced by the language-server-side type validator; the library itself
+/// never throws this type during evaluation.
+/// </summary>
+public sealed class SemanticException(
+    string message,
+    ErrorContext? context = null,
+    Exception? innerException = null
+) : ExpressionException(message, context, innerException);

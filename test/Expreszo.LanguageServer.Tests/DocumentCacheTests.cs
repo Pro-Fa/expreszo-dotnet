@@ -41,6 +41,19 @@ public class DocumentCacheTests
     }
 
     [Test]
+    public async Task Update_surfaces_semantic_diagnostics()
+    {
+        var cache = new DocumentCache();
+
+        ExpreszoTextDocument doc = cache.Update(Uri, "\"foo\" + 1", version: 1);
+
+        await Assert.That(doc.HasErrors).IsTrue();
+        await Assert.That(
+            doc.Errors.Any(e => e is global::Expreszo.Errors.SemanticException)
+        ).IsTrue();
+    }
+
+    [Test]
     public async Task Remove_deletes_the_entry()
     {
         var cache = new DocumentCache();
