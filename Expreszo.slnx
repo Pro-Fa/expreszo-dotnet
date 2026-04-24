@@ -8,6 +8,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Expreszo/Expreszo.csproj" />
+    <Project Path="src/Expreszo.Analysis/Expreszo.Analysis.csproj" />
     <Project Path="src/Expreszo.LanguageServer/Expreszo.LanguageServer.csproj" />
     <Project Path="src/Expreszo.LanguageServer.Host/Expreszo.LanguageServer.Host.csproj" />
   </Folder>

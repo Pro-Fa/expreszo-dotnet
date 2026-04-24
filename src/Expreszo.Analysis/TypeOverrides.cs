@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Selective type annotations overlaid on the plain <see cref="BuiltinMetadata"/>

@@ -1,27 +1,30 @@
-using System.Collections.Immutable;
 using Expreszo.Ast;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Literal-driven, flow-insensitive type inference over an AST. One
 /// post-order walk annotates every node with a <see cref="ValueKind"/>.
 /// Free identifiers, user-function return values, and anything behind an
 /// operator whose result shape depends on runtime data all stay
-/// <see cref="ValueKind.Unknown"/>; the validator reads this pass and only
-/// flags problems where both (or the sole) operands are known.
+/// <see cref="ValueKind.Unknown"/>; <see cref="TypeValidator"/> reads this
+/// pass and only flags problems where operand kinds are known.
 /// </summary>
-internal sealed class TypeInference
+public sealed class TypeInference
 {
     private readonly Dictionary<Node, ValueKind> _kinds = [];
 
     private TypeInference() { }
 
+    /// <summary>Per-node kinds collected during the walk.</summary>
     public IReadOnlyDictionary<Node, ValueKind> Kinds => _kinds;
 
+    /// <summary>Kind assigned to <paramref name="node"/>, or <see cref="ValueKind.Unknown"/> if the node wasn't visited.</summary>
     public ValueKind KindOf(Node node) =>
         _kinds.TryGetValue(node, out ValueKind k) ? k : ValueKind.Unknown;
 
+    /// <summary>Runs the inference pass from <paramref name="root"/>.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="root"/> is <c>null</c>.</exception>
     public static TypeInference Run(Node root)
     {
         ArgumentNullException.ThrowIfNull(root);

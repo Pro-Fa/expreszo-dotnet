@@ -1,20 +1,21 @@
 using System.Collections.Immutable;
 using Expreszo.Ast;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Locates the deepest <see cref="Node"/> whose <see cref="Node.Span"/>
 /// contains a given source offset. Backs hover, completion-context, and
-/// future goto / rename features.
+/// goto / rename features.
 /// </summary>
-internal static class AstLocator
+public static class AstLocator
 {
     /// <summary>
     /// Returns the narrowest node containing <paramref name="offset"/>, along
-    /// with its ancestor chain (outermost first). Returns an empty result if
-    /// the offset lies outside the root span.
+    /// with its ancestor chain (outermost first). Returns <see cref="LocateResult.None"/>
+    /// if the offset lies outside <paramref name="root"/>'s span.
     /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="root"/> is <c>null</c>.</exception>
     public static LocateResult Locate(Node root, int offset)
     {
         ArgumentNullException.ThrowIfNull(root);
@@ -104,10 +105,18 @@ internal static class AstLocator
     }
 }
 
-/// <summary>Result of an <see cref="AstLocator.Locate"/> call.</summary>
-internal readonly record struct LocateResult(Node? Deepest, ImmutableArray<Node> Chain)
+/// <summary>
+/// Result of an <see cref="AstLocator.Locate"/> call. <see cref="Chain"/>
+/// is ordered outermost-first (index 0 is the root), and <see cref="Deepest"/>
+/// is the last element of the chain.
+/// </summary>
+/// <param name="Deepest">The narrowest node containing the queried offset, or <c>null</c> when no match.</param>
+/// <param name="Chain">Ancestor chain from root to deepest. Empty when no match.</param>
+public readonly record struct LocateResult(Node? Deepest, ImmutableArray<Node> Chain)
 {
+    /// <summary>Sentinel value representing "offset didn't match any node".</summary>
     public static LocateResult None { get; } = new(null, []);
 
+    /// <summary>True when <see cref="Deepest"/> is populated.</summary>
     public bool Found => Deepest is not null;
 }

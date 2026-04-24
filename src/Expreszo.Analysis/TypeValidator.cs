@@ -2,20 +2,30 @@ using System.Collections.Immutable;
 using Expreszo.Ast;
 using Expreszo.Errors;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Consumes the output of <see cref="TypeInference"/> and emits
 /// <see cref="SemanticException"/> diagnostics for literal-driven problems
 /// the evaluator would hit at runtime. Conservative: never fires when an
-/// operand's kind is <see cref="ValueKind.Unknown"/>.
+/// operand's kind is <see cref="ValueKind.Unknown"/>, so idiomatic dynamic
+/// code stays quiet.
 /// </summary>
-internal static class TypeValidator
+public static class TypeValidator
 {
     private static readonly ImmutableHashSet<string> ValidCastTargets = [
         "number", "int", "integer", "boolean",
     ];
 
+    /// <summary>
+    /// Walks <paramref name="root"/> and returns every semantic-error
+    /// diagnostic found, using <paramref name="inference"/> for per-node
+    /// type kinds.
+    /// </summary>
+    /// <param name="root">AST to validate.</param>
+    /// <param name="inference">Result of <see cref="TypeInference.Run"/> over the same root.</param>
+    /// <param name="source">Optional source text used to populate <see cref="ErrorContext.Expression"/>.</param>
+    /// <exception cref="ArgumentNullException">Either required argument is <c>null</c>.</exception>
     public static ImmutableArray<ExpressionException> Validate(
         Node root,
         TypeInference inference,

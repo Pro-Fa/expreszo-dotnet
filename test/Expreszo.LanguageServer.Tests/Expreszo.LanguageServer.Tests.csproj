@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+    <ProjectReference Include="..\..\src\Expreszo.Analysis\Expreszo.Analysis.csproj" />
     <ProjectReference Include="..\..\src\Expreszo.LanguageServer\Expreszo.LanguageServer.csproj" />
   </ItemGroup>
 </Project>

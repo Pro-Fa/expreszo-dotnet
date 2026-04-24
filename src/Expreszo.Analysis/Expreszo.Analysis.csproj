@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Expreszo.Analysis</RootNamespace>
+    <AssemblyName>Expreszo.Analysis</AssemblyName>
+
+    <!-- AOT / trimming guarantees. The analysis package has no DI, no
+         MediatR, no runtime code generation — it is safe to ship with the
+         same trim and AOT constraints the core library enforces. The
+         separate OmniSharp-based Expreszo.LanguageServer package is not
+         AOT-compatible; consumers who only want the analyser avoid that
+         dependency by referencing this package directly. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+    <!-- NuGet package metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Expreszo.Analysis</PackageId>
+    <Title>ExpresZo Analysis</Title>
+    <Description>Static analysis primitives for the ExpresZo expression language: literal-driven type inference, type validation, symbol indexing, AST cursor lookup, line / offset conversion, and the built-in function catalogue. Targets tooling authors who want the analyser without pulling in the OmniSharp Language Server runtime.</Description>
+    <PackageTags>expreszo;analysis;type-inference;symbols;diagnostics;aot;trimming</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None
+      Include="..\..\README.md"
+      Pack="true"
+      PackagePath="\"
+      Condition="Exists('..\..\README.md')"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

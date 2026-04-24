@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Expreszo.Analysis;
 using Expreszo.Errors;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;

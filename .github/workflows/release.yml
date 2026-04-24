@@ -76,7 +76,13 @@ jobs:
         run: ./aot-out/Expreszo.AotCheck
 
       - name: Pack
-        run: dotnet pack src/Expreszo/Expreszo.csproj --configuration Release --no-build --output ./artifacts
+        # Packs the three packable projects in one command — the library,
+        # the analyser, and the LSP host. The nuget push step below picks
+        # every .nupkg / .snupkg up via glob.
+        run: |
+          dotnet pack src/Expreszo/Expreszo.csproj --configuration Release --no-build --output ./artifacts
+          dotnet pack src/Expreszo.Analysis/Expreszo.Analysis.csproj --configuration Release --no-build --output ./artifacts
+          dotnet pack src/Expreszo.LanguageServer/Expreszo.LanguageServer.csproj --configuration Release --no-build --output ./artifacts
 
       - name: List package contents
         run: ls -la ./artifacts

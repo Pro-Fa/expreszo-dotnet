@@ -1,15 +1,15 @@
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Static catalogue of ExpresZo operators, built-in functions, and keywords
-/// keyed by name. Used by hover, completion, and semantic-highlight
-/// classification. Signatures are short-form documentation strings, not
-/// parser-consumed schemas.
+/// keyed by name. Used by hover, completion, signature help, semantic-
+/// highlight classification, and the type validator. Signatures are
+/// short-form documentation strings, not parser-consumed schemas.
 /// </summary>
-internal static class BuiltinMetadata
+public static class BuiltinMetadata
 {
     private static readonly BuiltinEntry[] All = BuildEntries();
 
@@ -244,13 +244,10 @@ internal static class BuiltinMetadata
     private static BuiltinEntry Kw(string name, string signature, string summary) =>
         new(name, BuiltinKind.Keyword, signature, summary, []);
 
-    /// <summary>
-    /// Best-effort extraction of parameter names from a signature string.
-    /// Handles the common shapes we write: <c>name(a, b)</c>,
-    /// <c>name(a, b, …)</c>, and <c>name(a) | name(array)</c> (picks the
-    /// first form). Returns an empty array when the signature doesn't look
-    /// like a simple call form.
-    /// </summary>
+    // Best-effort extraction of parameter names from a signature string.
+    // Handles the common shapes we write: `name(a, b)`, `name(a, b, …)`,
+    // and `name(a) | name(array)` (picks the first form). Returns an empty
+    // array when the signature doesn't look like a simple call form.
     private static ImmutableArray<string> ExtractParameters(string signature)
     {
         int open = signature.IndexOf('(', StringComparison.Ordinal);
@@ -288,15 +285,30 @@ internal static class BuiltinMetadata
 }
 
 /// <summary>Kind of a catalogued identifier.</summary>
-internal enum BuiltinKind
+public enum BuiltinKind
 {
+    /// <summary>A callable function (builtin or user-facing).</summary>
     Function,
+
+    /// <summary>An operator symbol or word (e.g. <c>+</c>, <c>and</c>).</summary>
     Operator,
+
+    /// <summary>A reserved keyword (e.g. <c>case</c>, <c>when</c>) or builtin literal.</summary>
     Keyword,
 }
 
-/// <summary>One entry in the built-in catalogue.</summary>
-internal sealed record BuiltinEntry(
+/// <summary>
+/// One entry in the built-in catalogue. Combines human-facing documentation
+/// (<see cref="Signature"/>, <see cref="Summary"/>) with analyser hints
+/// (<see cref="ReturnKind"/>, <see cref="MinArity"/>, <see cref="MaxArity"/>,
+/// <see cref="ParameterKinds"/>).
+/// </summary>
+/// <param name="Name">Canonical name as it appears in source.</param>
+/// <param name="Kind">Which of function / operator / keyword this entry represents.</param>
+/// <param name="Signature">Short one-line signature for hover display.</param>
+/// <param name="Summary">One-sentence description.</param>
+/// <param name="Parameters">Parameter names extracted from the signature; may be empty.</param>
+public sealed record BuiltinEntry(
     string Name,
     BuiltinKind Kind,
     string Signature,

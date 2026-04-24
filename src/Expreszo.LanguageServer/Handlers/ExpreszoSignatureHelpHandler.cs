@@ -1,3 +1,4 @@
+using Expreszo.Analysis;
 using Expreszo.Ast;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;

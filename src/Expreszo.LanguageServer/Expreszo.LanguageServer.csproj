@@ -2,13 +2,13 @@
   <PropertyGroup>
     <RootNamespace>Expreszo.LanguageServer</RootNamespace>
     <AssemblyName>Expreszo.LanguageServer</AssemblyName>
-    <IsPackable>false</IsPackable>
 
     <!-- OmniSharp's LSP framework wires handlers through
          Microsoft.Extensions.DependencyInjection and MediatR at runtime, so
          this assembly cannot participate in the library's AOT / trimming
-         guarantees. The library project in src/Expreszo retains those
-         guarantees unchanged. -->
+         guarantees. The core library and Expreszo.Analysis both retain
+         those guarantees unchanged — consumers who only want the analyser
+         should reference Expreszo.Analysis instead of this package. -->
     <IsAotCompatible>false</IsAotCompatible>
     <IsTrimmable>false</IsTrimmable>
 
@@ -20,7 +20,29 @@
          intertwined enough that some handler files need usings that the
          analyser can't see are transitively required. -->
     <NoWarn>$(NoWarn);CA1812;CA1848;CA2254;IDE0005</NoWarn>
+
+    <!-- NuGet package metadata. Packed alongside the analyser so editor
+         integrators can reach for `dotnet add package Expreszo.LanguageServer`
+         and embed the server in-process. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Expreszo.LanguageServer</PackageId>
+    <Title>ExpresZo Language Server</Title>
+    <Description>OmniSharp-based Language Server Protocol implementation for the ExpresZo expression language. Wraps Expreszo.Analysis into diagnostics / hover / completion / signature help / document symbols / definition / references / rename / semantic-tokens handlers and a stdio host entry point. Not AOT-compatible — consumers who only want the analyser should reference Expreszo.Analysis instead.</Description>
+    <PackageTags>expreszo;language-server;lsp;omnisharp;diagnostics;completion;hover</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None
+      Include="..\..\README.md"
+      Pack="true"
+      PackagePath="\"
+      Condition="Exists('..\..\README.md')"
+    />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
@@ -32,5 +54,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Expreszo\Expreszo.csproj" />
+    <ProjectReference Include="..\Expreszo.Analysis\Expreszo.Analysis.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

@@ -1,27 +1,29 @@
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Precomputes newline offsets for a source document and converts between
-/// absolute character offsets (as used by <c>TextSpan</c>) and LSP
+/// absolute character offsets (as used by <c>TextSpan</c>) and 0-based
 /// <c>(line, character)</c> positions.
 /// </summary>
 /// <remarks>
-/// LSP line/character are both 0-based and count UTF-16 code units. The
-/// default LSP position encoding is <c>utf-16</c>, which matches how .NET
-/// <see cref="string"/> indices work, so each code-unit offset in the source
-/// maps 1:1 to an LSP character column.
+/// The output is compatible with the Language Server Protocol's default
+/// <c>utf-16</c> position encoding — both line and character are 0-based
+/// and count UTF-16 code units, which matches how .NET <see cref="string"/>
+/// indices work — so an LSP server can forward these positions unchanged.
 /// </remarks>
-internal sealed class LineIndex
+public sealed class LineIndex
 {
     private readonly string _text;
     private readonly int[] _lineStarts;
 
+    /// <summary>Builds a line index over <paramref name="text"/>.</summary>
     public LineIndex(string text)
     {
         _text = text ?? string.Empty;
         _lineStarts = BuildLineStarts(_text);
     }
 
+    /// <summary>Number of lines in the indexed text (always at least 1).</summary>
     public int LineCount => _lineStarts.Length;
 
     /// <summary>Converts a 0-based character offset into a 0-based (line, character) pair.</summary>

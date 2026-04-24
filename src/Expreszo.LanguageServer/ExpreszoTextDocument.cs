@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Expreszo.Analysis;
 using Expreszo.Ast;
 using Expreszo.Errors;
 

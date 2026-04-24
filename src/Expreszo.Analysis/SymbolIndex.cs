@@ -2,20 +2,21 @@ using System.Collections.Immutable;
 using Expreszo.Ast;
 using Expreszo.Errors;
 
-namespace Expreszo.LanguageServer;
+namespace Expreszo.Analysis;
 
 /// <summary>
 /// Name-keyed index of definitions and references reached from a
-/// <see cref="Node"/>. Produced on demand per request; cheap (one AST walk)
-/// and therefore not cached.
+/// <see cref="Node"/>. Produced on demand per request (one AST walk) and
+/// not cached.
 /// </summary>
 /// <remarks>
 /// Scope-insensitive on purpose. A name shadowed by a lambda parameter
 /// still matches the outer name — resolving true lexical scope needs
-/// the Tier-3 type-and-scope pass. For a single-file expression language
-/// in practice this is rarely confusing.
+/// a scope-aware flow pass that is not part of the current analyser.
+/// For a single-file expression language this is rarely confusing in
+/// practice.
 /// </remarks>
-internal sealed class SymbolIndex
+public sealed class SymbolIndex
 {
     private SymbolIndex(
         ImmutableDictionary<string, ImmutableArray<TextSpan>> definitions,
@@ -47,6 +48,8 @@ internal sealed class SymbolIndex
         return builder.ToImmutable();
     }
 
+    /// <summary>Builds a fresh index over <paramref name="root"/>.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="root"/> is <c>null</c>.</exception>
     public static SymbolIndex Build(Node root)
     {
         ArgumentNullException.ThrowIfNull(root);
@@ -76,12 +79,10 @@ internal sealed class SymbolIndex
         return new SymbolIndex(Freeze(defs), Freeze(refs));
     }
 
-    /// <summary>
-    /// The selection span for a <see cref="FunctionDef"/> — the name
-    /// portion, derived from the node's full span by taking the first
-    /// <c>FunctionDef.Name.Length</c> characters. The library doesn't
-    /// expose a per-name span on the node itself.
-    /// </summary>
+    // The selection span for a FunctionDef — the name portion, derived
+    // from the node's full span by taking the first FunctionDef.Name.Length
+    // characters. The library doesn't expose a per-name span on the node
+    // itself.
     private static TextSpan SelectionSpan(FunctionDef fd) =>
         new(fd.Span.Start, fd.Span.Start + fd.Name.Length);
 
