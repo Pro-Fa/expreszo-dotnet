@@ -44,11 +44,6 @@ internal sealed class ExpreszoHoverHandler : HoverHandlerBase
 
     private static Hover? ResolveFromAst(ExpreszoTextDocument doc, int offset)
     {
-        if (doc.Root is null)
-        {
-            return null;
-        }
-
         LocateResult located = AstLocator.Locate(doc.Root, offset);
         if (!located.Found)
         {

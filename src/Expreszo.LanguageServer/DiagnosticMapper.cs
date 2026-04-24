@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Expreszo.Errors;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -10,11 +11,26 @@ namespace Expreszo.LanguageServer;
 /// </summary>
 internal static class DiagnosticMapper
 {
-    /// <summary>
-    /// Maps <paramref name="error"/> to a single-element diagnostic list.
-    /// The strict parser only ever surfaces one error at a time — multi-
-    /// diagnostic publishing lands alongside error recovery in Tier 2.
-    /// </summary>
+    /// <summary>Maps each exception in <paramref name="errors"/> to a <see cref="Diagnostic"/>.</summary>
+    public static IEnumerable<Diagnostic> Map(
+        ImmutableArray<ExpressionException> errors,
+        LineIndex lineIndex
+    )
+    {
+        ArgumentNullException.ThrowIfNull(lineIndex);
+
+        if (errors.IsDefaultOrEmpty)
+        {
+            yield break;
+        }
+
+        foreach (ExpressionException error in errors)
+        {
+            yield return MapOne(error, lineIndex);
+        }
+    }
+
+    /// <summary>Single-error convenience overload for call sites that still hold one exception.</summary>
     public static IEnumerable<Diagnostic> Map(ExpressionException error, LineIndex lineIndex)
     {
         ArgumentNullException.ThrowIfNull(error);

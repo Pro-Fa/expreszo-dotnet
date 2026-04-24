@@ -92,9 +92,7 @@ internal sealed class ExpreszoTextDocumentSyncHandler : TextDocumentSyncHandlerB
 
     private void PublishDiagnostics(DocumentUri uri, ExpreszoTextDocument doc)
     {
-        IEnumerable<Diagnostic> diagnostics = doc.LastError is null
-            ? []
-            : DiagnosticMapper.Map(doc.LastError, doc.LineIndex);
+        IEnumerable<Diagnostic> diagnostics = DiagnosticMapper.Map(doc.Errors, doc.LineIndex);
 
         _server.TextDocument.PublishDiagnostics(
             new PublishDiagnosticsParams

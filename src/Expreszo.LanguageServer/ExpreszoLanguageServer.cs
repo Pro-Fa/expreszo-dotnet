@@ -46,7 +46,11 @@ public static class ExpreszoLanguageServer
                     .WithHandler<ExpreszoTextDocumentSyncHandler>()
                     .WithHandler<ExpreszoHoverHandler>()
                     .WithHandler<ExpreszoCompletionHandler>()
+                    .WithHandler<ExpreszoSignatureHelpHandler>()
                     .WithHandler<ExpreszoDocumentSymbolHandler>()
+                    .WithHandler<ExpreszoDefinitionHandler>()
+                    .WithHandler<ExpreszoReferencesHandler>()
+                    .WithHandler<ExpreszoRenameHandler>()
                     .WithHandler<ExpreszoSemanticTokensHandler>();
             }, cancellationToken)
             .ConfigureAwait(false);

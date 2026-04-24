@@ -156,7 +156,9 @@ dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Eval*'  
 
 ## Tooling
 
-A Language Server Protocol (LSP) implementation lives in `src/Expreszo.LanguageServer` and `src/Expreszo.LanguageServer.Host`. The host is a stdio server consumable from any LSP-aware editor (VS Code, Neovim, Zed, JetBrains, Emacs). Tier 1 covers diagnostics, hover, completion, document symbols, and semantic tokens; richer features (error-recovering parse, signature help, goto, rename) land in later tiers.
+A Language Server Protocol (LSP) implementation lives in `src/Expreszo.LanguageServer` and `src/Expreszo.LanguageServer.Host`. The host is a stdio server consumable from any LSP-aware editor (VS Code, Neovim, Zed, JetBrains, Emacs). Current coverage: diagnostics (statement-level error recovery, so one broken statement doesn't silence diagnostics elsewhere), hover, completion, signature help, document symbols, goto-definition, find-references, rename, and semantic tokens. A VS Code extension and published host binaries are the next things on the roadmap.
+
+Error-recovering parsing is exposed on the library API too — `Parser.TryParse(string)` returns a `ParseResult` with a best-effort expression plus an `ImmutableArray<ExpressionException>`, so callers that want diagnostics without try/catch plumbing can use it directly.
 
 ## Out of scope
 

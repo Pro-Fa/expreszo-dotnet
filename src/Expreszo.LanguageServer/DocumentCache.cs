@@ -1,14 +1,13 @@
 using System.Collections.Concurrent;
-using Expreszo.Ast;
-using Expreszo.Errors;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace Expreszo.LanguageServer;
 
 /// <summary>
 /// Stores one <see cref="ExpreszoTextDocument"/> per open URI and re-parses
-/// the buffer on every change. The cache owns the single <see cref="Parser"/>
-/// instance — parsers are immutable and safe for concurrent use.
+/// the buffer on every change via <see cref="Parser.TryParse(string)"/>. The
+/// cache owns a single <see cref="Parser"/> instance — parsers are immutable
+/// and safe for concurrent use.
 /// </summary>
 internal sealed class DocumentCache
 {
@@ -16,26 +15,21 @@ internal sealed class DocumentCache
     private readonly Parser _parser = new();
 
     /// <summary>
-    /// Parses <paramref name="text"/> and stores the resulting state under
-    /// <paramref name="uri"/>. Returns the stored document so callers can
-    /// publish diagnostics or react to the new state without a second lookup.
+    /// Parses <paramref name="text"/> tolerantly and stores the resulting
+    /// state under <paramref name="uri"/>. Always returns a populated
+    /// document — syntax errors in one statement don't eliminate the whole
+    /// AST.
     /// </summary>
     public ExpreszoTextDocument Update(DocumentUri uri, string text, int version)
     {
-        Node? root = null;
-        ExpressionException? error = null;
+        ParseResult result = _parser.TryParse(text ?? string.Empty);
 
-        try
-        {
-            Expression expr = _parser.Parse(text ?? string.Empty);
-            root = expr.Root;
-        }
-        catch (ExpressionException ex)
-        {
-            error = ex;
-        }
-
-        var doc = new ExpreszoTextDocument(text ?? string.Empty, version, root, error);
+        var doc = new ExpreszoTextDocument(
+            text ?? string.Empty,
+            version,
+            result.Expression.Root,
+            result.Errors
+        );
         _documents[uri] = doc;
         return doc;
     }

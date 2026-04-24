@@ -58,7 +58,7 @@ public class DocumentSymbolHandlerTests
     }
 
     [Test]
-    public async Task Returns_null_for_unparseable_document()
+    public async Task Returns_empty_container_for_unparseable_document()
     {
         var cache = new DocumentCache();
         cache.Update(Uri, "1 +", version: 1);
@@ -69,6 +69,10 @@ public class DocumentSymbolHandlerTests
             CancellationToken.None
         );
 
-        await Assert.That(result).IsNull();
+        // Error-recovering parse still yields a (minimal) AST, so the handler
+        // returns an empty container rather than null. Null stays reserved
+        // for the "no document open" case.
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Count()).IsEqualTo(0);
     }
 }

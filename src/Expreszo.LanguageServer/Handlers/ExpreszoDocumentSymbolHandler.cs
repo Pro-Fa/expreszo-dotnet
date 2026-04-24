@@ -26,7 +26,7 @@ internal sealed class ExpreszoDocumentSymbolHandler : DocumentSymbolHandlerBase
     )
     {
         ExpreszoTextDocument? doc = _cache.TryGet(request.TextDocument.Uri);
-        if (doc?.Root is null)
+        if (doc is null)
         {
             return Task.FromResult<SymbolInformationOrDocumentSymbolContainer?>(null);
         }

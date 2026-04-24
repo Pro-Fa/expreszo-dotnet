@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace Expreszo.LanguageServer;
 
@@ -210,13 +211,55 @@ internal static class BuiltinMetadata
     }
 
     private static BuiltinEntry Fn(string name, string signature, string summary) =>
-        new(name, BuiltinKind.Function, signature, summary);
+        new(name, BuiltinKind.Function, signature, summary, ExtractParameters(signature));
 
     private static BuiltinEntry Op(string name, string signature, string summary) =>
-        new(name, BuiltinKind.Operator, signature, summary);
+        new(name, BuiltinKind.Operator, signature, summary, []);
 
     private static BuiltinEntry Kw(string name, string signature, string summary) =>
-        new(name, BuiltinKind.Keyword, signature, summary);
+        new(name, BuiltinKind.Keyword, signature, summary, []);
+
+    /// <summary>
+    /// Best-effort extraction of parameter names from a signature string.
+    /// Handles the common shapes we write: <c>name(a, b)</c>,
+    /// <c>name(a, b, …)</c>, and <c>name(a) | name(array)</c> (picks the
+    /// first form). Returns an empty array when the signature doesn't look
+    /// like a simple call form.
+    /// </summary>
+    private static ImmutableArray<string> ExtractParameters(string signature)
+    {
+        int open = signature.IndexOf('(', StringComparison.Ordinal);
+        if (open < 0)
+        {
+            return [];
+        }
+
+        int close = signature.IndexOf(')', open + 1);
+        if (close < 0)
+        {
+            return [];
+        }
+
+        string inner = signature.Substring(open + 1, close - open - 1).Trim();
+        if (inner.Length == 0)
+        {
+            return [];
+        }
+
+        var result = ImmutableArray.CreateBuilder<string>();
+        foreach (string raw in inner.Split(','))
+        {
+            string name = raw.Trim();
+            if (name.Length == 0)
+            {
+                continue;
+            }
+
+            result.Add(name);
+        }
+
+        return result.ToImmutable();
+    }
 }
 
 /// <summary>Kind of a catalogued identifier.</summary>
@@ -228,7 +271,13 @@ internal enum BuiltinKind
 }
 
 /// <summary>One entry in the built-in catalogue.</summary>
-internal sealed record BuiltinEntry(string Name, BuiltinKind Kind, string Signature, string Summary)
+internal sealed record BuiltinEntry(
+    string Name,
+    BuiltinKind Kind,
+    string Signature,
+    string Summary,
+    ImmutableArray<string> Parameters
+)
 {
     /// <summary>Markdown-formatted hover content: code block with the signature plus a one-line summary.</summary>
     public string ToMarkdown() => $"```expreszo\n{Signature}\n```\n{Summary}";

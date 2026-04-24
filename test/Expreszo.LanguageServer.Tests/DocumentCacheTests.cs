@@ -7,25 +7,37 @@ public class DocumentCacheTests
     private static readonly DocumentUri Uri = DocumentUri.From("file:///tmp/test.zo");
 
     [Test]
-    public async Task Update_with_valid_source_populates_root_and_clears_error()
+    public async Task Update_with_valid_source_populates_root_and_clears_errors()
     {
         var cache = new DocumentCache();
 
         ExpreszoTextDocument doc = cache.Update(Uri, "1 + 2", version: 1);
 
         await Assert.That(doc.Root).IsNotNull();
-        await Assert.That(doc.LastError).IsNull();
+        await Assert.That(doc.HasErrors).IsFalse();
     }
 
     [Test]
-    public async Task Update_with_invalid_source_populates_error_and_clears_root()
+    public async Task Update_with_invalid_source_records_at_least_one_error()
     {
         var cache = new DocumentCache();
 
         ExpreszoTextDocument doc = cache.Update(Uri, "1 +", version: 1);
 
-        await Assert.That(doc.Root).IsNull();
-        await Assert.That(doc.LastError).IsNotNull();
+        await Assert.That(doc.HasErrors).IsTrue();
+    }
+
+    [Test]
+    public async Task Update_with_partial_failure_keeps_healthy_statements()
+    {
+        var cache = new DocumentCache();
+
+        ExpreszoTextDocument doc = cache.Update(Uri, "a = 1; b = 1 +; c = 3", version: 1);
+
+        await Assert.That(doc.HasErrors).IsTrue();
+        await Assert.That(doc.Errors.Length).IsEqualTo(1);
+        // The a = ... and c = ... statements should still produce AST.
+        await Assert.That(doc.Root).IsNotNull();
     }
 
     [Test]
