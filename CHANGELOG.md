@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-24
+
+### Changed
+
+- `Expression.Root` is now a public property (was internal). External
+  tooling consumers — in particular the `Expreszo.Analysis` package —
+  need to pass the root `Node` into analysers like `TypeInference.Run`
+  and `TypeValidator.Validate` without a second parse pass. No other
+  changes; no breaking changes.
+
 ## [0.4.0] - 2026-04-24
 
 Splits the language-server analyser out of the OmniSharp-coupled server
@@ -190,7 +200,8 @@ Initial public release.
 - GitHub Actions workflows: `ci.yml` (build + test + AOT canary + pack) and
   `release.yml` (tag-driven NuGet publish with MinVer + GitHub Release).
 
-[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.2.0...v0.2.1

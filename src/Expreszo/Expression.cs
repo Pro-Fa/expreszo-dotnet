@@ -31,7 +31,13 @@ public sealed class Expression
         _config = config;
     }
 
-    internal Node Root => _root;
+    /// <summary>
+    /// The parsed AST root. Exposed so analysis tools (e.g. the
+    /// <c>Expreszo.Analysis</c> package) can walk the tree without a
+    /// second parse pass.
+    /// </summary>
+    public Node Root => _root;
+
     internal OperatorTable Ops => _ops;
     internal ParserConfig Config => _config;
 
