@@ -38,6 +38,13 @@ jobs:
         # Cobertura report into the test project's TestResults folder.
         run: dotnet run --project test/Expreszo.Tests/Expreszo.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*' --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
 
+      - name: Test (LanguageServer)
+        # LanguageServer tests exercise the LSP handlers, DocumentCache, and
+        # metadata catalogue. Kept in a separate job step so a failure there
+        # surfaces clearly. No coverage collection here yet — the library
+        # remains the canonical coverage source.
+        run: dotnet run --project test/Expreszo.LanguageServer.Tests/Expreszo.LanguageServer.Tests.csproj --configuration Release --no-build -- --treenode-filter '/*/*/*/*'
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:

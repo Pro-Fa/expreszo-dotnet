@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.LanguageServer.Tests</RootNamespace>
+    <AssemblyName>Expreszo.LanguageServer.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <EnableMSTestRunner>false</EnableMSTestRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsAotCompatible>false</IsAotCompatible>
+    <IsTrimmable>false</IsTrimmable>
+
+    <NoWarn>$(NoWarn);CA1707;CA2012</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.37.24" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+    <ProjectReference Include="..\..\src\Expreszo.LanguageServer\Expreszo.LanguageServer.csproj" />
+  </ItemGroup>
+</Project>

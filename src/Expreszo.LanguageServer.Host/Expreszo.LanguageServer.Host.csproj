@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.LanguageServer.Host</RootNamespace>
+    <AssemblyName>expreszo-lsp</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <!-- The host is a small stdio shim around OmniSharp's LanguageServer; it
+         inherits the non-AOT stance from the LanguageServer library. -->
+    <IsAotCompatible>false</IsAotCompatible>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Expreszo.LanguageServer\Expreszo.LanguageServer.csproj" />
+  </ItemGroup>
+</Project>

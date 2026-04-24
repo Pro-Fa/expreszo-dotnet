@@ -154,9 +154,13 @@ dotnet run --project bench/Expreszo.Benchmarks -c Release                       
 dotnet run --project bench/Expreszo.Benchmarks -c Release -- --filter '*Eval*'  # run a subset
 ```
 
+## Tooling
+
+A Language Server Protocol (LSP) implementation lives in `src/Expreszo.LanguageServer` and `src/Expreszo.LanguageServer.Host`. The host is a stdio server consumable from any LSP-aware editor (VS Code, Neovim, Zed, JetBrains, Emacs). Tier 1 covers diagnostics, hover, completion, document symbols, and semantic tokens; richer features (error-recovering parse, signature help, goto, rename) land in later tiers.
+
 ## Out of scope
 
-- MCP server, language service (LSP).
+- MCP server.
 - Legacy-mode semantics.
 - Runtime disabling of specific operators.
 - Customising the built-in operator set (adding custom named operators). Adding custom functions will be supported via `OperatorTableBuilder` in a future release.

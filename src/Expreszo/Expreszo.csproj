@@ -50,6 +50,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Expreszo.Tests" />
+    <InternalsVisibleTo Include="Expreszo.LanguageServer" />
+    <InternalsVisibleTo Include="Expreszo.LanguageServer.Tests" />
   </ItemGroup>
 
   <ItemGroup>
