@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-04-28
+
+### Changed
+
+- Hardened `Expression.ToString()`'s lazy `_cachedToString` against a
+  technical data race (non-atomic `??=` on a non-volatile field) by
+  switching to `LazyInitializer.EnsureInitialized`. The result was always
+  deterministic, but two concurrent first-callers could each compute the
+  string and write the field. After this change the `Parser`'s
+  thread-safety contract is race-free under the .NET memory model.
+
+### Added
+
+- Concurrency stress tests (`ThreadSafetyTests`) that hammer a single
+  shared `Parser` instance with 16 threads × 500 iterations across
+  `Parse`, `Evaluate`, `TryParse`, `ToString`, and `Symbols` to keep the
+  guarantee enforced.
+- README "Highlights" now calls out thread-safety explicitly.
+
 ## [0.4.1] - 2026-04-24
 
 ### Changed
@@ -200,7 +219,8 @@ Initial public release.
 - GitHub Actions workflows: `ci.yml` (build + test + AOT canary + pack) and
   `release.yml` (tag-driven NuGet publish with MinVer + GitHub Release).
 
-[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.2.1...v0.3.0

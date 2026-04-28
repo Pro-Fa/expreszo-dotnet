@@ -19,6 +19,7 @@ A safe, extensible expression evaluator for .NET - a configurable alternative to
 - **JsonDocument-based I/O** - variables in, results out, using `System.Text.Json` primitives.
 - Single async-capable evaluator with a synchronous fast path (`ValueTask<Value>` under the hood).
 - **Native AOT and trim compatible** - zero reflection, zero runtime code generation. CI verifies on every PR.
+- **Thread-safe by design** - one `Parser` instance can serve many threads; parsed `Expression`s are immutable and safe to share.
 - `net10.0` target.
 
 ## Install

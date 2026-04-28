@@ -106,10 +106,8 @@ public sealed class Expression
     }
 
     /// <inheritdoc />
-    public override string ToString()
-    {
-        return _cachedToString ??= ToStringVisitor.Run(_root);
-    }
+    public override string ToString() =>
+        LazyInitializer.EnsureInitialized(ref _cachedToString, () => ToStringVisitor.Run(_root))!;
 
     /// <summary>Every symbol referenced by the expression (variables + functions, as seen).</summary>
     public IReadOnlyList<string> Symbols(bool withMembers = false) =>
