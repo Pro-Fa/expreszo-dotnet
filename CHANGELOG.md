@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-06-02
+
+### Fixed
+
+- `length(null)` now returns `0` instead of `undefined`. Both the unary
+  `length` operator and the `length` function were missing a `null` case
+  in their value switch, so a `null` argument fell through to the default
+  and produced `undefined`. This also aligns `length` with `isEmpty`,
+  which already treats `null` as empty.
+
 ## [0.4.2] - 2026-04-28
 
 ### Changed

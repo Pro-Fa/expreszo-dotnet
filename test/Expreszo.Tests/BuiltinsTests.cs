@@ -513,4 +513,21 @@ public class BuiltinsTests
         await Assert.That(isBool).IsTrue();
         await Assert.That(isFn).IsTrue();
     }
+
+    // ---------- length ----------
+
+    [Test]
+    [Arguments("length(\"hello\")", 5d)]
+    [Arguments("length([1, 2, 3])", 3d)]
+    [Arguments("length(null)", 0d)]
+    public async Task Length_of_value(string expr, double expected)
+    {
+        // Arrange
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(((Value.Number)result).V).IsEqualTo(expected);
+    }
 }

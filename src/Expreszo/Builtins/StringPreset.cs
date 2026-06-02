@@ -16,6 +16,7 @@ internal static class StringPreset
                 return args[0] switch
                 {
                     Value.Undefined => Value.Undefined.Instance,
+                    Value.Null => Value.Number.Of(0),
                     Value.String s => Value.Number.Of(s.V.Length),
                     Value.Array a => Value.Number.Of(a.Items.Length),
                     _ => Value.Undefined.Instance,
