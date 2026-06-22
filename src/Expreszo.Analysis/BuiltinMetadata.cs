@@ -202,6 +202,12 @@ public static class BuiltinMetadata
             Fn("padRight", "padRight(s, width) | padRight(s, width, pad)", "Right-pad to width."),
             Fn("padBoth", "padBoth(s, width) | padBoth(s, width, pad)", "Centre-pad to width."),
             Fn("slice", "slice(s, start) | slice(s, start, end)", "Substring by character offsets."),
+            Fn("regexMatches", "regexMatches(s, pattern) | regexMatches(s, pattern, flags)",
+                "Regex test → boolean."),
+            Fn("regexExtract", "regexExtract(s, pattern) | regexExtract(s, pattern, flags)",
+                "First match: capture-group array when the pattern has groups, else the full match; undefined if no match."),
+            Fn("regexReplace", "regexReplace(s, pattern, replacement) | regexReplace(s, pattern, replacement, flags)",
+                "Regex replace (global by default; pass flags to override)."),
             Fn("urlEncode", "urlEncode(s)", "Percent-encode for URL usage."),
             Fn("base64Encode", "base64Encode(s)", "Base64 encode."),
             Fn("base64Decode", "base64Decode(s)", "Base64 decode."),
@@ -220,6 +226,7 @@ public static class BuiltinMetadata
             // --- utility -------------------------------------------------
             Fn("if", "if(cond, thenExpr, elseExpr)", "Lazy conditional; only the chosen branch evaluates."),
             Fn("json", "json(value)", "Canonical JSON string representation."),
+            Fn("ipInRange", "ipInRange(ip, cidr)", "True if the IPv4 address is in the CIDR block."),
 
             // --- type checks ---------------------------------------------
             Fn("isArray", "isArray(x)", "True for arrays."),

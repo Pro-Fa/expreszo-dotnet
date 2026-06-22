@@ -530,4 +530,245 @@ public class BuiltinsTests
         // Assert
         await Assert.That(((Value.Number)result).V).IsEqualTo(expected);
     }
+
+    // ---------- regexMatches ----------
+
+    [Test]
+    public async Task RegexMatches_basic()
+    {
+        // Arrange
+
+        // Act
+        bool digits = ((Value.Boolean)Parser.Evaluate("regexMatches(\"abc123\", \"[0-9]+\")")).V;
+        bool anchored = ((Value.Boolean)Parser.Evaluate("regexMatches(\"hello\", \"^h.*o$\")")).V;
+        bool noMatch = ((Value.Boolean)Parser.Evaluate("regexMatches(\"abc\", \"[0-9]+\")")).V;
+        bool caseSensitive = ((Value.Boolean)Parser.Evaluate("regexMatches(\"ABC\", \"abc\")")).V;
+        bool caseInsensitive = ((Value.Boolean)Parser.Evaluate("regexMatches(\"ABC\", \"abc\", \"i\")")).V;
+        bool backslashClass = ((Value.Boolean)Parser.Evaluate("regexMatches(\"a1\", \"\\\\d\")")).V;
+
+        // Assert
+        await Assert.That(digits).IsTrue();
+        await Assert.That(anchored).IsTrue();
+        await Assert.That(noMatch).IsFalse();
+        await Assert.That(caseSensitive).IsFalse();
+        await Assert.That(caseInsensitive).IsTrue();
+        await Assert.That(backslashClass).IsTrue();
+    }
+
+    [Test]
+    public async Task RegexMatches_undefined_args_return_undefined()
+    {
+        // Arrange
+
+        // Act
+        Value first = Parser.Evaluate("regexMatches(undefined, \"x\")");
+        Value second = Parser.Evaluate("regexMatches(\"x\", undefined)");
+
+        // Assert
+        await Assert.That(first).IsTypeOf<Value.Undefined>();
+        await Assert.That(second).IsTypeOf<Value.Undefined>();
+    }
+
+    [Test]
+    public async Task RegexMatches_throws_for_invalid_pattern_and_non_string_args()
+    {
+        // Arrange
+        Action invalidPattern = () => Parser.Evaluate("regexMatches(\"x\", \"(\")");
+        Action nonStringStr = () => Parser.Evaluate("regexMatches(123, \"x\")");
+        Action nonStringPattern = () => Parser.Evaluate("regexMatches(\"x\", 123)");
+        Action nonStringFlags = () => Parser.Evaluate("regexMatches(\"x\", \"y\", 1)");
+
+        // Act / Assert
+        await Assert.That(invalidPattern).Throws<EvaluationException>();
+        await Assert.That(nonStringStr).Throws<ExpressionArgumentException>();
+        await Assert.That(nonStringPattern).Throws<ExpressionArgumentException>();
+        await Assert.That(nonStringFlags).Throws<ExpressionArgumentException>();
+    }
+
+    // ---------- regexExtract ----------
+
+    [Test]
+    public async Task RegexExtract_full_match_when_no_groups()
+    {
+        // Arrange
+
+        // Act
+        var result = Parser.Evaluate("regexExtract(\"abc123def\", \"[0-9]+\")");
+
+        // Assert
+        await Assert.That(((Value.String)result).V).IsEqualTo("123");
+    }
+
+    [Test]
+    public async Task RegexExtract_returns_capture_groups_as_array()
+    {
+        // Arrange
+
+        // Act
+        var single = (Value.Array)Parser.Evaluate("regexExtract(\"user-42\", \"user-([0-9]+)\")");
+        var multi = (Value.Array)Parser.Evaluate("regexExtract(\"2026-06-22\", \"([0-9]+)-([0-9]+)-([0-9]+)\")");
+
+        // Assert
+        await Assert.That(single.Items.Length).IsEqualTo(1);
+        await Assert.That(((Value.String)single.Items[0]).V).IsEqualTo("42");
+        await Assert.That(multi.Items.Length).IsEqualTo(3);
+        await Assert.That(((Value.String)multi.Items[0]).V).IsEqualTo("2026");
+        await Assert.That(((Value.String)multi.Items[1]).V).IsEqualTo("06");
+        await Assert.That(((Value.String)multi.Items[2]).V).IsEqualTo("22");
+    }
+
+    [Test]
+    public async Task RegexExtract_undefined_when_no_match_or_undefined_args()
+    {
+        // Arrange
+
+        // Act
+        Value noMatch = Parser.Evaluate("regexExtract(\"abc\", \"[0-9]+\")");
+        Value undefinedArg = Parser.Evaluate("regexExtract(undefined, \"x\")");
+
+        // Assert
+        await Assert.That(noMatch).IsTypeOf<Value.Undefined>();
+        await Assert.That(undefinedArg).IsTypeOf<Value.Undefined>();
+    }
+
+    [Test]
+    public async Task RegexExtract_throws_for_invalid_pattern_and_non_string_args()
+    {
+        // Arrange
+        Action invalidPattern = () => Parser.Evaluate("regexExtract(\"x\", \"(\")");
+        Action nonStringStr = () => Parser.Evaluate("regexExtract(123, \"x\")");
+        Action nonStringPattern = () => Parser.Evaluate("regexExtract(\"x\", 5)");
+        Action nonStringFlags = () => Parser.Evaluate("regexExtract(\"x\", \"y\", 5)");
+
+        // Act / Assert
+        await Assert.That(invalidPattern).Throws<EvaluationException>();
+        await Assert.That(nonStringStr).Throws<ExpressionArgumentException>();
+        await Assert.That(nonStringPattern).Throws<ExpressionArgumentException>();
+        await Assert.That(nonStringFlags).Throws<ExpressionArgumentException>();
+    }
+
+    // ---------- regexReplace ----------
+
+    [Test]
+    public async Task RegexReplace_global_by_default()
+    {
+        // Arrange
+
+        // Act
+        string dashes = ((Value.String)Parser.Evaluate("regexReplace(\"a-b-c\", \"-\", \"_\")")).V;
+        string digits = ((Value.String)Parser.Evaluate("regexReplace(\"a1b2c3\", \"[0-9]\", \"#\")")).V;
+
+        // Assert
+        await Assert.That(dashes).IsEqualTo("a_b_c");
+        await Assert.That(digits).IsEqualTo("a#b#c#");
+    }
+
+    [Test]
+    public async Task RegexReplace_supports_capture_group_references()
+    {
+        // Arrange
+
+        // Act
+        string swapped = ((Value.String)
+            Parser.Evaluate("regexReplace(\"John Smith\", \"([A-Za-z]+) ([A-Za-z]+)\", \"$2 $1\")")).V;
+
+        // Assert
+        await Assert.That(swapped).IsEqualTo("Smith John");
+    }
+
+    [Test]
+    public async Task RegexReplace_non_global_flag_replaces_first_only()
+    {
+        // Arrange
+
+        // Act
+        string firstOnly = ((Value.String)Parser.Evaluate("regexReplace(\"a-b-c\", \"-\", \"_\", \"\")")).V;
+
+        // Assert
+        await Assert.That(firstOnly).IsEqualTo("a_b-c");
+    }
+
+    [Test]
+    public async Task RegexReplace_undefined_args_and_invalid_pattern()
+    {
+        // Arrange
+        Action invalidPattern = () => Parser.Evaluate("regexReplace(\"x\", \"(\", \"y\")");
+        Action nonStringRepl = () => Parser.Evaluate("regexReplace(\"x\", \"y\", 3)");
+
+        // Act
+        Value undefinedStr = Parser.Evaluate("regexReplace(undefined, \"x\", \"y\")");
+        Value undefinedRepl = Parser.Evaluate("regexReplace(\"x\", \"y\", undefined)");
+
+        // Assert
+        await Assert.That(undefinedStr).IsTypeOf<Value.Undefined>();
+        await Assert.That(undefinedRepl).IsTypeOf<Value.Undefined>();
+        await Assert.That(invalidPattern).Throws<EvaluationException>();
+        await Assert.That(nonStringRepl).Throws<ExpressionArgumentException>();
+    }
+
+    // ---------- ipInRange ----------
+
+    [Test]
+    [Arguments("ipInRange(\"10.1.2.3\", \"10.0.0.0/8\")", true)]
+    [Arguments("ipInRange(\"192.168.1.5\", \"192.168.1.0/24\")", true)]
+    [Arguments("ipInRange(\"172.16.5.4\", \"172.16.0.0/16\")", true)]
+    [Arguments("ipInRange(\"192.168.1.5\", \"10.0.0.0/8\")", false)]
+    [Arguments("ipInRange(\"192.168.2.1\", \"192.168.1.0/24\")", false)]
+    [Arguments("ipInRange(\"10.0.0.1\", \"10.0.0.1/32\")", true)]
+    [Arguments("ipInRange(\"10.0.0.2\", \"10.0.0.1/32\")", false)]
+    [Arguments("ipInRange(\"8.8.8.8\", \"0.0.0.0/0\")", true)]
+    [Arguments("ipInRange(\"255.255.255.255\", \"0.0.0.0/0\")", true)]
+    [Arguments("ipInRange(\"255.255.255.255\", \"255.255.255.0/24\")", true)]
+    [Arguments("ipInRange(\"200.100.50.25\", \"200.100.0.0/16\")", true)]
+    public async Task IpInRange_membership(string expr, bool expected)
+    {
+        // Arrange
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(((Value.Boolean)result).V).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task IpInRange_undefined_args_return_undefined()
+    {
+        // Arrange
+
+        // Act
+        Value first = Parser.Evaluate("ipInRange(undefined, \"10.0.0.0/8\")");
+        Value second = Parser.Evaluate("ipInRange(\"10.0.0.1\", undefined)");
+
+        // Assert
+        await Assert.That(first).IsTypeOf<Value.Undefined>();
+        await Assert.That(second).IsTypeOf<Value.Undefined>();
+    }
+
+    [Test]
+    [Arguments("ipInRange(\"10.0.0.256\", \"10.0.0.0/8\")")]
+    [Arguments("ipInRange(\"10.0.0\", \"10.0.0.0/8\")")]
+    [Arguments("ipInRange(\"abc\", \"10.0.0.0/8\")")]
+    [Arguments("ipInRange(\"10.0.0.x\", \"10.0.0.0/8\")")]
+    [Arguments("ipInRange(\"10.0.0.1\", \"999.0.0.0/8\")")]
+    [Arguments("ipInRange(\"10.0.0.1\", \"10.0.0.0\")")]
+    [Arguments("ipInRange(\"10.0.0.1\", \"10.0.0.0/33\")")]
+    public async Task IpInRange_throws_for_malformed_input(string expr)
+    {
+        // Arrange
+        Action act = () => Parser.Evaluate(expr);
+
+        // Act / Assert
+        await Assert.That(act).Throws<EvaluationException>();
+    }
+
+    [Test]
+    public async Task IpInRange_throws_for_non_string_args()
+    {
+        // Arrange
+        Action act = () => Parser.Evaluate("ipInRange(123, \"10.0.0.0/8\")");
+
+        // Act / Assert
+        await Assert.That(act).Throws<ExpressionArgumentException>();
+    }
 }

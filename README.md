@@ -106,11 +106,11 @@ Console.WriteLine(parser.Evaluate(
 
 **Array** (20): `count`, `filter`, `fold`, `reduce`, `find`, `some`, `every`, `unique`, `distinct`, `indexOf`, `join`, `map`, `range`, `chunk`, `union`, `intersect`, `groupBy`, `countBy`, `sort`, `flatten`
 
-**String** (28): `length`, `isEmpty`, `contains`, `startsWith`, `endsWith`, `searchCount`, `trim`, `toUpper`, `toLower`, `toTitle`, `split`, `repeat`, `reverse`, `left`, `right`, `replace`, `replaceFirst`, `naturalSort`, `toNumber`, `toBoolean`, `padLeft`, `padRight`, `padBoth`, `slice`, `urlEncode`, `base64Encode`, `base64Decode`, `coalesce`
+**String** (31): `length`, `isEmpty`, `contains`, `startsWith`, `endsWith`, `searchCount`, `trim`, `toUpper`, `toLower`, `toTitle`, `split`, `repeat`, `reverse`, `left`, `right`, `replace`, `replaceFirst`, `regexMatches`, `regexExtract`, `regexReplace`, `naturalSort`, `toNumber`, `toBoolean`, `padLeft`, `padRight`, `padBoth`, `slice`, `urlEncode`, `base64Encode`, `base64Decode`, `coalesce`
 
 **Object** (7): `merge`, `keys`, `values`, `mapValues`, `pick`, `omit`, `flattenObject`
 
-**Utility** (2): `if` (lazy), `json`
+**Utility** (3): `if` (lazy), `json`, `ipInRange`
 
 **Type-check** (8): `isArray`, `isObject`, `isNumber`, `isString`, `isBoolean`, `isNull`, `isUndefined`, `isFunction`
 

@@ -96,6 +96,10 @@ internal static class TypeOverrides
         b["toLower"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["toTitle"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["split"] = new(ValueKind.Array, 2, 2, [ValueKind.String, ValueKind.String]);
+        b["regexMatches"] = new(ValueKind.Boolean, 2, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
+        // regexExtract returns String (no groups) or Array (groups) → Unknown.
+        b["regexExtract"] = new(ValueKind.Unknown, 2, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
+        b["regexReplace"] = new(ValueKind.String, 3, 4, [ValueKind.String, ValueKind.String, ValueKind.String, ValueKind.String]);
         b["repeat"] = new(ValueKind.String, 2, 2, [ValueKind.String, ValueKind.Number]);
         b["reverse"] = new(ValueKind.Unknown, 1, 1, []);
         b["left"] = new(ValueKind.String, 2, 2, [ValueKind.String, ValueKind.Number]);
@@ -126,6 +130,7 @@ internal static class TypeOverrides
         // ---- utility ----
         b["if"] = new(ValueKind.Unknown, 3, 3, []);
         b["json"] = new(ValueKind.String, 1, 1, []);
+        b["ipInRange"] = new(ValueKind.Boolean, 2, 2, [ValueKind.String, ValueKind.String]);
 
         // ---- type checks: anything → Boolean ----
         string[] typeChecks =
