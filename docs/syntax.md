@@ -163,6 +163,12 @@ Higher-order functions accept both `(array, fn)` and `(fn, array)` argument orde
 | `coalesce(a, b, ...)` | First non-null, non-undefined, non-empty-string value. |
 | `json(value)` | Convert to a JSON string. |
 
+### Network Functions
+
+| Function | Description |
+|:---------|:----------- |
+| `ipInRange(ip, cidr)` | `true` if the IPv4 address `ip` falls within the CIDR block `cidr` (e.g. `"10.0.0.0/8"`), `false` otherwise. IPv4 only. Throws on a malformed address or CIDR. |
+
 ### Type Checking Functions
 
 | Function | Description |
@@ -216,6 +222,18 @@ Higher-order functions accept both `(array, fn)` and `(fn, array)` argument orde
 | `replace(str, old, new)` | Replace all occurrences. |
 | `replaceFirst(str, old, new)` | Replace first occurrence only. |
 
+### Regular Expressions
+
+| Function | Description |
+|:---------|:----------- |
+| `regexMatches(str, pattern, flags?)` | `true` if `str` matches the regular expression `pattern`, `false` otherwise. Optional `flags` (e.g. `"i"`) are passed to the regex engine. |
+| `regexExtract(str, pattern, flags?)` | First match of `pattern` in `str`. When `pattern` has capture groups, returns an array of the captured groups; otherwise returns the full matched substring. `undefined` when there is no match. |
+| `regexReplace(str, pattern, replacement, flags?)` | Replace matches of `pattern` with `replacement` (which may reference capture groups via `$1`, `$&`, …). Defaults to a global replace; pass `flags` to override (include `g` to keep replacing all matches). |
+
+Patterns and flags use the .NET [`System.Text.RegularExpressions`](https://learn.microsoft.com/dotnet/standard/base-types/regular-expressions) engine. Supported flags: `i` (ignore case), `m` (multiline), `s` (single-line / dot-matches-newline), and `g` (global — only meaningful for `regexReplace`).
+
+> **Note:** Backslashes in a pattern must be escaped in the expression source because the string lexer rejects unknown escape sequences — write `"\\d+"` to match digits. Character classes such as `"[0-9]+"` need no escaping. A pattern supplied by an untrusted expression can trigger catastrophic backtracking (ReDoS); regex execution is capped by a 1-second timeout, but validate or constrain patterns when evaluating untrusted input.
+
 ### Type Conversion
 
 | Function | Description |
@@ -256,6 +274,9 @@ right("hello", 3)                       → "llo"
 split("a,b,c", ",")                     → ["a", "b", "c"]
 replace("aaa", "a", "b")                → "bbb"
 replaceFirst("aaa", "a", "b")           → "baa"
+regexMatches("abc123", "[0-9]+")        → true
+regexExtract("user-42", "user-([0-9]+)") → ["42"]
+regexReplace("a-b-c", "-", "_")         → "a_b_c"
 naturalSort(["f10", "f2", "f1"])        → ["f1", "f2", "f10"]
 toNumber("123.4")                       → 123.4
 toBoolean("yes")                        → true

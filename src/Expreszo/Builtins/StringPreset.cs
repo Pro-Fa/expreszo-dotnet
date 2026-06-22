@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Expreszo.Errors;
 
 namespace Expreszo.Builtins;
@@ -420,6 +421,85 @@ internal static class StringPreset
         );
 
         b.AddFunction(
+            "regexMatches",
+            OperatorTableBuilder.Sync(args =>
+            {
+                // Required: str, pattern. Missing or undefined -> undefined.
+                if (args.Length < 2 || args[0] is Value.Undefined || args[1] is Value.Undefined)
+                {
+                    return Value.Undefined.Instance;
+                }
+
+                string s = RequireString("regexMatches", args[0], 0);
+                string pattern = RequireString("regexMatches", args[1], 1);
+                string? flags = OptionalFlags("regexMatches", args, 2);
+                return Value.Boolean.Of(CompileRegex("regexMatches", pattern, flags).IsMatch(s));
+            })
+        );
+
+        b.AddFunction(
+            "regexExtract",
+            OperatorTableBuilder.Sync(args =>
+            {
+                if (args.Length < 2 || args[0] is Value.Undefined || args[1] is Value.Undefined)
+                {
+                    return Value.Undefined.Instance;
+                }
+
+                string s = RequireString("regexExtract", args[0], 0);
+                string pattern = RequireString("regexExtract", args[1], 1);
+                string? flags = OptionalFlags("regexExtract", args, 2);
+                Match m = CompileRegex("regexExtract", pattern, flags).Match(s);
+                if (!m.Success)
+                {
+                    return Value.Undefined.Instance;
+                }
+
+                // When the pattern has capture groups, return them; otherwise the
+                // full match. Group 0 is the full match, so groups start at 1.
+                if (m.Groups.Count > 1)
+                {
+                    Value[] groups = new Value[m.Groups.Count - 1];
+                    for (int i = 1; i < m.Groups.Count; i++)
+                    {
+                        Group g = m.Groups[i];
+                        groups[i - 1] = new Value.String(g.Success ? g.Value : "");
+                    }
+
+                    return new Value.Array([.. groups]);
+                }
+
+                return new Value.String(m.Value);
+            })
+        );
+
+        b.AddFunction(
+            "regexReplace",
+            OperatorTableBuilder.Sync(args =>
+            {
+                if (
+                    args.Length < 3
+                    || args[0] is Value.Undefined
+                    || args[1] is Value.Undefined
+                    || args[2] is Value.Undefined
+                )
+                {
+                    return Value.Undefined.Instance;
+                }
+
+                string s = RequireString("regexReplace", args[0], 0);
+                string pattern = RequireString("regexReplace", args[1], 1);
+                string replacement = RequireString("regexReplace", args[2], 2);
+                string? flags = OptionalFlags("regexReplace", args, 3);
+                Regex re = CompileRegex("regexReplace", pattern, flags);
+                // Default (flags omitted) is a global replace; a supplied flag
+                // string replaces only the first match unless it contains 'g'.
+                bool global = flags is null || flags.Contains('g');
+                return new Value.String(global ? re.Replace(s, replacement) : re.Replace(s, replacement, 1));
+            })
+        );
+
+        b.AddFunction(
             "coalesce",
             OperatorTableBuilder.Sync(args =>
             {
@@ -461,6 +541,83 @@ internal static class StringPreset
             })
         );
     }
+
+    /// <summary>Cap regex execution to guard against catastrophic backtracking (ReDoS).</summary>
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+
+    /// <summary>Returns the string payload of a required argument or throws (TS parity).</summary>
+    private static string RequireString(string fn, Value v, int index)
+    {
+        if (v is Value.String s)
+        {
+            return s.V;
+        }
+
+        throw new ExpressionArgumentException(
+            $"{fn}() expects a string as {Ordinal(index)} argument, got {v.TypeName()}",
+            functionName: fn,
+            argumentIndex: index,
+            expectedType: "string",
+            receivedType: v.TypeName()
+        );
+    }
+
+    /// <summary>
+    /// Reads an optional flags argument at <paramref name="index"/>. An omitted
+    /// arg or an explicit <c>undefined</c> means "no flags"; any other non-string
+    /// value throws (TS parity).
+    /// </summary>
+    private static string? OptionalFlags(string fn, Value[] args, int index)
+    {
+        if (args.Length <= index || args[index] is Value.Undefined)
+        {
+            return null;
+        }
+
+        return RequireString(fn, args[index], index);
+    }
+
+    /// <summary>Compiles a regex, mapping JS-style flag characters to <see cref="RegexOptions"/>.</summary>
+    private static Regex CompileRegex(string fn, string pattern, string? flags)
+    {
+        RegexOptions opts = RegexOptions.None;
+        if (flags is not null)
+        {
+            foreach (char f in flags)
+            {
+                opts |= f switch
+                {
+                    'i' => RegexOptions.IgnoreCase,
+                    'm' => RegexOptions.Multiline,
+                    's' => RegexOptions.Singleline,
+                    // 'g' (global) is meaningful only for regexReplace, where the
+                    // caller inspects it directly; it has no RegexOptions analogue.
+                    'g' => RegexOptions.None,
+                    _ => throw new EvaluationException($"{fn}(): invalid flags '{flags}'"),
+                };
+            }
+        }
+
+        try
+        {
+            return new Regex(pattern, opts, RegexTimeout);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new EvaluationException($"{fn}(): invalid pattern '{pattern}': {ex.Message}");
+        }
+    }
+
+    /// <summary>Ordinal word for an argument position in error messages.</summary>
+    private static string Ordinal(int index) =>
+        index switch
+        {
+            0 => "first",
+            1 => "second",
+            2 => "third",
+            3 => "fourth",
+            _ => $"{index + 1}th",
+        };
 
     private static void StrToStr(OperatorTableBuilder b, string name, Func<string, string> fn)
     {

@@ -104,6 +104,9 @@ Short-circuits: `and` / `&&` only evaluate the right-hand side if the left is tr
 | `replace(s, old, new)` | `replace("aa", "a", "b")` | `"bb"` |
 | `split(s, delim)` | `split("a,b", ",")` | `["a", "b"]` |
 | `join(a, sep)` | `join([1, 2], "-")` | `"1-2"` |
+| `regexMatches(s, pat, flags?)` | `regexMatches("abc123", "[0-9]+")` | true |
+| `regexExtract(s, pat, flags?)` | `regexExtract("user-42", "user-([0-9]+)")` | `["42"]` |
+| `regexReplace(s, pat, repl, flags?)` | `regexReplace("a-b-c", "-", "_")` | `"a_b_c"` |
 | `base64Encode(s)` | `base64Encode("hi")` | `"aGk="` |
 | `coalesce(...)` | `coalesce(null, "", "ok")` | `"ok"` |
 
@@ -135,6 +138,12 @@ Short-circuits: `and` / `&&` only evaluate the right-hand side if the left is tr
 | `pick(obj, keys)` | `pick({a: 1, b: 2}, ["a"])` | `{a: 1}` |
 | `omit(obj, keys)` | `omit({a: 1, b: 2}, ["b"])` | `{a: 1}` |
 | `mapValues(obj, fn)` | `mapValues({a: 1}, v => v * 10)` | `{a: 10}` |
+
+## Network Functions
+
+| Function | Example | Result |
+|:---------|:--------|:-------|
+| `ipInRange(ip, cidr)` | `ipInRange("10.1.2.3", "10.0.0.0/8")` | true |
 
 ## Type Checking
 

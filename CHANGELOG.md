@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-22
+
+### Added
+
+- Regex string functions `regexMatches(str, pattern, flags?)`,
+  `regexExtract(str, pattern, flags?)`, and
+  `regexReplace(str, pattern, replacement, flags?)`. `regexExtract` returns
+  the captured groups as an array when the pattern has groups, otherwise the
+  full match; `regexReplace` defaults to a global replace. Flags map to .NET
+  `RegexOptions` (`i`, `m`, `s`; `g` controls global replace), and execution is
+  capped by a 1-second timeout to guard against catastrophic backtracking.
+- Network utility function `ipInRange(ip, cidr)` — `true` when the IPv4 address
+  is inside the CIDR block (IPv4 only).
+
 ## [0.4.3] - 2026-06-02
 
 ### Fixed
