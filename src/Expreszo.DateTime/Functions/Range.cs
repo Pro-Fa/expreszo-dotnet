@@ -50,7 +50,7 @@ internal static class Ranges
             a[2] is not Value.Number wn
             || wn.V < 1
             || wn.V > 7
-            || wn.V != Math.Floor(wn.V)
+            || !double.IsInteger(wn.V)
         )
         {
             throw new EvaluationException(

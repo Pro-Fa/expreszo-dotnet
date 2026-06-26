@@ -110,8 +110,9 @@ public class Additions020Tests
     [Test]
     public async Task WeeksInYear()
     {
-        double r = DateFixture.Num(P.Evaluate("weeksInYear('2026-06-01')"));
-        await Assert.That(r == 52 || r == 53).IsTrue();
+        // weeksInYear returns an integral count; compare as an int.
+        int weeks = (int)DateFixture.Num(P.Evaluate("weeksInYear('2026-06-01')"));
+        await Assert.That(weeks is 52 or 53).IsTrue();
     }
 
     [Test]

@@ -53,8 +53,14 @@ public sealed class Parser
         if (options.Plugins.Count > 0)
         {
             var registration = new PluginRegistration(builder);
-            foreach (IExpreszoPlugin plugin in options.Plugins)
+            for (int i = 0; i < options.Plugins.Count; i++)
             {
+                IExpreszoPlugin plugin =
+                    options.Plugins[i]
+                    ?? throw new ArgumentException(
+                        $"ParserOptions.Plugins contains a null entry at index {i}.",
+                        nameof(options)
+                    );
                 plugin.Register(registration);
             }
         }

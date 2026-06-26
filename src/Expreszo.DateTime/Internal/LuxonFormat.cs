@@ -18,20 +18,29 @@ internal static class LuxonFormat
         {
             char c = luxon[i];
 
-            // Quoted literal: copy verbatim (single quotes mean the same thing
-            // in .NET custom format strings).
+            // Quoted literal. Luxon escapes a literal single quote as a doubled
+            // '' (inside or outside a quoted run); a lone ' closes the run.
+            // Emit each literal char backslash-escaped so any character —
+            // including quotes and letters — passes through .NET verbatim.
             if (c == '\'')
             {
-                int start = i++;
-                while (i < luxon.Length && luxon[i] != '\'')
+                i++; // opening quote
+                while (i < luxon.Length)
                 {
+                    if (luxon[i] == '\'')
+                    {
+                        if (i + 1 < luxon.Length && luxon[i + 1] == '\'')
+                        {
+                            sb.Append("\\'"); // escaped literal quote
+                            i += 2;
+                            continue;
+                        }
+                        i++; // closing quote
+                        break;
+                    }
+                    sb.Append('\\').Append(luxon[i]);
                     i++;
                 }
-                if (i < luxon.Length)
-                {
-                    i++; // closing quote
-                }
-                sb.Append(luxon, start, i - start);
                 continue;
             }
 

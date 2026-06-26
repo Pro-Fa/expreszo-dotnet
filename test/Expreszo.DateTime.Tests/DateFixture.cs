@@ -20,7 +20,10 @@ internal static class DateFixture
             ]
         );
 
-    /// <summary>A parser for time-independent tests (zone UTC, real clock).</summary>
+    /// <summary>
+    /// A parser for time-independent tests. "Now" is fixed to the construction
+    /// time (UtcNow captured once), zone UTC — these tests don't depend on the clock.
+    /// </summary>
     public static Parser ParserUtc() => ParserAt(DateTimeOffset.UtcNow);
 
     /// <summary>Options used by the direct Normalize.* tests.</summary>

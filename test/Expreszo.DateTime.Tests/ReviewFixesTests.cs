@@ -37,6 +37,17 @@ public class ReviewFixesTests
         await Assert.That(diff).Throws<EvaluationException>();
     }
 
+    // A fractional calendar amount is rejected rather than silently truncating
+    // to a non-advancing step (which would hang dateRange).
+    [Test]
+    public async Task Fractional_calendar_amount_is_rejected()
+    {
+        Action add = () => P.Evaluate("addDuration('2026-01-01', 0.5, 'months')");
+        Action range = () => P.Evaluate("dateRange('2026-01-01', '2026-06-01', 'months', 0.5)");
+        await Assert.That(add).Throws<EvaluationException>();
+        await Assert.That(range).Throws<EvaluationException>();
+    }
+
     // Fix #3: a DateTime coerces to Unix milliseconds in numeric contexts, so
     // mixed-type relational operators are meaningful.
     [Test]

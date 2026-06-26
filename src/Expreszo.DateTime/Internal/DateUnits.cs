@@ -71,6 +71,17 @@ internal static class DateUnits
 
     public static Value.DateTime Add(Value.DateTime d, double n, DateUnit u)
     {
+        // Calendar units use integer AddYears/AddMonths; a fractional amount
+        // would truncate to 0 and silently fail to advance (e.g. a step of 0.5
+        // months would make dateRange loop forever). Reject it outright.
+        if (u is DateUnit.Year or DateUnit.Quarter or DateUnit.Month && !double.IsInteger(n))
+        {
+            throw new EvaluationException(
+                $"a fractional amount ({n.ToString(CultureInfo.InvariantCulture)}) is not "
+                    + "supported for year/quarter/month units"
+            );
+        }
+
         TimeZoneInfo zone = d.Zone;
         DateTime wall = Dt.Wall(d);
         return u switch
