@@ -13,6 +13,13 @@ public sealed record ParserOptions
 {
     /// <summary>Whether member access (<c>obj.prop</c>) is permitted. Defaults to <c>true</c>.</summary>
     public bool AllowMemberAccess { get; init; } = true;
+
+    /// <summary>
+    /// Plugins whose functions/operators are registered on top of the built-in
+    /// presets. Registered in order, after the built-ins, so a plugin may
+    /// override a built-in by re-using its name. Empty by default.
+    /// </summary>
+    public IReadOnlyList<IExpreszoPlugin> Plugins { get; init; } = [];
 }
 
 /// <summary>
@@ -38,6 +45,20 @@ public sealed class Parser
         ObjectPreset.RegisterInto(builder);
         UtilityPreset.RegisterInto(builder);
         TypeCheckPreset.RegisterInto(builder);
+
+        // Plugin functions must be registered before Build() snapshots the
+        // callable allow-list. No constant-folding concern: Evaluate never runs
+        // the folder, and the folder never evaluates Call nodes, so impure
+        // plugin functions like now()/today() are safe without a `pure` flag.
+        if (options.Plugins.Count > 0)
+        {
+            var registration = new PluginRegistration(builder);
+            foreach (IExpreszoPlugin plugin in options.Plugins)
+            {
+                plugin.Register(registration);
+            }
+        }
+
         _ops = builder.Build();
 
         _config = new ParserConfig(
@@ -50,6 +71,21 @@ public sealed class Parser
             ParserConfig.Default.IsOperatorEnabled,
             allowMemberAccess: options.AllowMemberAccess
         );
+    }
+
+    /// <summary>
+    /// Creates a parser with the default built-in preset plus the given plugins.
+    /// Mirrors the TypeScript <c>parser.use(plugin)</c> ergonomics. A static
+    /// factory (rather than a constructor overload) avoids an ambiguity with
+    /// <see cref="Parser(ParserOptions?)"/> when called as <c>Parser(null)</c>.
+    /// </summary>
+    public static Parser WithPlugins(
+        IEnumerable<IExpreszoPlugin> plugins,
+        ParserOptions? options = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(plugins);
+        return new Parser((options ?? new ParserOptions()) with { Plugins = [.. plugins] });
     }
 
     /// <summary>Parses an expression into a reusable <see cref="Expression"/>.</summary>

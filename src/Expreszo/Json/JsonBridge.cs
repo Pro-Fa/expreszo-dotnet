@@ -107,6 +107,11 @@ public static class JsonBridge
             case Value.Object o:
                 WriteObject(writer, o.Props);
                 break;
+            case Value.DateTime dt:
+                // JSON has no native date type; emit the ISO 8601 rendering
+                // (the same form Value.DateTime.ToString produces).
+                writer.WriteStringValue(dt.ToString());
+                break;
             case Value.Function:
                 throw new InvalidOperationException(
                     "Cannot serialise Value.Function to JSON: functions are not JSON-representable."

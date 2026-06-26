@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Code namespace is Expreszo.DateTimes (plural) to avoid the last
+         namespace segment shadowing System.DateTime. The assembly and NuGet
+         package keep the singular Expreszo.DateTime name. -->
+    <RootNamespace>Expreszo.DateTimes</RootNamespace>
+    <AssemblyName>Expreszo.DateTime</AssemblyName>
+
+    <!-- AOT / trimming guarantees mirror the core library. No reflection or
+         dynamic code generation is used; date math is pure BCL. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+    <!-- CA1716/CA1720: this package surfaces a type named DateTimeOptions and
+         methods/locals using domain words (Date, Time); the conflicts are false
+         positives for the same reasons documented in the core csproj. -->
+    <NoWarn>$(NoWarn);CA1716;CA1720</NoWarn>
+
+    <!-- NuGet package metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Expreszo.DateTime</PackageId>
+    <Title>ExpresZo Date/Time</Title>
+    <Description>Optional date/time functions for the Expreszo expression evaluator. Backed by BCL DateTimeOffset/TimeZoneInfo, Native AOT compatible. Feature parity with @pro-fa/expreszo-datetime.</Description>
+    <PackageTags>expression;evaluator;datetime;date;time;expreszo;aot</PackageTags>
+
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ProjectReference for in-repo builds. The SDK emits the referenced
+         packable project (Expreszo) as a NuGet dependency in the produced
+         package, so consumers transitively get the core library. -->
+    <ProjectReference Include="..\Expreszo\Expreszo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>
