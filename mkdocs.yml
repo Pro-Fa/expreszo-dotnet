@@ -65,6 +65,7 @@ nav:
     - Parser: parser.md
     - Expression: expression.md
     - Advanced Features: advanced-features.md
+    - Date / Time Plugin: datetime-plugin.md
     - Values & JsonDocument: values-and-json.md
     - Security & Validation: security.md
     - AOT & Trimming: aot-and-trimming.md

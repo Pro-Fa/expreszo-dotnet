@@ -81,6 +81,30 @@ Console.WriteLine(parser.Evaluate(
 // alice @ eu-west-1
 ```
 
+## Date / Time functions
+
+Date/time support is an optional companion package, [`Expreszo.DateTime`](https://www.nuget.org/packages/Expreszo.DateTime),
+that registers 76 functions (parse, format, arithmetic, comparison, ranges,
+relative-to-now) on a parser. It is backed by the BCL (`DateTimeOffset` +
+`TimeZoneInfo`), has no external dependencies, and is AOT/trim compatible.
+
+```sh
+dotnet add package Expreszo.DateTime
+```
+
+```csharp
+using Expreszo;
+using Expreszo.DateTimes;
+
+var parser = Parser.WithPlugins([new ExpreszoDateTimePlugin()]);
+
+parser.Evaluate("format(addDuration('2026-01-01', 7, 'days'), 'yyyy-MM-dd')");
+// => "2026-01-08"
+```
+
+See the [Date / Time plugin guide](docs/datetime-plugin.md) for registration,
+clock/zone configuration, input shapes, and the full function reference.
+
 ## Expression language - cheat sheet
 
 | Category | Examples |
