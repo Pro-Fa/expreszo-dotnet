@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Expreszo.DateTimes.Tests</RootNamespace>
+    <AssemblyName>Expreszo.DateTime.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+
+    <!-- TUnit is Microsoft Testing Platform based and runs as its own
+         entry-point executable, not through VSTest. That's why OutputType=Exe. -->
+    <EnableMSTestRunner>false</EnableMSTestRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CA1707;CA2012</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.37.24" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Expreszo\Expreszo.csproj" />
+    <ProjectReference Include="..\..\src\Expreszo.DateTime\Expreszo.DateTime.csproj" />
+  </ItemGroup>
+</Project>

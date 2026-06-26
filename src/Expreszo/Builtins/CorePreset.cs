@@ -370,6 +370,10 @@ internal static class CorePreset
             )
                 ? d
                 : double.NaN,
+            // Date values coerce to Unix milliseconds, matching the way a JS
+            // Date / Luxon DateTime numifies via valueOf. Keeps `<`, `>`, `as
+            // number`, and arithmetic meaningful when mixed with numbers.
+            Value.DateTime dt => dt.Instant.ToUnixTimeMilliseconds(),
             _ => double.NaN,
         };
 
@@ -395,6 +399,10 @@ internal static class CorePreset
             (Value.Number na, Value.Number nb) =>
                 !double.IsNaN(na.V) && !double.IsNaN(nb.V) && na.V == nb.V,
             (Value.String sa, Value.String sb) => sa.V == sb.V,
+            // DateTime values compare by instant in Unix milliseconds (matches
+            // Luxon valueOf equality): equal instants are equal across zones.
+            (Value.DateTime da, Value.DateTime db) =>
+                da.Instant.ToUnixTimeMilliseconds() == db.Instant.ToUnixTimeMilliseconds(),
             _ => ReferenceEquals(a, b),
         };
 
@@ -409,6 +417,16 @@ internal static class CorePreset
         {
             int r = string.CompareOrdinal(sa.V, sb.V);
             return Value.Boolean.Of(cmp(r, 0));
+        }
+        if (a is Value.DateTime da && b is Value.DateTime db)
+        {
+            return Value.Boolean.Of(
+                cmp(
+                    da.Instant.ToUnixTimeMilliseconds()
+                        .CompareTo(db.Instant.ToUnixTimeMilliseconds()),
+                    0
+                )
+            );
         }
         return Value.Boolean.Of(cmp(ToNumber(a), ToNumber(b)));
     }

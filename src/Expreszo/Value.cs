@@ -209,6 +209,30 @@ public abstract record Value
     }
 
     /// <summary>
+    /// A zone-aware instant in time. <see cref="Instant"/> is the absolute moment
+    /// (UTC-anchored); <see cref="Zone"/> retains the zone identity so functions
+    /// like <c>setZone</c>/<c>zoneName</c>/<c>offsetMinutes</c> can report it.
+    /// Equality and ordering are by instant only, matching Luxon's
+    /// <c>valueOf</c>-based comparison: two values at the same instant are equal
+    /// even when their zones differ.
+    /// </summary>
+    public sealed record DateTime(System.DateTimeOffset Instant, System.TimeZoneInfo Zone) : Value
+    {
+        /// <summary>Wall-clock view of <see cref="Instant"/> in <see cref="Zone"/>.</summary>
+        public System.DateTimeOffset Local =>
+            System.TimeZoneInfo.ConvertTime(Instant.ToUniversalTime(), Zone);
+
+        public bool Equals(DateTime? other) =>
+            other is not null
+            && Instant.ToUnixTimeMilliseconds() == other.Instant.ToUnixTimeMilliseconds();
+
+        public override int GetHashCode() => Instant.ToUnixTimeMilliseconds().GetHashCode();
+
+        public override string ToString() =>
+            Local.ToString("yyyy-MM-dd'T'HH:mm:ss.fffK", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
     /// Returns <c>true</c> when this value is JavaScript-falsy: <see cref="Null"/>,
     /// <see cref="Undefined"/>, <c>false</c>, <c>0</c>, <c>NaN</c>, or empty string.
     /// Every other value (including empty arrays and objects, matching JS) is truthy.
@@ -220,6 +244,7 @@ public abstract record Value
             Boolean b => b.V,
             Number n => n.V != 0 && !double.IsNaN(n.V),
             String s => s.V.Length > 0,
+            DateTime => true,
             _ => true,
         };
 
@@ -235,6 +260,7 @@ public abstract record Value
             Array => "array",
             Object => "object",
             Function => "function",
+            DateTime => "datetime",
             _ => "unknown",
         };
 }
