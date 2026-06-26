@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-26
+
+### Added
+
+- New optional companion package **`Expreszo.DateTime`** with 76 date/time
+  functions (construction, inspection, arithmetic, comparison, ranges,
+  distance-from-now, formatting). Backed by the BCL (`DateTimeOffset` +
+  `TimeZoneInfo`) with no external dependencies, Native AOT and trim compatible,
+  and feature-parity with the TypeScript `@pro-fa/expreszo-datetime` plugin.
+  Register with `Parser.WithPlugins([new ExpreszoDateTimePlugin()])`. An
+  injectable clock and default zone (`DateTimeOptions`) make the impure
+  functions deterministic for tests.
+- Public plugin API: `IExpreszoPlugin` / `IPluginRegistration`,
+  `ParserOptions.Plugins`, and the `Parser.WithPlugins(...)` factory let external
+  packages register functions and operators without reflection (AOT/trim-safe).
+- `Value.DateTime` value variant (a zone-aware instant). It participates in the
+  core `==`/`!=`/`<`/`<=`/`>`/`>=` operators by instant (compared in Unix
+  milliseconds, matching the TypeScript `valueOf` semantics), coerces to
+  epoch-milliseconds in numeric contexts (`as 'number'`, mixed comparisons), and
+  serializes to JSON as an ISO 8601 string.
+
 ## [0.5.0] - 2026-06-22
 
 ### Added
@@ -243,7 +264,10 @@ Initial public release.
 - GitHub Actions workflows: `ci.yml` (build + test + AOT canary + pack) and
   `release.yml` (tag-driven NuGet publish with MinVer + GitHub Release).
 
-[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.3...v0.5.0
+[0.4.3]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.3.0...v0.4.0
