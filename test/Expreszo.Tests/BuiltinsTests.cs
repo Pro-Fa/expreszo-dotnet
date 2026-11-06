@@ -783,6 +783,19 @@ public class BuiltinsTests
         await Assert.That(act).Throws<ExpressionArgumentException>();
     }
 
+    [Test]
+    public async Task IpInRange_throws_for_non_string_cidr()
+    {
+        // Arrange
+        Action act = () => Parser.Evaluate("ipInRange(\"10.0.0.1\", 8)");
+
+        // Act / Assert
+        await Assert
+            .That(act)
+            .Throws<ExpressionArgumentException>()
+            .WithMessageContaining("second argument");
+    }
+
     // ---------- fromJson / toJson ----------
 
     private static VariableResolver Bind(string name, Value value) =>
@@ -790,6 +803,39 @@ public class BuiltinsTests
 
     private static Value EvaluateWith(string expr, string name, string text) =>
         Parser.Evaluate(expr, values: null, resolver: Bind(name, new Value.String(text)));
+
+    [Test]
+    public async Task FromJson_error_reports_position()
+    {
+        // Arrange
+        Action singleLine = () => EvaluateWith("fromJson(s)", "s", "[1, x]");
+        Action multiLine = () => EvaluateWith("fromJson(s)", "s", "[\n  1,\n  x\n]");
+
+        // Act / Assert
+        await Assert
+            .That(singleLine)
+            .Throws<EvaluationException>()
+            .WithMessage("fromJson(): invalid JSON at position 4");
+        await Assert
+            .That(multiLine)
+            .Throws<EvaluationException>()
+            .WithMessage("fromJson(): invalid JSON at line 3, position 2");
+    }
+
+    [Test]
+    [Arguments("json(x => x)")]
+    [Arguments("toJson(x => x)")]
+    [Arguments("toJson()")]
+    public async Task ToJson_returns_undefined_for_unserializable_or_missing_value(string expr)
+    {
+        // Arrange
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(result).IsTypeOf<Value.Undefined>();
+    }
 
     [Test]
     [Arguments("fromJson('{\"a\": 1, \"b\": [2, 3]}')", "{a: 1, b: [2, 3]}")]

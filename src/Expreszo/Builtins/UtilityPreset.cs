@@ -144,11 +144,8 @@ internal static class UtilityPreset
 
     private static string InvalidJsonMessage(JsonException ex)
     {
-        if (ex.LineNumber is not { } line || ex.BytePositionInLine is not { } position)
-        {
-            return "fromJson(): invalid JSON";
-        }
-
+        long line = ex.LineNumber ?? 0;
+        long position = ex.BytePositionInLine ?? 0;
         return line == 0
             ? $"fromJson(): invalid JSON at position {position}"
             : $"fromJson(): invalid JSON at line {line + 1}, position {position}";
