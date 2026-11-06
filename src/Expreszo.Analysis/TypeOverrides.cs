@@ -130,6 +130,8 @@ internal static class TypeOverrides
         // ---- utility ----
         b["if"] = new(ValueKind.Unknown, 3, 3, []);
         b["json"] = new(ValueKind.String, 1, 1, []);
+        b["toJson"] = new(ValueKind.String, 1, 1, []);
+        b["fromJson"] = new(ValueKind.Unknown, 1, 2, [ValueKind.String, ValueKind.Unknown]);
         b["ipInRange"] = new(ValueKind.Boolean, 2, 2, [ValueKind.String, ValueKind.String]);
 
         // ---- type checks: anything → Boolean ----

@@ -282,7 +282,7 @@ if(cond, a, b)              // only `a` evaluates when cond is truthy
 
 Compare to a user-defined `myIf(c, a, b) = c ? a : b`, which eagerly evaluates all three arguments before calling the lambda.
 
-## `json()` Function
+## `json()` / `toJson()` and `fromJson()` Functions
 
 Convert any value to a JSON string:
 
@@ -290,6 +290,14 @@ Convert any value to a JSON string:
 json([1, 2, 3])           // "[1,2,3]"
 json({a: 1, b: 2})        // "{\"a\":1,\"b\":2}"
 json("hello")             // "\"hello\""
+toJson([1, 2, 3])         // "[1,2,3]" (alias for json)
+```
+
+Parse JSON strings into values, with an optional fallback for invalid input:
+
+```
+fromJson('{"a": 1}')      // {a: 1}
+fromJson('oops', {})      // {}
 ```
 
 Function values and `undefined` follow the same rules as [JsonBridge](values-and-json.md#converting-value-json) serialisation.

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `fromJson(text, fallback?)` parses a JSON string into a value. Keys named
+  `__proto__`, `prototype`, or `constructor` are dropped, nesting is limited to
+  256 levels, and error messages never echo the input. With a fallback,
+  undefined or unparseable input returns the fallback instead of throwing; a
+  non-string first argument always throws `ExpressionArgumentException`.
+  Feature parity with `@pro-fa/expreszo` 0.7.0.
+- `toJson(value)` as an alias for `json(value)`.
+
+### Changed
+
+- `json(undefined)` now returns `undefined` instead of the string `"null"`,
+  matching the TypeScript implementation.
+
 ## [0.6.0] - 2026-06-26
 
 ### Added

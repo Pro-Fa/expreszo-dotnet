@@ -771,4 +771,220 @@ public class BuiltinsTests
         // Act / Assert
         await Assert.That(act).Throws<ExpressionArgumentException>();
     }
+
+    // ---------- fromJson / toJson ----------
+
+    private static VariableResolver Bind(string name, Value value) =>
+        n => n == name ? new VariableResolveResult.Bound(value) : VariableResolveResult.NotResolved;
+
+    private static Value EvaluateWith(string expr, string name, string text) =>
+        Parser.Evaluate(expr, values: null, resolver: Bind(name, new Value.String(text)));
+
+    [Test]
+    [Arguments("fromJson('{\"a\": 1, \"b\": [2, 3]}')", "{a: 1, b: [2, 3]}")]
+    [Arguments("fromJson(\"[1, 2, 3]\")", "[1, 2, 3]")]
+    [Arguments("fromJson(\"42\")", "42")]
+    [Arguments("fromJson('\"hi\"')", "\"hi\"")]
+    [Arguments("fromJson(\"true\")", "true")]
+    [Arguments("fromJson(\"null\")", "null")]
+    public async Task FromJson_parses_objects_arrays_and_scalars(string expr, string expected)
+    {
+        // Arrange
+        Value expectedValue = Parser.Evaluate(expected);
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(result).IsEqualTo(expectedValue);
+    }
+
+    [Test]
+    public async Task FromJson_result_supports_member_access()
+    {
+        // Arrange
+        const string payload = "{\"lines\": [{\"qty\": 1}, {\"qty\": 5}]}";
+
+        // Act
+        Value direct = EvaluateWith("(fromJson(s)).lines[1].qty", "s", payload);
+        Value viaVariable = EvaluateWith("o = fromJson(s); o.lines[1].qty", "s", payload);
+
+        // Assert
+        await Assert.That(((Value.Number)direct).V).IsEqualTo(5d);
+        await Assert.That(((Value.Number)viaVariable).V).IsEqualTo(5d);
+    }
+
+    [Test]
+    [Arguments("fromJson(json({a: [1, {b: \"x\"}]}))")]
+    [Arguments("fromJson(toJson({a: [1, {b: \"x\"}]}))")]
+    public async Task FromJson_round_trips_with_json(string expr)
+    {
+        // Arrange
+        Value expected = Parser.Evaluate("{a: [1, {b: \"x\"}]}");
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(result).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task FromJson_undefined_input_without_fallback_returns_undefined()
+    {
+        // Arrange
+
+        // Act
+        Value result = Parser.Evaluate("fromJson(undefined)");
+
+        // Assert
+        await Assert.That(result).IsTypeOf<Value.Undefined>();
+    }
+
+    [Test]
+    [Arguments("fromJson(\"{a: 1}\")")]
+    [Arguments("fromJson(\"\")")]
+    [Arguments("fromJson(\"[1] x\")")]
+    public async Task FromJson_throws_on_invalid_json(string expr)
+    {
+        // Arrange
+        Action act = () => Parser.Evaluate(expr);
+
+        // Act / Assert
+        await Assert.That(act).Throws<EvaluationException>().WithMessageContaining("fromJson(): invalid JSON");
+    }
+
+    [Test]
+    public async Task FromJson_error_does_not_echo_input()
+    {
+        // Arrange
+        Action act = () => EvaluateWith("fromJson(s)", "s", "secret-token-123");
+
+        // Act
+        EvaluationException? ex = await Assert.That(act).Throws<EvaluationException>();
+
+        // Assert
+        await Assert.That(ex!.ToString()).DoesNotContain("secret");
+    }
+
+    [Test]
+    [Arguments("fromJson(42)")]
+    [Arguments("fromJson(42, {})")]
+    [Arguments("fromJson(null)")]
+    public async Task FromJson_throws_for_non_string_input(string expr)
+    {
+        // Arrange
+        Action act = () => Parser.Evaluate(expr);
+
+        // Act / Assert
+        await Assert.That(act).Throws<ExpressionArgumentException>().WithMessageContaining("expects a string");
+    }
+
+    [Test]
+    [Arguments("fromJson(\"not json\", {theme: \"light\"})", "{theme: \"light\"}")]
+    [Arguments("fromJson(undefined, [])", "[]")]
+    [Arguments("fromJson(\"not json\", null)", "null")]
+    [Arguments("fromJson(\"[1]\", \"fallback\")", "[1]")]
+    public async Task FromJson_fallback_applies_only_to_invalid_or_undefined_input(
+        string expr,
+        string expected
+    )
+    {
+        // Arrange
+        Value expectedValue = Parser.Evaluate(expected);
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(result).IsEqualTo(expectedValue);
+    }
+
+    [Test]
+    public async Task FromJson_drops_dangerous_keys()
+    {
+        // Arrange
+        const string payload =
+            "{\"__proto__\": {\"isAdmin\": true}, \"constructor\": 1, \"nested\": {\"prototype\": 2, \"ok\": 3}, \"a\": 1}";
+
+        // Act
+        var result = (Value.Object)EvaluateWith("fromJson(s)", "s", payload);
+
+        // Assert
+        await Assert.That(result.Props.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(["a", "nested"]);
+        await Assert.That(result.Props["nested"]).IsEqualTo(Parser.Evaluate("{ok: 3}"));
+    }
+
+    [Test]
+    public async Task FromJson_rejects_nesting_beyond_depth_limit()
+    {
+        // Arrange
+        string tooDeep = new string('[', 257) + new string(']', 257);
+        string atLimit = new string('[', 256) + new string(']', 256);
+        Action act = () => EvaluateWith("fromJson(s)", "s", tooDeep);
+
+        // Act
+        Value fallback = EvaluateWith("fromJson(s, \"too deep\")", "s", tooDeep);
+        Value ok = EvaluateWith("fromJson(s)", "s", atLimit);
+
+        // Assert
+        await Assert.That(act).Throws<EvaluationException>().WithMessageContaining("maximum nesting depth of 256");
+        await Assert.That(((Value.String)fallback).V).IsEqualTo("too deep");
+        await Assert.That(ok).IsTypeOf<Value.Array>();
+    }
+
+    [Test]
+    public async Task FromJson_ignores_brackets_inside_strings_for_depth_limit()
+    {
+        // Arrange
+        string text = new string('[', 1000) + "\\\"{";
+        string payload = "{\"text\": \"" + new string('[', 1000) + "\\\\\\\"{\"}";
+
+        // Act
+        var result = (Value.Object)EvaluateWith("fromJson(s)", "s", payload);
+
+        // Assert
+        await Assert.That(((Value.String)result.Props["text"]).V).IsEqualTo(text);
+    }
+
+    [Test]
+    public async Task FromJson_survives_simplify()
+    {
+        // Arrange
+        Expression expr = Parser.Parse("fromJson(\"[1, 2]\")").Simplify();
+
+        // Act
+        Value result = expr.Evaluate();
+
+        // Assert
+        await Assert.That(result).IsEqualTo(Parser.Evaluate("[1, 2]"));
+    }
+
+    [Test]
+    [Arguments("toJson({a: [1, \"x\"]})", "{\"a\":[1,\"x\"]}")]
+    [Arguments("toJson(\"hi\")", "\"hi\"")]
+    public async Task ToJson_serializes_value(string expr, string expected)
+    {
+        // Arrange
+
+        // Act
+        Value result = Parser.Evaluate(expr);
+
+        // Assert
+        await Assert.That(((Value.String)result).V).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task ToJson_matches_json()
+    {
+        // Arrange
+
+        // Act
+        Value undefinedResult = Parser.Evaluate("toJson(undefined)");
+        Value same = Parser.Evaluate("toJson({b: [true, null]}) == json({b: [true, null]})");
+
+        // Assert
+        await Assert.That(undefinedResult).IsTypeOf<Value.Undefined>();
+        await Assert.That(((Value.Boolean)same).V).IsTrue();
+    }
 }

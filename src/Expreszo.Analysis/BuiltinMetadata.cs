@@ -226,6 +226,9 @@ public static class BuiltinMetadata
             // --- utility -------------------------------------------------
             Fn("if", "if(cond, thenExpr, elseExpr)", "Lazy conditional; only the chosen branch evaluates."),
             Fn("json", "json(value)", "Canonical JSON string representation."),
+            Fn("toJson", "toJson(value)", "Alias for json. Canonical JSON string representation."),
+            Fn("fromJson", "fromJson(text) | fromJson(text, fallback)",
+                "Parse a JSON string into a value; dangerous keys are dropped. Throws on invalid JSON unless a fallback is given."),
             Fn("ipInRange", "ipInRange(ip, cidr)", "True if the IPv4 address is in the CIDR block."),
 
             // --- type checks ---------------------------------------------

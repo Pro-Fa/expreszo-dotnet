@@ -138,6 +138,9 @@ Short-circuits: `and` / `&&` only evaluate the right-hand side if the left is tr
 | `pick(obj, keys)` | `pick({a: 1, b: 2}, ["a"])` | `{a: 1}` |
 | `omit(obj, keys)` | `omit({a: 1, b: 2}, ["b"])` | `{a: 1}` |
 | `mapValues(obj, fn)` | `mapValues({a: 1}, v => v * 10)` | `{a: 10}` |
+| `json(x)` | `json({a: 1})` | `'{"a":1}'` |
+| `toJson(x)` | `toJson([1, 2])` | `"[1,2]"` |
+| `fromJson(s, fallback?)` | `fromJson('{"a":1}')` | `{a: 1}` |
 
 ## Network Functions
 
