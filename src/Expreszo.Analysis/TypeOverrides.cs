@@ -31,10 +31,34 @@ internal static class TypeOverrides
         // ---- math unary: Number → Number ----
         string[] mathUnary =
         [
-            "abs", "ceil", "floor", "round", "sign", "sqrt", "cbrt", "trunc",
-            "exp", "expm1", "log", "ln", "log1p", "log2", "log10", "lg",
-            "sin", "cos", "tan", "asin", "acos", "atan",
-            "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
+            "abs",
+            "ceil",
+            "floor",
+            "round",
+            "sign",
+            "sqrt",
+            "cbrt",
+            "trunc",
+            "exp",
+            "expm1",
+            "log",
+            "ln",
+            "log1p",
+            "log2",
+            "log10",
+            "lg",
+            "sin",
+            "cos",
+            "tan",
+            "asin",
+            "acos",
+            "atan",
+            "sinh",
+            "cosh",
+            "tanh",
+            "asinh",
+            "acosh",
+            "atanh",
         ];
         foreach (string name in mathUnary)
         {
@@ -46,7 +70,12 @@ internal static class TypeOverrides
 
         // ---- math functions with precise shapes ----
         b["atan2"] = new(ValueKind.Number, 2, 2, [ValueKind.Number, ValueKind.Number]);
-        b["clamp"] = new(ValueKind.Number, 3, 3, [ValueKind.Number, ValueKind.Number, ValueKind.Number]);
+        b["clamp"] = new(
+            ValueKind.Number,
+            3,
+            3,
+            [ValueKind.Number, ValueKind.Number, ValueKind.Number]
+        );
         b["fac"] = new(ValueKind.Number, 1, 1, [ValueKind.Number]);
         b["gamma"] = new(ValueKind.Number, 1, 1, [ValueKind.Number]);
         b["hypot"] = new(ValueKind.Number, 1, int.MaxValue, []);
@@ -66,7 +95,12 @@ internal static class TypeOverrides
         // ---- array functions ----
         b["count"] = new(ValueKind.Number, 1, 1, [ValueKind.Array]);
         b["filter"] = new(ValueKind.Array, 2, 2, [ValueKind.Array, ValueKind.Function]);
-        b["fold"] = new(ValueKind.Unknown, 3, 3, [ValueKind.Array, ValueKind.Unknown, ValueKind.Function]);
+        b["fold"] = new(
+            ValueKind.Unknown,
+            3,
+            3,
+            [ValueKind.Array, ValueKind.Unknown, ValueKind.Function]
+        );
         b["reduce"] = new(ValueKind.Unknown, 2, 2, [ValueKind.Array, ValueKind.Function]);
         b["find"] = new(ValueKind.Unknown, 2, 2, [ValueKind.Array, ValueKind.Function]);
         b["some"] = new(ValueKind.Boolean, 2, 2, [ValueKind.Array, ValueKind.Function]);
@@ -76,7 +110,12 @@ internal static class TypeOverrides
         b["indexOf"] = new(ValueKind.Number, 2, 2, [ValueKind.Array, ValueKind.Unknown]);
         b["join"] = new(ValueKind.String, 2, 2, [ValueKind.Array, ValueKind.String]);
         b["map"] = new(ValueKind.Array, 2, 2, [ValueKind.Array, ValueKind.Function]);
-        b["range"] = new(ValueKind.Array, 2, 3, [ValueKind.Number, ValueKind.Number, ValueKind.Number]);
+        b["range"] = new(
+            ValueKind.Array,
+            2,
+            3,
+            [ValueKind.Number, ValueKind.Number, ValueKind.Number]
+        );
         b["chunk"] = new(ValueKind.Array, 2, 2, [ValueKind.Array, ValueKind.Number]);
         b["union"] = new(ValueKind.Array, 2, 2, [ValueKind.Array, ValueKind.Array]);
         b["intersect"] = new(ValueKind.Array, 2, 2, [ValueKind.Array, ValueKind.Array]);
@@ -96,23 +135,68 @@ internal static class TypeOverrides
         b["toLower"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["toTitle"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["split"] = new(ValueKind.Array, 2, 2, [ValueKind.String, ValueKind.String]);
-        b["regexMatches"] = new(ValueKind.Boolean, 2, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
+        b["regexMatches"] = new(
+            ValueKind.Boolean,
+            2,
+            3,
+            [ValueKind.String, ValueKind.String, ValueKind.String]
+        );
         // regexExtract returns String (no groups) or Array (groups) → Unknown.
-        b["regexExtract"] = new(ValueKind.Unknown, 2, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
-        b["regexReplace"] = new(ValueKind.String, 3, 4, [ValueKind.String, ValueKind.String, ValueKind.String, ValueKind.String]);
+        b["regexExtract"] = new(
+            ValueKind.Unknown,
+            2,
+            3,
+            [ValueKind.String, ValueKind.String, ValueKind.String]
+        );
+        b["regexReplace"] = new(
+            ValueKind.String,
+            3,
+            4,
+            [ValueKind.String, ValueKind.String, ValueKind.String, ValueKind.String]
+        );
         b["repeat"] = new(ValueKind.String, 2, 2, [ValueKind.String, ValueKind.Number]);
         b["reverse"] = new(ValueKind.Unknown, 1, 1, []);
         b["left"] = new(ValueKind.String, 2, 2, [ValueKind.String, ValueKind.Number]);
         b["right"] = new(ValueKind.String, 2, 2, [ValueKind.String, ValueKind.Number]);
-        b["replace"] = new(ValueKind.String, 3, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
-        b["replaceFirst"] = new(ValueKind.String, 3, 3, [ValueKind.String, ValueKind.String, ValueKind.String]);
+        b["replace"] = new(
+            ValueKind.String,
+            3,
+            3,
+            [ValueKind.String, ValueKind.String, ValueKind.String]
+        );
+        b["replaceFirst"] = new(
+            ValueKind.String,
+            3,
+            3,
+            [ValueKind.String, ValueKind.String, ValueKind.String]
+        );
         b["naturalSort"] = new(ValueKind.Array, 1, 1, [ValueKind.Array]);
         b["toNumber"] = new(ValueKind.Number, 1, 1, [ValueKind.String]);
         b["toBoolean"] = new(ValueKind.Boolean, 1, 1, [ValueKind.String]);
-        b["padLeft"] = new(ValueKind.String, 2, 3, [ValueKind.String, ValueKind.Number, ValueKind.String]);
-        b["padRight"] = new(ValueKind.String, 2, 3, [ValueKind.String, ValueKind.Number, ValueKind.String]);
-        b["padBoth"] = new(ValueKind.String, 2, 3, [ValueKind.String, ValueKind.Number, ValueKind.String]);
-        b["slice"] = new(ValueKind.String, 2, 3, [ValueKind.String, ValueKind.Number, ValueKind.Number]);
+        b["padLeft"] = new(
+            ValueKind.String,
+            2,
+            3,
+            [ValueKind.String, ValueKind.Number, ValueKind.String]
+        );
+        b["padRight"] = new(
+            ValueKind.String,
+            2,
+            3,
+            [ValueKind.String, ValueKind.Number, ValueKind.String]
+        );
+        b["padBoth"] = new(
+            ValueKind.String,
+            2,
+            3,
+            [ValueKind.String, ValueKind.Number, ValueKind.String]
+        );
+        b["slice"] = new(
+            ValueKind.String,
+            2,
+            3,
+            [ValueKind.String, ValueKind.Number, ValueKind.Number]
+        );
         b["urlEncode"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["base64Encode"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
         b["base64Decode"] = new(ValueKind.String, 1, 1, [ValueKind.String]);
@@ -137,8 +221,14 @@ internal static class TypeOverrides
         // ---- type checks: anything → Boolean ----
         string[] typeChecks =
         [
-            "isArray", "isObject", "isNumber", "isString",
-            "isBoolean", "isNull", "isUndefined", "isFunction",
+            "isArray",
+            "isObject",
+            "isNumber",
+            "isString",
+            "isBoolean",
+            "isNull",
+            "isUndefined",
+            "isFunction",
         ];
         foreach (string name in typeChecks)
         {

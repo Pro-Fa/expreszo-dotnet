@@ -543,7 +543,9 @@ public class BuiltinsTests
         bool anchored = ((Value.Boolean)Parser.Evaluate("regexMatches(\"hello\", \"^h.*o$\")")).V;
         bool noMatch = ((Value.Boolean)Parser.Evaluate("regexMatches(\"abc\", \"[0-9]+\")")).V;
         bool caseSensitive = ((Value.Boolean)Parser.Evaluate("regexMatches(\"ABC\", \"abc\")")).V;
-        bool caseInsensitive = ((Value.Boolean)Parser.Evaluate("regexMatches(\"ABC\", \"abc\", \"i\")")).V;
+        bool caseInsensitive = (
+            (Value.Boolean)Parser.Evaluate("regexMatches(\"ABC\", \"abc\", \"i\")")
+        ).V;
         bool backslashClass = ((Value.Boolean)Parser.Evaluate("regexMatches(\"a1\", \"\\\\d\")")).V;
 
         // Assert
@@ -606,7 +608,8 @@ public class BuiltinsTests
 
         // Act
         var single = (Value.Array)Parser.Evaluate("regexExtract(\"user-42\", \"user-([0-9]+)\")");
-        var multi = (Value.Array)Parser.Evaluate("regexExtract(\"2026-06-22\", \"([0-9]+)-([0-9]+)-([0-9]+)\")");
+        var multi = (Value.Array)
+            Parser.Evaluate("regexExtract(\"2026-06-22\", \"([0-9]+)-([0-9]+)-([0-9]+)\")");
 
         // Assert
         await Assert.That(single.Items.Length).IsEqualTo(1);
@@ -656,7 +659,9 @@ public class BuiltinsTests
 
         // Act
         string dashes = ((Value.String)Parser.Evaluate("regexReplace(\"a-b-c\", \"-\", \"_\")")).V;
-        string digits = ((Value.String)Parser.Evaluate("regexReplace(\"a1b2c3\", \"[0-9]\", \"#\")")).V;
+        string digits = (
+            (Value.String)Parser.Evaluate("regexReplace(\"a1b2c3\", \"[0-9]\", \"#\")")
+        ).V;
 
         // Assert
         await Assert.That(dashes).IsEqualTo("a_b_c");
@@ -669,8 +674,12 @@ public class BuiltinsTests
         // Arrange
 
         // Act
-        string swapped = ((Value.String)
-            Parser.Evaluate("regexReplace(\"John Smith\", \"([A-Za-z]+) ([A-Za-z]+)\", \"$2 $1\")")).V;
+        string swapped = (
+            (Value.String)
+                Parser.Evaluate(
+                    "regexReplace(\"John Smith\", \"([A-Za-z]+) ([A-Za-z]+)\", \"$2 $1\")"
+                )
+        ).V;
 
         // Assert
         await Assert.That(swapped).IsEqualTo("Smith John");
@@ -682,7 +691,9 @@ public class BuiltinsTests
         // Arrange
 
         // Act
-        string firstOnly = ((Value.String)Parser.Evaluate("regexReplace(\"a-b-c\", \"-\", \"_\", \"\")")).V;
+        string firstOnly = (
+            (Value.String)Parser.Evaluate("regexReplace(\"a-b-c\", \"-\", \"_\", \"\")")
+        ).V;
 
         // Assert
         await Assert.That(firstOnly).IsEqualTo("a_b-c");
@@ -851,7 +862,10 @@ public class BuiltinsTests
         Action act = () => Parser.Evaluate(expr);
 
         // Act / Assert
-        await Assert.That(act).Throws<EvaluationException>().WithMessageContaining("fromJson(): invalid JSON");
+        await Assert
+            .That(act)
+            .Throws<EvaluationException>()
+            .WithMessageContaining("fromJson(): invalid JSON");
     }
 
     [Test]
@@ -877,7 +891,10 @@ public class BuiltinsTests
         Action act = () => Parser.Evaluate(expr);
 
         // Act / Assert
-        await Assert.That(act).Throws<ExpressionArgumentException>().WithMessageContaining("expects a string");
+        await Assert
+            .That(act)
+            .Throws<ExpressionArgumentException>()
+            .WithMessageContaining("expects a string");
     }
 
     [Test]
@@ -911,7 +928,9 @@ public class BuiltinsTests
         var result = (Value.Object)EvaluateWith("fromJson(s)", "s", payload);
 
         // Assert
-        await Assert.That(result.Props.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(["a", "nested"]);
+        await Assert
+            .That(result.Props.Keys.Order(StringComparer.Ordinal))
+            .IsEquivalentTo(["a", "nested"]);
         await Assert.That(result.Props["nested"]).IsEqualTo(Parser.Evaluate("{ok: 3}"));
     }
 
@@ -928,7 +947,10 @@ public class BuiltinsTests
         Value ok = EvaluateWith("fromJson(s)", "s", atLimit);
 
         // Assert
-        await Assert.That(act).Throws<EvaluationException>().WithMessageContaining("maximum nesting depth of 256");
+        await Assert
+            .That(act)
+            .Throws<EvaluationException>()
+            .WithMessageContaining("maximum nesting depth of 256");
         await Assert.That(((Value.String)fallback).V).IsEqualTo("too deep");
         await Assert.That(ok).IsTypeOf<Value.Array>();
     }

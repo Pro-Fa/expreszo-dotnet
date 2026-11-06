@@ -324,9 +324,7 @@ internal static class CorePreset
     {
         Expreszo.Validation.ExpressionValidator.ValidateArrayAccess(arr, key);
         int idx = (int)((Value.Number)key).V;
-        return idx >= 0 && idx < arr.Items.Length
-            ? arr.Items[idx]
-            : Value.Undefined.Instance;
+        return idx >= 0 && idx < arr.Items.Length ? arr.Items[idx] : Value.Undefined.Instance;
     }
 
     private static Value IndexObject(Value.Object obj, Value key)
@@ -396,13 +394,14 @@ internal static class CorePreset
             (Value.Undefined, Value.Undefined) => true,
             (Value.Null, Value.Null) => true,
             (Value.Boolean ba, Value.Boolean bb) => ba.V == bb.V,
-            (Value.Number na, Value.Number nb) =>
-                !double.IsNaN(na.V) && !double.IsNaN(nb.V) && na.V == nb.V,
+            (Value.Number na, Value.Number nb) => !double.IsNaN(na.V)
+                && !double.IsNaN(nb.V)
+                && na.V == nb.V,
             (Value.String sa, Value.String sb) => sa.V == sb.V,
             // DateTime values compare by instant in Unix milliseconds (matches
             // Luxon valueOf equality): equal instants are equal across zones.
-            (Value.DateTime da, Value.DateTime db) =>
-                da.Instant.ToUnixTimeMilliseconds() == db.Instant.ToUnixTimeMilliseconds(),
+            (Value.DateTime da, Value.DateTime db) => da.Instant.ToUnixTimeMilliseconds()
+                == db.Instant.ToUnixTimeMilliseconds(),
             _ => ReferenceEquals(a, b),
         };
 

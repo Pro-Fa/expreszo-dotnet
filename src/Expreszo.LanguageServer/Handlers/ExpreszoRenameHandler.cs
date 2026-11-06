@@ -75,12 +75,7 @@ internal sealed class ExpreszoRenameHandler : RenameHandlerBase
     protected override RenameRegistrationOptions CreateRegistrationOptions(
         RenameCapability capability,
         ClientCapabilities clientCapabilities
-    ) =>
-        new()
-        {
-            DocumentSelector = DocumentSelectorFactory.Expreszo,
-            PrepareProvider = false,
-        };
+    ) => new() { DocumentSelector = DocumentSelectorFactory.Expreszo, PrepareProvider = false };
 
     /// <summary>
     /// Mirrors the tokenizer's identifier rule: leading letter or underscore,

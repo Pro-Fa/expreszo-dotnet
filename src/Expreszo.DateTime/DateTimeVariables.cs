@@ -44,8 +44,9 @@ public static class DateTimeVariables
             float f => Value.Number.Of(f),
             double d => Value.Number.Of(d),
             decimal m => Value.Number.Of((double)m),
-            sbyte or byte or short or ushort or int or uint or long or ulong =>
-                Value.Number.Of(Convert.ToDouble(raw, CultureInfo.InvariantCulture)),
+            sbyte or byte or short or ushort or int or uint or long or ulong => Value.Number.Of(
+                Convert.ToDouble(raw, CultureInfo.InvariantCulture)
+            ),
             _ => throw new EvaluationException(
                 $"Cannot convert value of type {raw.GetType().Name} to an Expreszo value"
             ),

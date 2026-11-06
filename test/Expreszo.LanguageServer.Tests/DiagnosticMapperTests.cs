@@ -11,11 +11,8 @@ public class DiagnosticMapperTests
     {
         var error = new ParseException(
             "bad",
-            new ErrorContext
-            {
-                Span = new TextSpan(2, 5),
-                Position = new ErrorPosition(1, 3),
-            });
+            new ErrorContext { Span = new TextSpan(2, 5), Position = new ErrorPosition(1, 3) }
+        );
 
         Diagnostic[] diagnostics = [.. DiagnosticMapper.Map(error, new LineIndex("01234567"))];
 
@@ -32,7 +29,8 @@ public class DiagnosticMapperTests
     {
         var error = new ParseException(
             "bad",
-            new ErrorContext { Position = new ErrorPosition(1, 3) });
+            new ErrorContext { Position = new ErrorPosition(1, 3) }
+        );
 
         Diagnostic[] diagnostics = [.. DiagnosticMapper.Map(error, new LineIndex("01234"))];
 

@@ -50,13 +50,16 @@ public class TryParseTests
         // of walkable shape that yields "a" and "c" as assignment targets
         // confirms recovery worked.
         var names = new List<string>();
-        global::Expreszo.Ast.Ast.Walk(result.Expression.Root, node =>
-        {
-            if (node is NameRef nr)
+        global::Expreszo.Ast.Ast.Walk(
+            result.Expression.Root,
+            node =>
             {
-                names.Add(nr.Name);
+                if (node is NameRef nr)
+                {
+                    names.Add(nr.Name);
+                }
             }
-        });
+        );
 
         await Assert.That(names).Contains("a");
         await Assert.That(names).Contains("c");
@@ -93,13 +96,16 @@ public class TryParseTests
 
         // Collect every Ident/NameRef to check they carry absolute offsets.
         var seen = new List<(string Name, int Start, int End)>();
-        global::Expreszo.Ast.Ast.Walk(result.Expression.Root, node =>
-        {
-            if (node is NameRef nr)
+        global::Expreszo.Ast.Ast.Walk(
+            result.Expression.Root,
+            node =>
             {
-                seen.Add((nr.Name, nr.Span.Start, nr.Span.End));
+                if (node is NameRef nr)
+                {
+                    seen.Add((nr.Name, nr.Span.Start, nr.Span.End));
+                }
             }
-        });
+        );
 
         // "a" is at absolute offset 0..1, "b" at 7..8.
         await Assert.That(seen).Contains(("a", 0, 1));

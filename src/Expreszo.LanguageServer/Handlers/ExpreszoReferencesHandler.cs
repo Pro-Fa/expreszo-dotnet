@@ -41,17 +41,19 @@ internal sealed class ExpreszoReferencesHandler : ReferencesHandlerBase
         }
 
         SymbolIndex index = SymbolIndex.Build(doc.Root);
-        IEnumerable<TextSpan> spans = request.Context?.IncludeDeclaration == true
-            ? index.AllOccurrences(name)
-            : index.References.TryGetValue(name, out ImmutableArray<TextSpan> refs)
-                ? refs
-                : [];
+        IEnumerable<TextSpan> spans =
+            request.Context?.IncludeDeclaration == true ? index.AllOccurrences(name)
+            : index.References.TryGetValue(name, out ImmutableArray<TextSpan> refs) ? refs
+            : [];
 
-        List<Location> locations = [.. spans.Select(span => new Location
-        {
-            Uri = request.TextDocument.Uri,
-            Range = ExpreszoDefinitionHandler.ToRange(span, doc.LineIndex),
-        })];
+        List<Location> locations =
+        [
+            .. spans.Select(span => new Location
+            {
+                Uri = request.TextDocument.Uri,
+                Range = ExpreszoDefinitionHandler.ToRange(span, doc.LineIndex),
+            }),
+        ];
 
         return Task.FromResult<LocationContainer?>(LocationContainer.From(locations));
     }

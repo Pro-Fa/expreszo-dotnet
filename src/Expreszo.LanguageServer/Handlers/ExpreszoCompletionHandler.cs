@@ -14,8 +14,10 @@ namespace Expreszo.LanguageServer.Handlers;
 /// </summary>
 internal sealed class ExpreszoCompletionHandler : CompletionHandlerBase
 {
-    private static readonly CompletionList CatalogueCompletions =
-        new(BuildItems(), isIncomplete: false);
+    private static readonly CompletionList CatalogueCompletions = new(
+        BuildItems(),
+        isIncomplete: false
+    );
 
     public override Task<CompletionList> Handle(
         CompletionParams request,

@@ -232,8 +232,7 @@ internal sealed class Evaluator(OperatorTable ops, ParserConfig config)
     }
 
     // Lazy `if(cond, t, f)` - only the selected branch is evaluated.
-    private static bool IsLazyIf(Call c) =>
-        c.Callee is Ident { Name: "if" } && c.Args.Length == 3;
+    private static bool IsLazyIf(Call c) => c.Callee is Ident { Name: "if" } && c.Args.Length == 3;
 
     private async ValueTask<Value> EvalLazyIf(Call c, EvalContext ctx)
     {

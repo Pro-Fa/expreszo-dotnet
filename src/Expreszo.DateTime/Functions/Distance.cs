@@ -35,7 +35,9 @@ internal static class Distance
 
     public static Value HoursSince(Value[] a, DateTimeOptions o) => Compute(a, o, Unit.Hours, -1);
 
-    public static Value MinutesUntil(Value[] a, DateTimeOptions o) => Compute(a, o, Unit.Minutes, 1);
+    public static Value MinutesUntil(Value[] a, DateTimeOptions o) =>
+        Compute(a, o, Unit.Minutes, 1);
 
-    public static Value MinutesSince(Value[] a, DateTimeOptions o) => Compute(a, o, Unit.Minutes, -1);
+    public static Value MinutesSince(Value[] a, DateTimeOptions o) =>
+        Compute(a, o, Unit.Minutes, -1);
 }

@@ -18,7 +18,9 @@ public class CoverageFillersTests
     [Test]
     public async Task ParseDate_with_an_explicit_zone()
     {
-        Value r = P.Evaluate("parseDate('2026-01-20 12:00', 'yyyy-MM-dd HH:mm', 'America/New_York')");
+        Value r = P.Evaluate(
+            "parseDate('2026-01-20 12:00', 'yyyy-MM-dd HH:mm', 'America/New_York')"
+        );
         await Assert.That(DateFixture.Date(r).Zone.Id).IsEqualTo("America/New_York");
     }
 
@@ -162,18 +164,30 @@ public class CoverageFillersTests
     [Test]
     public async Task IsValid_accepts_a_native_date()
     {
-        var d = DateTimeOffset.Parse("2026-01-01", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
-        await Assert.That(DateFixture.Bool(P.Eval("isValid(d)", DateFixture.Vars(("d", d))))).IsTrue();
+        var d = DateTimeOffset.Parse(
+            "2026-01-01",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind
+        );
+        await Assert
+            .That(DateFixture.Bool(P.Eval("isValid(d)", DateFixture.Vars(("d", d)))))
+            .IsTrue();
     }
 
     [Test]
     public async Task IsValid_accepts_a_value_datetime()
     {
         Value.DateTime dt = new(
-            DateTimeOffset.Parse("2026-01-01", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            DateTimeOffset.Parse(
+                "2026-01-01",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            ),
             DateFixture.Utc
         );
-        await Assert.That(DateFixture.Bool(P.Eval("isValid(dt)", DateFixture.Vars(("dt", dt))))).IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Eval("isValid(dt)", DateFixture.Vars(("dt", dt)))))
+            .IsTrue();
     }
 
     [Test]
@@ -185,7 +199,9 @@ public class CoverageFillersTests
     [Test]
     public async Task IsValid_rejects_nan()
     {
-        await Assert.That(DateFixture.Bool(P.Eval("isValid(n)", DateFixture.Vars(("n", double.NaN))))).IsFalse();
+        await Assert
+            .That(DateFixture.Bool(P.Eval("isValid(n)", DateFixture.Vars(("n", double.NaN)))))
+            .IsFalse();
     }
 
     [Test]

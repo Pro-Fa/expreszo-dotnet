@@ -68,12 +68,14 @@ public sealed class TypeInference
     {
         foreach (ArrayEntry entry in a.Elements)
         {
-            Visit(entry switch
-            {
-                ArrayElement e => e.Node,
-                ArraySpread s => s.Argument,
-                _ => throw new NotSupportedException(),
-            });
+            Visit(
+                entry switch
+                {
+                    ArrayElement e => e.Node,
+                    ArraySpread s => s.Argument,
+                    _ => throw new NotSupportedException(),
+                }
+            );
         }
         return ValueKind.Array;
     }
@@ -82,12 +84,14 @@ public sealed class TypeInference
     {
         foreach (ObjectEntry entry in o.Properties)
         {
-            Visit(entry switch
-            {
-                ObjectProperty p => p.Value,
-                ObjectSpread s => s.Argument,
-                _ => throw new NotSupportedException(),
-            });
+            Visit(
+                entry switch
+                {
+                    ObjectProperty p => p.Value,
+                    ObjectSpread s => s.Argument,
+                    _ => throw new NotSupportedException(),
+                }
+            );
         }
         return ValueKind.Object;
     }
@@ -220,10 +224,34 @@ public sealed class TypeInference
     private static bool IsMathUnary(string op) =>
         op switch
         {
-            "abs" or "ceil" or "floor" or "round" or "sign" or "sqrt" or "cbrt" or "trunc"
-            or "exp" or "expm1" or "log" or "ln" or "log1p" or "log2" or "log10" or "lg"
-            or "sin" or "cos" or "tan" or "asin" or "acos" or "atan"
-            or "sinh" or "cosh" or "tanh" or "asinh" or "acosh" or "atanh"
+            "abs"
+            or "ceil"
+            or "floor"
+            or "round"
+            or "sign"
+            or "sqrt"
+            or "cbrt"
+            or "trunc"
+            or "exp"
+            or "expm1"
+            or "log"
+            or "ln"
+            or "log1p"
+            or "log2"
+            or "log10"
+            or "lg"
+            or "sin"
+            or "cos"
+            or "tan"
+            or "asin"
+            or "acos"
+            or "atan"
+            or "sinh"
+            or "cosh"
+            or "tanh"
+            or "asinh"
+            or "acosh"
+            or "atanh"
             or "length" => true,
             _ => false,
         };

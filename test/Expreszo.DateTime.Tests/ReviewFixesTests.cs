@@ -53,8 +53,14 @@ public class ReviewFixesTests
     [Test]
     public async Task DateTime_coerces_to_millis_in_numeric_comparison()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01T00:00:00Z') > 0"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01T00:00:00Z') < 9999999999999"))).IsTrue();
-        await Assert.That(DateFixture.Num(P.Evaluate("parseISO('2026-01-01T00:00:00Z') as 'number'"))).IsEqualTo(1767225600000d);
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01T00:00:00Z') > 0")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01T00:00:00Z') < 9999999999999")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("parseISO('2026-01-01T00:00:00Z') as 'number'")))
+            .IsEqualTo(1767225600000d);
     }
 }

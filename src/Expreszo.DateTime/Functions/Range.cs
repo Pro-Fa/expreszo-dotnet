@@ -46,12 +46,7 @@ internal static class Ranges
 
     public static Value WeekdaysBetween(Value[] a, DateTimeOptions o)
     {
-        if (
-            a[2] is not Value.Number wn
-            || wn.V < 1
-            || wn.V > 7
-            || !double.IsInteger(wn.V)
-        )
+        if (a[2] is not Value.Number wn || wn.V < 1 || wn.V > 7 || !double.IsInteger(wn.V))
         {
             throw new EvaluationException(
                 $"weekdaysBetween() weekday must be an integer 1..7; got {Describe(a[2])}"
@@ -86,7 +81,9 @@ internal static class Ranges
         }
         if (a[index] is not Value.Number n || !double.IsFinite(n.V) || n.V <= 0)
         {
-            throw new EvaluationException($"step must be a positive number; got {Describe(a[index])}");
+            throw new EvaluationException(
+                $"step must be a positive number; got {Describe(a[index])}"
+            );
         }
         return n.V;
     }

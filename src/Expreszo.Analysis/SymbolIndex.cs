@@ -57,24 +57,27 @@ public sealed class SymbolIndex
         var defs = new Dictionary<string, List<TextSpan>>(StringComparer.Ordinal);
         var refs = new Dictionary<string, List<TextSpan>>(StringComparer.Ordinal);
 
-        Ast.Ast.Walk(root, node =>
-        {
-            switch (node)
+        Ast.Ast.Walk(
+            root,
+            node =>
             {
-                case FunctionDef fd:
-                    Add(defs, fd.Name, SelectionSpan(fd));
-                    break;
+                switch (node)
+                {
+                    case FunctionDef fd:
+                        Add(defs, fd.Name, SelectionSpan(fd));
+                        break;
 
-                case Binary { Op: "=", Left: NameRef nr }:
-                    // Assignments like `x = …` define `x` at the NameRef span.
-                    Add(defs, nr.Name, nr.Span);
-                    break;
+                    case Binary { Op: "=", Left: NameRef nr }:
+                        // Assignments like `x = …` define `x` at the NameRef span.
+                        Add(defs, nr.Name, nr.Span);
+                        break;
 
-                case Ident id:
-                    Add(refs, id.Name, id.Span);
-                    break;
+                    case Ident id:
+                        Add(refs, id.Name, id.Span);
+                        break;
+                }
             }
-        });
+        );
 
         return new SymbolIndex(Freeze(defs), Freeze(refs));
     }

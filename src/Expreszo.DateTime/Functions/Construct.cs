@@ -70,8 +70,7 @@ internal static class Construct
         return Dt.FromWall(wall, o.DefaultZone);
     }
 
-    public static Value Date(Value[] a, DateTimeOptions o) =>
-        DateTimeFn([a[0], a[1], a[2]], o);
+    public static Value Date(Value[] a, DateTimeOptions o) => DateTimeFn([a[0], a[1], a[2]], o);
 
     public static Value Time(Value[] a, DateTimeOptions o)
     {

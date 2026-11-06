@@ -20,7 +20,10 @@ public class TypeInferenceTests
     [Arguments("[1, 2, 3]", ValueKind.Array)]
     [Arguments("{a: 1}", ValueKind.Object)]
     [Arguments("x => x + 1", ValueKind.Function)]
-    public async Task Literals_and_constructors_map_to_the_matching_kind(string src, ValueKind expected)
+    public async Task Literals_and_constructors_map_to_the_matching_kind(
+        string src,
+        ValueKind expected
+    )
     {
         await Assert.That(KindOfRoot(src)).IsEqualTo(expected);
     }

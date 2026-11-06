@@ -49,7 +49,12 @@ internal static class UtilityPreset
                 string prefixStr = cidr[(slash + 1)..];
                 if (
                     prefixStr.Length is 0 or > 2
-                    || !int.TryParse(prefixStr, NumberStyles.None, CultureInfo.InvariantCulture, out int prefix)
+                    || !int.TryParse(
+                        prefixStr,
+                        NumberStyles.None,
+                        CultureInfo.InvariantCulture,
+                        out int prefix
+                    )
                     || prefix > 32
                 )
                 {
@@ -221,7 +226,12 @@ internal static class UtilityPreset
             // decimal integer 0-255.
             if (
                 part.Length is 0 or > 3
-                || !int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out int octet)
+                || !int.TryParse(
+                    part,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out int octet
+                )
                 || octet > 255
             )
             {
