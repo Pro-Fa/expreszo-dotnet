@@ -50,32 +50,44 @@ public class RangeTests
     [Test]
     public async Task BusinessDaysBetween_counts_mon_to_fri()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-05', '2026-01-12')"))).IsEqualTo(5);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-05', '2026-01-12')")))
+            .IsEqualTo(5);
     }
 
     [Test]
     public async Task BusinessDaysBetween_skips_weekends()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-02', '2026-01-06')"))).IsEqualTo(2);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-02', '2026-01-06')")))
+            .IsEqualTo(2);
     }
 
     [Test]
     public async Task BusinessDaysBetween_zero_for_empty_or_reversed()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-01', '2026-01-01')"))).IsEqualTo(0);
-        await Assert.That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-10', '2026-01-01')"))).IsEqualTo(0);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-01', '2026-01-01')")))
+            .IsEqualTo(0);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("businessDaysBetween('2026-01-10', '2026-01-01')")))
+            .IsEqualTo(0);
     }
 
     [Test]
     public async Task WeekdaysBetween_counts_a_single_weekday()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("weekdaysBetween('2026-01-05', '2026-02-02', 1)"))).IsEqualTo(4);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("weekdaysBetween('2026-01-05', '2026-02-02', 1)")))
+            .IsEqualTo(4);
     }
 
     [Test]
     public async Task WeekdaysBetween_zero_for_empty_ranges()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("weekdaysBetween('2026-01-01', '2026-01-01', 3)"))).IsEqualTo(0);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("weekdaysBetween('2026-01-01', '2026-01-01', 3)")))
+            .IsEqualTo(0);
     }
 
     [Test]

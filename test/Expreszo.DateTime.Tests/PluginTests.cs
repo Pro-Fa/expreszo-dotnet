@@ -43,11 +43,13 @@ public class PluginTests
     [Test]
     public async Task FromMillis_builds_a_datetime_from_a_number()
     {
-        long ms = DateTimeOffset.Parse(
-            "2026-01-01T00:00:00Z",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.RoundtripKind
-        ).ToUnixTimeMilliseconds();
+        long ms = DateTimeOffset
+            .Parse(
+                "2026-01-01T00:00:00Z",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            )
+            .ToUnixTimeMilliseconds();
         Value result = P.Evaluate($"fromMillis({ms})");
         await Assert.That(DateFixture.Date(result).Local.Year).IsEqualTo(2026);
     }
@@ -106,26 +108,42 @@ public class PluginTests
     [Test]
     public async Task IsBefore_and_isAfter()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("isBefore('2026-01-01', '2026-01-02')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("isAfter('2026-01-02', '2026-01-01')"))).IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("isBefore('2026-01-01', '2026-01-02')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("isAfter('2026-01-02', '2026-01-01')")))
+            .IsTrue();
     }
 
     [Test]
     public async Task IsSame_with_no_unit_checks_exact_equality()
     {
         await Assert
-            .That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')")))
+            .That(
+                DateFixture.Bool(
+                    P.Evaluate("isSame('2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')")
+                )
+            )
             .IsTrue();
         await Assert
-            .That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01T00:00:00Z', '2026-01-01T00:00:01Z')")))
+            .That(
+                DateFixture.Bool(
+                    P.Evaluate("isSame('2026-01-01T00:00:00Z', '2026-01-01T00:00:01Z')")
+                )
+            )
             .IsFalse();
     }
 
     [Test]
     public async Task IsSame_with_a_unit_truncates_before_comparing()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01', '2026-01-31', 'month')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01', '2026-02-01', 'month')"))).IsFalse();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01', '2026-01-31', 'month')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("isSame('2026-01-01', '2026-02-01', 'month')")))
+            .IsFalse();
     }
 
     // ---------- format and zone ----------
@@ -148,12 +166,16 @@ public class PluginTests
     [Test]
     public async Task ToMillis_returns_unix_milliseconds()
     {
-        long expected = DateTimeOffset.Parse(
-            "2026-01-01T00:00:00Z",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.RoundtripKind
-        ).ToUnixTimeMilliseconds();
-        await Assert.That(DateFixture.Num(P.Evaluate("toMillis('2026-01-01T00:00:00Z')"))).IsEqualTo(expected);
+        long expected = DateTimeOffset
+            .Parse(
+                "2026-01-01T00:00:00Z",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            )
+            .ToUnixTimeMilliseconds();
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("toMillis('2026-01-01T00:00:00Z')")))
+            .IsEqualTo(expected);
     }
 
     // ---------- inspection ----------
@@ -161,8 +183,12 @@ public class PluginTests
     [Test]
     public async Task Exposes_calendar_parts()
     {
-        await Assert.That(DateFixture.Num(P.Evaluate("year('2026-04-15T00:00:00Z')"))).IsEqualTo(2026);
-        await Assert.That(DateFixture.Num(P.Evaluate("month('2026-04-15T00:00:00Z')"))).IsEqualTo(4);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("year('2026-04-15T00:00:00Z')")))
+            .IsEqualTo(2026);
+        await Assert
+            .That(DateFixture.Num(P.Evaluate("month('2026-04-15T00:00:00Z')")))
+            .IsEqualTo(4);
         await Assert.That(DateFixture.Num(P.Evaluate("day('2026-04-15T00:00:00Z')"))).IsEqualTo(15);
     }
 
@@ -186,15 +212,23 @@ public class PluginTests
     [Test]
     public async Task Two_datetimes_at_the_same_instant_are_equal()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') == parseISO('2026-01-01')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') != parseISO('2026-01-01')"))).IsFalse();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') == parseISO('2026-01-01')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') != parseISO('2026-01-01')")))
+            .IsFalse();
     }
 
     [Test]
     public async Task Two_datetimes_at_different_instants_are_not_equal()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') == parseISO('2026-01-02')"))).IsFalse();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') != parseISO('2026-01-02')"))).IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') == parseISO('2026-01-02')")))
+            .IsFalse();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') != parseISO('2026-01-02')")))
+            .IsTrue();
     }
 
     [Test]
@@ -205,20 +239,25 @@ public class PluginTests
             CultureInfo.InvariantCulture,
             DateTimeStyles.RoundtripKind
         );
-        Value result = P.Eval(
-            "parseISO('2026-01-01T00:00:00Z') == d",
-            DateFixture.Vars(("d", d))
-        );
+        Value result = P.Eval("parseISO('2026-01-01T00:00:00Z') == d", DateFixture.Vars(("d", d)));
         await Assert.That(DateFixture.Bool(result)).IsTrue();
     }
 
     [Test]
     public async Task Relational_operators_work()
     {
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') <  parseISO('2026-02-01')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-02-01') >  parseISO('2026-01-01')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') <= parseISO('2026-01-01')"))).IsTrue();
-        await Assert.That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') >= parseISO('2026-01-01')"))).IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') <  parseISO('2026-02-01')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-02-01') >  parseISO('2026-01-01')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') <= parseISO('2026-01-01')")))
+            .IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Evaluate("parseISO('2026-01-01') >= parseISO('2026-01-01')")))
+            .IsTrue();
     }
 
     // ---------- end-to-end pipeline ----------
@@ -227,7 +266,11 @@ public class PluginTests
     public async Task Chains_construction_arithmetic_and_formatting()
     {
         await Assert
-            .That(DateFixture.Str(P.Evaluate("format(addDuration('2026-01-01', 7, 'days'), 'yyyy-MM-dd')")))
+            .That(
+                DateFixture.Str(
+                    P.Evaluate("format(addDuration('2026-01-01', 7, 'days'), 'yyyy-MM-dd')")
+                )
+            )
             .IsEqualTo("2026-01-08");
     }
 }

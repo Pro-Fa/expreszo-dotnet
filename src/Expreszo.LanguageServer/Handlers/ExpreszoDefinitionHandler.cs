@@ -50,13 +50,17 @@ internal sealed class ExpreszoDefinitionHandler : DefinitionHandlerBase
             return Task.FromResult<LocationOrLocationLinks?>(null);
         }
 
-        IEnumerable<LocationOrLocationLink> locations = defs.Select(span => new LocationOrLocationLink(
-            new Location { Uri = request.TextDocument.Uri, Range = ToRange(span, doc.LineIndex) }
-        ));
-
-        return Task.FromResult<LocationOrLocationLinks?>(
-            new LocationOrLocationLinks(locations)
+        IEnumerable<LocationOrLocationLink> locations = defs.Select(
+            span => new LocationOrLocationLink(
+                new Location
+                {
+                    Uri = request.TextDocument.Uri,
+                    Range = ToRange(span, doc.LineIndex),
+                }
+            )
         );
+
+        return Task.FromResult<LocationOrLocationLinks?>(new LocationOrLocationLinks(locations));
     }
 
     protected override DefinitionRegistrationOptions CreateRegistrationOptions(
@@ -82,8 +86,8 @@ internal sealed class ExpreszoDefinitionHandler : DefinitionHandlerBase
         {
             Ident i => i.Name,
             NameRef n => n.Name,
-            FunctionDef fd when offset >= fd.Span.Start && offset <= fd.Span.Start + fd.Name.Length =>
-                fd.Name,
+            FunctionDef fd
+                when offset >= fd.Span.Start && offset <= fd.Span.Start + fd.Name.Length => fd.Name,
             _ => null,
         };
     }

@@ -312,11 +312,7 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
         {
             throw new ParseException(
                 $"malformed numeric literal: {slice}",
-                new ErrorContext
-                {
-                    Expression = _expression,
-                    Position = GetCoordinatesAt(startPos),
-                }
+                new ErrorContext { Expression = _expression, Position = GetCoordinatesAt(startPos) }
             );
         }
         _current = NewToken(TokenKind.Number, slice, startPos, end, number: number);
@@ -558,10 +554,7 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
         {
             char c = _expression[pos];
             bool isContinuation =
-                IsLetter(c)
-                || c == '_'
-                || (c >= '0' && c <= '9')
-                || (allowDot && c == '.');
+                IsLetter(c) || c == '_' || (c >= '0' && c <= '9') || (allowDot && c == '.');
             if (!isContinuation)
             {
                 break;
@@ -650,15 +643,7 @@ internal sealed class Tokenizer(ParserConfig config, string? expression)
     // '?' / '=' / '<' / '>' / '!' / '|' are also single-char ops but they
     // double as the first char of a compound and are covered via TryOneCharOp.
     // '&' is intentionally excluded: a bare '&' is not a valid operator.
-    private static readonly HashSet<char> CompoundAmbiguousOps =
-    [
-        '?',
-        '=',
-        '<',
-        '>',
-        '!',
-        '|',
-    ];
+    private static readonly HashSet<char> CompoundAmbiguousOps = ['?', '=', '<', '>', '!', '|'];
 
     /// <summary>
     /// Tokenises the operator starting at <c>_pos</c> using a longest-match

@@ -43,7 +43,7 @@ public class DefinitionHandlerTests
             new DefinitionParams
             {
                 TextDocument = new TextDocumentIdentifier(Uri),
-                Position = new Position(0, 1),  // on `sum`
+                Position = new Position(0, 1), // on `sum`
             },
             CancellationToken.None
         );

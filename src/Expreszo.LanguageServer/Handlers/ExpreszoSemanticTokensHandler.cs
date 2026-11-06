@@ -88,7 +88,10 @@ internal sealed class ExpreszoSemanticTokensHandler : SemanticTokensHandlerBase
         token.Kind switch
         {
             TokenKind.Keyword => (SemanticTokenType.Keyword, []),
-            TokenKind.Op when BuiltinMetadata.IsKeyword(token.Text) => (SemanticTokenType.Keyword, []),
+            TokenKind.Op when BuiltinMetadata.IsKeyword(token.Text) => (
+                SemanticTokenType.Keyword,
+                []
+            ),
             TokenKind.Op => (SemanticTokenType.Operator, []),
             TokenKind.Number => (SemanticTokenType.Number, []),
             TokenKind.String => (SemanticTokenType.String, []),

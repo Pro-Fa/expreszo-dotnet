@@ -31,9 +31,7 @@ internal static class Compare
 
         if (a[2] is not Value.String)
         {
-            throw new EvaluationException(
-                $"isSame() unit must be a string; got {a[2].TypeName()}"
-            );
+            throw new EvaluationException($"isSame() unit must be a string; got {a[2].TypeName()}");
         }
 
         DateUnit u = DateUnits.Parse(a[2]);
@@ -51,9 +49,7 @@ internal static class Compare
 
         DateTimeOffset x = d.Instant;
         return Value.Boolean.Of(
-            inclusive
-                ? x >= lo.Instant && x <= hi.Instant
-                : x > lo.Instant && x < hi.Instant
+            inclusive ? x >= lo.Instant && x <= hi.Instant : x > lo.Instant && x < hi.Instant
         );
     }
 
@@ -62,7 +58,11 @@ internal static class Compare
         // Parity with the TS compareDates, which compares toMillis().
         long x = Normalize.ToDateTime(a[0], o).Instant.ToUnixTimeMilliseconds();
         long y = Normalize.ToDateTime(a[1], o).Instant.ToUnixTimeMilliseconds();
-        return Value.Number.Of(x < y ? -1 : x > y ? 1 : 0);
+        return Value.Number.Of(
+            x < y ? -1
+            : x > y ? 1
+            : 0
+        );
     }
 
     public static Value OverlapsRange(Value[] a, DateTimeOptions o)

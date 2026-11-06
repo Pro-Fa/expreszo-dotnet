@@ -54,7 +54,8 @@ internal static class Arithmetic
 
     public static Value MinDate(Value[] a, DateTimeOptions o) => Reduce(a, o, "minDate", min: true);
 
-    public static Value MaxDate(Value[] a, DateTimeOptions o) => Reduce(a, o, "maxDate", min: false);
+    public static Value MaxDate(Value[] a, DateTimeOptions o) =>
+        Reduce(a, o, "maxDate", min: false);
 
     private static Value.DateTime Reduce(Value[] a, DateTimeOptions o, string fn, bool min)
     {

@@ -15,7 +15,7 @@ A safe, extensible expression evaluator for .NET - a configurable alternative to
 
 ## Highlights
 
-- Pratt parser, immutable AST, 27 operators, 82 built-in functions.
+- Pratt parser, immutable AST, 27 operators, 84 built-in functions.
 - **JsonDocument-based I/O** - variables in, results out, using `System.Text.Json` primitives.
 - Single async-capable evaluator with a synchronous fast path (`ValueTask<Value>` under the hood).
 - **Native AOT and trim compatible** - zero reflection, zero runtime code generation. CI verifies on every PR.
@@ -134,7 +134,7 @@ clock/zone configuration, input shapes, and the full function reference.
 
 **Object** (7): `merge`, `keys`, `values`, `mapValues`, `pick`, `omit`, `flattenObject`
 
-**Utility** (3): `if` (lazy), `json`, `ipInRange`
+**Utility** (5): `if` (lazy), `json`, `toJson`, `fromJson`, `ipInRange`
 
 **Type-check** (8): `isArray`, `isObject`, `isNumber`, `isString`, `isBoolean`, `isNull`, `isUndefined`, `isFunction`
 

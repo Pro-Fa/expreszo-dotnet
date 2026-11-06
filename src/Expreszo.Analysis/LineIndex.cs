@@ -67,7 +67,9 @@ public sealed class LineIndex
         }
 
         int offset = lineStart + character;
-        return offset < lineStart ? lineStart : offset > lineEnd ? lineEnd : offset;
+        return offset < lineStart ? lineStart
+            : offset > lineEnd ? lineEnd
+            : offset;
     }
 
     private int BinarySearchLine(int offset)

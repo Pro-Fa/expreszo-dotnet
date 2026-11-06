@@ -54,15 +54,28 @@ internal sealed class ExpreszoDocumentSymbolHandler : DocumentSymbolHandlerBase
             switch (stmt)
             {
                 case FunctionDef fd:
-                    symbols.Add(CreateSymbol(fd.Name, SymbolKind.Function, fd.Span, fd.Span, lineIndex, FormatFunction(fd)));
+                    symbols.Add(
+                        CreateSymbol(
+                            fd.Name,
+                            SymbolKind.Function,
+                            fd.Span,
+                            fd.Span,
+                            lineIndex,
+                            FormatFunction(fd)
+                        )
+                    );
                     break;
 
                 case Binary { Op: "=", Left: Ident id } bin:
-                    symbols.Add(CreateSymbol(id.Name, SymbolKind.Variable, bin.Span, id.Span, lineIndex));
+                    symbols.Add(
+                        CreateSymbol(id.Name, SymbolKind.Variable, bin.Span, id.Span, lineIndex)
+                    );
                     break;
 
                 case Binary { Op: "=", Left: NameRef nr } bin:
-                    symbols.Add(CreateSymbol(nr.Name, SymbolKind.Variable, bin.Span, nr.Span, lineIndex));
+                    symbols.Add(
+                        CreateSymbol(nr.Name, SymbolKind.Variable, bin.Span, nr.Span, lineIndex)
+                    );
                     break;
             }
         }

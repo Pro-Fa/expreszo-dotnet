@@ -12,13 +12,11 @@ internal static class DateFixture
 
     /// <summary>A parser whose "now" is fixed to <paramref name="now"/> and zone is UTC.</summary>
     public static Parser ParserAt(DateTimeOffset now) =>
-        Parser.WithPlugins(
-            [
-                new ExpreszoDateTimePlugin(
-                    new DateTimeOptions { NowProvider = () => now, DefaultZone = Utc }
-                ),
-            ]
-        );
+        Parser.WithPlugins([
+            new ExpreszoDateTimePlugin(
+                new DateTimeOptions { NowProvider = () => now, DefaultZone = Utc }
+            ),
+        ]);
 
     /// <summary>
     /// A parser for time-independent tests. "Now" is fixed to the construction

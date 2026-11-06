@@ -19,7 +19,7 @@ public class SignatureHelpHandlerTests
             new SignatureHelpParams
             {
                 TextDocument = new TextDocumentIdentifier(Uri),
-                Position = new Position(0, 6),  // just inside the `(`
+                Position = new Position(0, 6), // just inside the `(`
             },
             CancellationToken.None
         );
@@ -42,7 +42,7 @@ public class SignatureHelpHandlerTests
             new SignatureHelpParams
             {
                 TextDocument = new TextDocumentIdentifier(Uri),
-                Position = new Position(0, 7),  // inside first argument
+                Position = new Position(0, 7), // inside first argument
             },
             CancellationToken.None
         );

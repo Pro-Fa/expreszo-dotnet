@@ -495,7 +495,9 @@ internal static class StringPreset
                 // Default (flags omitted) is a global replace; a supplied flag
                 // string replaces only the first match unless it contains 'g'.
                 bool global = flags is null || flags.Contains('g');
-                return new Value.String(global ? re.Replace(s, replacement) : re.Replace(s, replacement, 1));
+                return new Value.String(
+                    global ? re.Replace(s, replacement) : re.Replace(s, replacement, 1)
+                );
             })
         );
 

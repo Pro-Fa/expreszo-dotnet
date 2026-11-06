@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.Json;
 using Expreszo.Errors;
 using Expreszo.Json;
 
@@ -48,7 +49,12 @@ internal static class UtilityPreset
                 string prefixStr = cidr[(slash + 1)..];
                 if (
                     prefixStr.Length is 0 or > 2
-                    || !int.TryParse(prefixStr, NumberStyles.None, CultureInfo.InvariantCulture, out int prefix)
+                    || !int.TryParse(
+                        prefixStr,
+                        NumberStyles.None,
+                        CultureInfo.InvariantCulture,
+                        out int prefix
+                    )
                     || prefix > 32
                 )
                 {
@@ -65,26 +71,122 @@ internal static class UtilityPreset
             })
         );
 
-        b.AddFunction(
-            "json",
-            OperatorTableBuilder.Sync(args =>
-            {
-                if (args.Length < 1)
-                {
-                    return Value.Undefined.Instance;
-                }
+        b.AddFunction("json", OperatorTableBuilder.Sync(ToJson));
+        b.AddFunction("toJson", OperatorTableBuilder.Sync(ToJson));
+        b.AddFunction("fromJson", OperatorTableBuilder.Sync(FromJson));
+    }
 
-                try
+    private const int MaxJsonDepth = 256;
+
+    private static Value ToJson(Value[] args)
+    {
+        if (args.Length < 1 || args[0] is Value.Undefined)
+        {
+            return Value.Undefined.Instance;
+        }
+
+        try
+        {
+            return new Value.String(JsonBridge.ToJsonString(args[0]));
+        }
+        catch (InvalidOperationException)
+        {
+            // Thrown for Value.Function - not serialisable.
+            return Value.Undefined.Instance;
+        }
+    }
+
+    /// <summary>
+    /// Parses a JSON string. Dangerous keys are dropped by <see cref="JsonBridge"/>,
+    /// nesting is capped, and error messages never echo the input (TS parity).
+    /// </summary>
+    private static Value FromJson(Value[] args)
+    {
+        bool hasFallback = args.Length > 1;
+        Value fallback = hasFallback ? args[1] : Value.Undefined.Instance;
+        if (args.Length < 1 || args[0] is Value.Undefined)
+        {
+            return fallback;
+        }
+
+        string text = RequireString("fromJson", args[0], 0);
+        if (ExceedsMaxJsonDepth(text))
+        {
+            if (hasFallback)
+            {
+                return fallback;
+            }
+
+            throw new EvaluationException(
+                $"fromJson(): JSON exceeds the maximum nesting depth of {MaxJsonDepth}"
+            );
+        }
+
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(
+                text,
+                new JsonDocumentOptions { MaxDepth = MaxJsonDepth + 1 }
+            );
+            return JsonBridge.FromJson(doc.RootElement);
+        }
+        catch (JsonException ex)
+        {
+            if (hasFallback)
+            {
+                return fallback;
+            }
+
+            // The inner exception is not attached: its message can quote the input.
+            throw new EvaluationException(InvalidJsonMessage(ex));
+        }
+    }
+
+    private static string InvalidJsonMessage(JsonException ex)
+    {
+        long line = ex.LineNumber ?? 0;
+        long position = ex.BytePositionInLine ?? 0;
+        return line == 0
+            ? $"fromJson(): invalid JSON at position {position}"
+            : $"fromJson(): invalid JSON at line {line + 1}, position {position}";
+    }
+
+    private static bool ExceedsMaxJsonDepth(string text)
+    {
+        int depth = 0;
+        bool inString = false;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (inString)
+            {
+                if (c == '\\')
                 {
-                    return new Value.String(JsonBridge.ToJsonString(args[0]));
+                    i++;
                 }
-                catch (InvalidOperationException)
+                else if (c == '"')
                 {
-                    // Thrown for Value.Function - not serialisable.
-                    return Value.Undefined.Instance;
+                    inString = false;
                 }
-            })
-        );
+            }
+            else if (c == '"')
+            {
+                inString = true;
+            }
+            else if (c is '[' or '{')
+            {
+                if (++depth > MaxJsonDepth)
+                {
+                    return true;
+                }
+            }
+            else if (c is ']' or '}')
+            {
+                depth--;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Returns the string payload of a required argument or throws (TS parity).</summary>
@@ -121,7 +223,12 @@ internal static class UtilityPreset
             // decimal integer 0-255.
             if (
                 part.Length is 0 or > 3
-                || !int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out int octet)
+                || !int.TryParse(
+                    part,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out int octet
+                )
                 || octet > 255
             )
             {

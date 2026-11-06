@@ -97,7 +97,11 @@ internal sealed class ExpreszoHoverHandler : HoverHandlerBase
         return null;
     }
 
-    private static Hover? BuildHover(string name, Expreszo.Errors.TextSpan span, LineIndex lineIndex)
+    private static Hover? BuildHover(
+        string name,
+        Expreszo.Errors.TextSpan span,
+        LineIndex lineIndex
+    )
     {
         if (!BuiltinMetadata.TryGet(name, out BuiltinEntry? entry))
         {

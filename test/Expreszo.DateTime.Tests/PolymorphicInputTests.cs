@@ -25,20 +25,36 @@ public class PolymorphicInputTests
         const string Expected = "2026-01-08";
         VariableResolver vars = AllShapes();
 
-        await Assert.That(DateFixture.IsoDate(P.Eval($"addDuration('{Iso}', 7, 'days')", vars))).IsEqualTo(Expected);
-        await Assert.That(DateFixture.IsoDate(P.Eval("addDuration(ms, 7, 'days')", vars))).IsEqualTo(Expected);
-        await Assert.That(DateFixture.IsoDate(P.Eval("addDuration(d,  7, 'days')", vars))).IsEqualTo(Expected);
-        await Assert.That(DateFixture.IsoDate(P.Eval("addDuration(dt, 7, 'days')", vars))).IsEqualTo(Expected);
+        await Assert
+            .That(DateFixture.IsoDate(P.Eval($"addDuration('{Iso}', 7, 'days')", vars)))
+            .IsEqualTo(Expected);
+        await Assert
+            .That(DateFixture.IsoDate(P.Eval("addDuration(ms, 7, 'days')", vars)))
+            .IsEqualTo(Expected);
+        await Assert
+            .That(DateFixture.IsoDate(P.Eval("addDuration(d,  7, 'days')", vars)))
+            .IsEqualTo(Expected);
+        await Assert
+            .That(DateFixture.IsoDate(P.Eval("addDuration(dt, 7, 'days')", vars)))
+            .IsEqualTo(Expected);
     }
 
     [Test]
     public async Task Format_accepts_every_input_shape()
     {
         VariableResolver vars = AllShapes();
-        await Assert.That(DateFixture.Str(P.Eval($"format('{Iso}', 'yyyy-MM-dd')", vars))).IsEqualTo("2026-01-01");
-        await Assert.That(DateFixture.Str(P.Eval("format(ms, 'yyyy-MM-dd')", vars))).IsEqualTo("2026-01-01");
-        await Assert.That(DateFixture.Str(P.Eval("format(d,  'yyyy-MM-dd')", vars))).IsEqualTo("2026-01-01");
-        await Assert.That(DateFixture.Str(P.Eval("format(dt, 'yyyy-MM-dd')", vars))).IsEqualTo("2026-01-01");
+        await Assert
+            .That(DateFixture.Str(P.Eval($"format('{Iso}', 'yyyy-MM-dd')", vars)))
+            .IsEqualTo("2026-01-01");
+        await Assert
+            .That(DateFixture.Str(P.Eval("format(ms, 'yyyy-MM-dd')", vars)))
+            .IsEqualTo("2026-01-01");
+        await Assert
+            .That(DateFixture.Str(P.Eval("format(d,  'yyyy-MM-dd')", vars)))
+            .IsEqualTo("2026-01-01");
+        await Assert
+            .That(DateFixture.Str(P.Eval("format(dt, 'yyyy-MM-dd')", vars)))
+            .IsEqualTo("2026-01-01");
     }
 
     [Test]
@@ -49,8 +65,12 @@ public class PolymorphicInputTests
         {
             await Assert.That(DateFixture.Num(P.Eval($"quarter({expr})", vars))).IsEqualTo(1);
             await Assert.That(DateFixture.Bool(P.Eval($"isLeapYear({expr})", vars))).IsFalse();
-            await Assert.That(DateFixture.Num(P.Eval($"toUnix({expr})", vars))).IsEqualTo(1767225600);
-            await Assert.That(DateFixture.Date(P.Eval($"toUTC({expr})", vars)).Zone.Id).IsEqualTo("UTC");
+            await Assert
+                .That(DateFixture.Num(P.Eval($"toUnix({expr})", vars)))
+                .IsEqualTo(1767225600);
+            await Assert
+                .That(DateFixture.Date(P.Eval($"toUTC({expr})", vars)).Zone.Id)
+                .IsEqualTo("UTC");
         }
     }
 
@@ -59,7 +79,9 @@ public class PolymorphicInputTests
     {
         VariableResolver vars = AllShapes();
         await Assert.That(DateFixture.Num(P.Eval($"compareDates('{Iso}', dt)", vars))).IsEqualTo(0);
-        await Assert.That(DateFixture.Bool(P.Eval("containsDate('2025-01-01', '2027-01-01', d)", vars))).IsTrue();
+        await Assert
+            .That(DateFixture.Bool(P.Eval("containsDate('2025-01-01', '2027-01-01', d)", vars)))
+            .IsTrue();
 
         Value clamped = P.Eval("clampDate(d, '2026-06-01', '2026-12-31')", vars);
         await Assert.That(DateFixture.IsoDate(clamped)).IsEqualTo("2026-06-01");

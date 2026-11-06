@@ -48,9 +48,9 @@ public class DocumentCacheTests
         ExpreszoTextDocument doc = cache.Update(Uri, "\"foo\" + 1", version: 1);
 
         await Assert.That(doc.HasErrors).IsTrue();
-        await Assert.That(
-            doc.Errors.Any(e => e is global::Expreszo.Errors.SemanticException)
-        ).IsTrue();
+        await Assert
+            .That(doc.Errors.Any(e => e is global::Expreszo.Errors.SemanticException))
+            .IsTrue();
     }
 
     [Test]

@@ -23,9 +23,7 @@ public class DocumentSymbolHandlerTests
         await Assert.That(result).IsNotNull();
         DocumentSymbol[] symbols =
         [
-            .. result!
-                .Where(s => s.DocumentSymbol is not null)
-                .Select(s => s.DocumentSymbol!),
+            .. result!.Where(s => s.DocumentSymbol is not null).Select(s => s.DocumentSymbol!),
         ];
 
         await Assert.That(symbols.Length).IsEqualTo(1);
@@ -48,9 +46,7 @@ public class DocumentSymbolHandlerTests
         await Assert.That(result).IsNotNull();
         string[] names =
         [
-            .. result!
-                .Where(s => s.DocumentSymbol is not null)
-                .Select(s => s.DocumentSymbol!.Name),
+            .. result!.Where(s => s.DocumentSymbol is not null).Select(s => s.DocumentSymbol!.Name),
         ];
 
         await Assert.That(names).Contains("a");

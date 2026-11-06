@@ -41,7 +41,10 @@ internal sealed class ExpreszoSignatureHelpHandler : SignatureHelpHandlerBase
             return Task.FromResult<SignatureHelp?>(null);
         }
 
-        if (call.Callee is not Ident callee || !BuiltinMetadata.TryGet(callee.Name, out BuiltinEntry? entry))
+        if (
+            call.Callee is not Ident callee
+            || !BuiltinMetadata.TryGet(callee.Name, out BuiltinEntry? entry)
+        )
         {
             return Task.FromResult<SignatureHelp?>(null);
         }

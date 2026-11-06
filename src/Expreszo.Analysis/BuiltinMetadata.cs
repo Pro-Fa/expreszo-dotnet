@@ -13,8 +13,10 @@ public static class BuiltinMetadata
 {
     private static readonly BuiltinEntry[] All = BuildEntries();
 
-    private static readonly FrozenDictionary<string, BuiltinEntry> ByName =
-        All.ToFrozenDictionary(e => e.Name, StringComparer.Ordinal);
+    private static readonly FrozenDictionary<string, BuiltinEntry> ByName = All.ToFrozenDictionary(
+        e => e.Name,
+        StringComparer.Ordinal
+    );
 
     /// <summary>All catalogued entries, stable order (operators → keywords → functions).</summary>
     public static IReadOnlyList<BuiltinEntry> Entries => All;
@@ -79,7 +81,6 @@ public static class BuiltinMetadata
             Kw("false", "false", "Boolean literal."),
             Kw("null", "null", "Explicit null value (distinct from undefined)."),
             Kw("undefined", "undefined", "Missing-value marker (distinct from null)."),
-
             // --- binary operators ----------------------------------------
             Op("+", "a + b", "Numeric addition; both sides must be numbers."),
             Op("-", "a - b", "Numeric subtraction (also used as unary negation)."),
@@ -87,8 +88,16 @@ public static class BuiltinMetadata
             Op("/", "a / b", "Numeric division; throws on divide-by-zero."),
             Op("%", "a % b", "Remainder."),
             Op("^", "a ^ b", "Exponentiation (base ^ exponent)."),
-            Op("|", "a | b", "Concatenation. Arrays: element-wise concat. Otherwise: stringify-and-join."),
-            Op("==", "a == b", "Strict equality (NaN != NaN; arrays/objects compared by reference)."),
+            Op(
+                "|",
+                "a | b",
+                "Concatenation. Arrays: element-wise concat. Otherwise: stringify-and-join."
+            ),
+            Op(
+                "==",
+                "a == b",
+                "Strict equality (NaN != NaN; arrays/objects compared by reference)."
+            ),
             Op("!=", "a != b", "Strict inequality."),
             Op("<", "a < b", "Less-than. Ordinal compare for strings, numeric otherwise."),
             Op("<=", "a <= b", "Less-than-or-equal."),
@@ -100,12 +109,19 @@ public static class BuiltinMetadata
             Op("&&", "a && b", "Logical AND (short-circuits). Alias: and."),
             Op("or", "a or b", "Logical OR (short-circuits). Alias: ||."),
             Op("||", "a || b", "Logical OR (short-circuits). Alias: or."),
-            Op("??", "a ?? fallback", "Null-coalesce. Treats null, undefined, NaN, and ±Infinity as nullish."),
-            Op("as", "value as \"number\"", "Type cast. Targets: \"number\", \"int\" / \"integer\", \"boolean\"."),
+            Op(
+                "??",
+                "a ?? fallback",
+                "Null-coalesce. Treats null, undefined, NaN, and ±Infinity as nullish."
+            ),
+            Op(
+                "as",
+                "value as \"number\"",
+                "Type cast. Targets: \"number\", \"int\" / \"integer\", \"boolean\"."
+            ),
             Op("?:", "cond ? a : b", "Ternary conditional."),
             Op("not", "not x", "Logical negation. Alias: prefix `!`."),
             Op("!", "x!", "Postfix factorial (prefix `!` means `not`)."),
-
             // --- math unary ----------------------------------------------
             Fn("abs", "abs(x)", "Absolute value."),
             Fn("ceil", "ceil(x)", "Round up to the nearest integer."),
@@ -136,7 +152,6 @@ public static class BuiltinMetadata
             Fn("acosh", "acosh(x)", "Inverse hyperbolic cosine."),
             Fn("atanh", "atanh(x)", "Inverse hyperbolic tangent."),
             Fn("length", "length(x)", "Length of a string, array, or stringified number."),
-
             // --- math functions ------------------------------------------
             Fn("atan2", "atan2(y, x)", "Two-argument arctangent."),
             Fn("clamp", "clamp(x, min, max)", "Constrain x to the [min, max] interval."),
@@ -155,29 +170,51 @@ public static class BuiltinMetadata
             Fn("variance", "variance(array)", "Population variance."),
             Fn("stddev", "stddev(array)", "Population standard deviation."),
             Fn("percentile", "percentile(array, p)", "Percentile at p (0..100)."),
-
             // --- array functions -----------------------------------------
             Fn("count", "count(array)", "Element count. Shorthand: length(array)."),
             Fn("filter", "filter(array, x => pred)", "Keep elements where pred is truthy."),
             Fn("fold", "fold(array, seed, (acc, x) => …)", "Left fold with an explicit seed."),
-            Fn("reduce", "reduce(array, (acc, x) => …)", "Left fold seeded with the first element."),
-            Fn("find", "find(array, x => pred)", "First element where pred is truthy, else undefined."),
+            Fn(
+                "reduce",
+                "reduce(array, (acc, x) => …)",
+                "Left fold seeded with the first element."
+            ),
+            Fn(
+                "find",
+                "find(array, x => pred)",
+                "First element where pred is truthy, else undefined."
+            ),
             Fn("some", "some(array, x => pred)", "True if any element satisfies pred."),
             Fn("every", "every(array, x => pred)", "True if all elements satisfy pred."),
             Fn("unique", "unique(array)", "Deduplicate by strict equality, preserving order."),
             Fn("distinct", "distinct(array)", "Alias of unique."),
-            Fn("indexOf", "indexOf(array, needle)", "Index of the first strict-equal match, or -1."),
+            Fn(
+                "indexOf",
+                "indexOf(array, needle)",
+                "Index of the first strict-equal match, or -1."
+            ),
             Fn("join", "join(array, separator)", "Stringify and join with `separator`."),
             Fn("map", "map(array, x => expr)", "Transform each element."),
-            Fn("range", "range(start, stop) | range(start, stop, step)", "Inclusive-exclusive numeric range."),
+            Fn(
+                "range",
+                "range(start, stop) | range(start, stop, step)",
+                "Inclusive-exclusive numeric range."
+            ),
             Fn("chunk", "chunk(array, size)", "Split into fixed-size chunks."),
             Fn("union", "union(a, b)", "Deduplicated concatenation."),
             Fn("intersect", "intersect(a, b)", "Elements present in both arrays."),
-            Fn("groupBy", "groupBy(array, x => key)", "Group elements by key into an object of arrays."),
+            Fn(
+                "groupBy",
+                "groupBy(array, x => key)",
+                "Group elements by key into an object of arrays."
+            ),
             Fn("countBy", "countBy(array, x => key)", "Count elements per key."),
             Fn("sort", "sort(array) | sort(array, x => key)", "Stable sort, ascending."),
-            Fn("flatten", "flatten(array) | flatten(array, depth)", "Flatten nested arrays to depth (default 1)."),
-
+            Fn(
+                "flatten",
+                "flatten(array) | flatten(array, depth)",
+                "Flatten nested arrays to depth (default 1)."
+            ),
             // --- string functions ----------------------------------------
             Fn("isEmpty", "isEmpty(string)", "True for empty or whitespace-only strings."),
             Fn("contains", "contains(haystack, needle)", "Substring check."),
@@ -194,40 +231,79 @@ public static class BuiltinMetadata
             Fn("left", "left(s, n)", "First n characters."),
             Fn("right", "right(s, n)", "Last n characters."),
             Fn("replace", "replace(s, needle, replacement)", "Replace every occurrence."),
-            Fn("replaceFirst", "replaceFirst(s, needle, replacement)", "Replace the first occurrence."),
-            Fn("naturalSort", "naturalSort(array)", "Sort with natural-numeric ordering (file2 < file10)."),
+            Fn(
+                "replaceFirst",
+                "replaceFirst(s, needle, replacement)",
+                "Replace the first occurrence."
+            ),
+            Fn(
+                "naturalSort",
+                "naturalSort(array)",
+                "Sort with natural-numeric ordering (file2 < file10)."
+            ),
             Fn("toNumber", "toNumber(s)", "Parse s as a number, or undefined if not parseable."),
             Fn("toBoolean", "toBoolean(s)", "Parse s as a boolean."),
             Fn("padLeft", "padLeft(s, width) | padLeft(s, width, pad)", "Left-pad to width."),
             Fn("padRight", "padRight(s, width) | padRight(s, width, pad)", "Right-pad to width."),
             Fn("padBoth", "padBoth(s, width) | padBoth(s, width, pad)", "Centre-pad to width."),
-            Fn("slice", "slice(s, start) | slice(s, start, end)", "Substring by character offsets."),
-            Fn("regexMatches", "regexMatches(s, pattern) | regexMatches(s, pattern, flags)",
-                "Regex test → boolean."),
-            Fn("regexExtract", "regexExtract(s, pattern) | regexExtract(s, pattern, flags)",
-                "First match: capture-group array when the pattern has groups, else the full match; undefined if no match."),
-            Fn("regexReplace", "regexReplace(s, pattern, replacement) | regexReplace(s, pattern, replacement, flags)",
-                "Regex replace (global by default; pass flags to override)."),
+            Fn(
+                "slice",
+                "slice(s, start) | slice(s, start, end)",
+                "Substring by character offsets."
+            ),
+            Fn(
+                "regexMatches",
+                "regexMatches(s, pattern) | regexMatches(s, pattern, flags)",
+                "Regex test → boolean."
+            ),
+            Fn(
+                "regexExtract",
+                "regexExtract(s, pattern) | regexExtract(s, pattern, flags)",
+                "First match: capture-group array when the pattern has groups, else the full match; undefined if no match."
+            ),
+            Fn(
+                "regexReplace",
+                "regexReplace(s, pattern, replacement) | regexReplace(s, pattern, replacement, flags)",
+                "Regex replace (global by default; pass flags to override)."
+            ),
             Fn("urlEncode", "urlEncode(s)", "Percent-encode for URL usage."),
             Fn("base64Encode", "base64Encode(s)", "Base64 encode."),
             Fn("base64Decode", "base64Decode(s)", "Base64 decode."),
             Fn("coalesce", "coalesce(a, b, …)", "First non-null, non-undefined argument."),
-
             // --- object functions ----------------------------------------
             Fn("merge", "merge(a, b, …)", "Shallow-merge objects; later keys win."),
             Fn("keys", "keys(object)", "Array of property names."),
             Fn("values", "values(object)", "Array of property values."),
-            Fn("mapValues", "mapValues(object, v => expr)", "Transform each value; keys preserved."),
+            Fn(
+                "mapValues",
+                "mapValues(object, v => expr)",
+                "Transform each value; keys preserved."
+            ),
             Fn("pick", "pick(object, keys)", "Subset the object to the given key list."),
             Fn("omit", "omit(object, keys)", "Remove the given keys."),
-            Fn("flattenObject", "flattenObject(object) | flattenObject(object, separator)",
-                "Flatten nested object paths into a single level; separator defaults to \".\"."),
-
+            Fn(
+                "flattenObject",
+                "flattenObject(object) | flattenObject(object, separator)",
+                "Flatten nested object paths into a single level; separator defaults to \".\"."
+            ),
             // --- utility -------------------------------------------------
-            Fn("if", "if(cond, thenExpr, elseExpr)", "Lazy conditional; only the chosen branch evaluates."),
+            Fn(
+                "if",
+                "if(cond, thenExpr, elseExpr)",
+                "Lazy conditional; only the chosen branch evaluates."
+            ),
             Fn("json", "json(value)", "Canonical JSON string representation."),
-            Fn("ipInRange", "ipInRange(ip, cidr)", "True if the IPv4 address is in the CIDR block."),
-
+            Fn("toJson", "toJson(value)", "Alias for json. Canonical JSON string representation."),
+            Fn(
+                "fromJson",
+                "fromJson(text) | fromJson(text, fallback)",
+                "Parse a JSON string into a value; dangerous keys are dropped. Throws on invalid JSON unless a fallback is given."
+            ),
+            Fn(
+                "ipInRange",
+                "ipInRange(ip, cidr)",
+                "True if the IPv4 address is in the CIDR block."
+            ),
             // --- type checks ---------------------------------------------
             Fn("isArray", "isArray(x)", "True for arrays."),
             Fn("isObject", "isObject(x)", "True for objects."),

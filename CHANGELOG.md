@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-06
+
+### Added
+
+- `fromJson(text, fallback?)` parses a JSON string into a value. Keys named
+  `__proto__`, `prototype`, or `constructor` are dropped, nesting is limited to
+  256 levels, and error messages never echo the input. With a fallback,
+  undefined or unparseable input returns the fallback instead of throwing; a
+  non-string first argument always throws `ExpressionArgumentException`.
+  Feature parity with `@pro-fa/expreszo` 0.7.0.
+- `toJson(value)` as an alias for `json(value)`.
+
+### Changed
+
+- `json(undefined)` now returns `undefined` instead of the string `"null"`,
+  matching the TypeScript implementation.
+
 ## [0.6.0] - 2026-06-26
 
 ### Added
@@ -264,7 +281,8 @@ Initial public release.
 - GitHub Actions workflows: `ci.yml` (build + test + AOT canary + pack) and
   `release.yml` (tag-driven NuGet publish with MinVer + GitHub Release).
 
-[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/Pro-Fa/expreszo-dotnet/compare/v0.4.2...v0.4.3

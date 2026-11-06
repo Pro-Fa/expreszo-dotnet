@@ -56,13 +56,11 @@ internal static class Format
         bool future = span.Ticks >= 0;
         TimeSpan abs = span.Duration();
 
-        (long n, string unit) = abs.TotalDays >= 1
-            ? ((long)abs.TotalDays, "day")
-            : abs.TotalHours >= 1
-                ? ((long)abs.TotalHours, "hour")
-                : abs.TotalMinutes >= 1
-                    ? ((long)abs.TotalMinutes, "minute")
-                    : ((long)abs.TotalSeconds, "second");
+        (long n, string unit) =
+            abs.TotalDays >= 1 ? ((long)abs.TotalDays, "day")
+            : abs.TotalHours >= 1 ? ((long)abs.TotalHours, "hour")
+            : abs.TotalMinutes >= 1 ? ((long)abs.TotalMinutes, "minute")
+            : ((long)abs.TotalSeconds, "second");
 
         string plural = n == 1 ? unit : unit + "s";
         return new Value.String(future ? $"in {n} {plural}" : $"{n} {plural} ago");

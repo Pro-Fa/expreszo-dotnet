@@ -13,8 +13,12 @@ namespace Expreszo.Analysis;
 /// </summary>
 public static class TypeValidator
 {
-    private static readonly ImmutableHashSet<string> ValidCastTargets = [
-        "number", "int", "integer", "boolean",
+    private static readonly ImmutableHashSet<string> ValidCastTargets =
+    [
+        "number",
+        "int",
+        "integer",
+        "boolean",
     ];
 
     /// <summary>
@@ -37,18 +41,21 @@ public static class TypeValidator
 
         var diagnostics = ImmutableArray.CreateBuilder<ExpressionException>();
 
-        Ast.Ast.Walk(root, node =>
-        {
-            switch (node)
+        Ast.Ast.Walk(
+            root,
+            node =>
             {
-                case Binary b:
-                    CheckBinary(b, inference, source, diagnostics);
-                    break;
-                case Call c:
-                    CheckCall(c, inference, source, diagnostics);
-                    break;
+                switch (node)
+                {
+                    case Binary b:
+                        CheckBinary(b, inference, source, diagnostics);
+                        break;
+                    case Call c:
+                        CheckCall(c, inference, source, diagnostics);
+                        break;
+                }
             }
-        });
+        );
 
         return diagnostics.ToImmutable();
     }
@@ -86,10 +93,12 @@ public static class TypeValidator
 
         if (IsDefinitelyNonNumeric(left) || IsDefinitelyNonNumeric(right))
         {
-            diagnostics.Add(new SemanticException(
-                $"operator '+' requires numeric operands (left: {left}, right: {right})",
-                Context(b.Span, source)
-            ));
+            diagnostics.Add(
+                new SemanticException(
+                    $"operator '+' requires numeric operands (left: {left}, right: {right})",
+                    Context(b.Span, source)
+                )
+            );
         }
     }
 
@@ -101,10 +110,7 @@ public static class TypeValidator
     {
         if (b.Right is NumberLit n && n.Value == 0d)
         {
-            diagnostics.Add(new SemanticException(
-                "division by zero",
-                Context(b.Span, source)
-            ));
+            diagnostics.Add(new SemanticException("division by zero", Context(b.Span, source)));
         }
     }
 
@@ -117,10 +123,12 @@ public static class TypeValidator
         if (b.Right is StringLit s && !ValidCastTargets.Contains(s.Value))
         {
             string valid = string.Join(", ", ValidCastTargets.OrderBy(x => x));
-            diagnostics.Add(new SemanticException(
-                $"unsupported cast target \"{s.Value}\"; expected one of: {valid}",
-                Context(b.Right.Span, source)
-            ));
+            diagnostics.Add(
+                new SemanticException(
+                    $"unsupported cast target \"{s.Value}\"; expected one of: {valid}",
+                    Context(b.Right.Span, source)
+                )
+            );
         }
     }
 
@@ -136,8 +144,10 @@ public static class TypeValidator
             return;
         }
 
-        if (!BuiltinMetadata.TryGet(id.Name, out BuiltinEntry? entry) ||
-            entry.Kind != BuiltinKind.Function)
+        if (
+            !BuiltinMetadata.TryGet(id.Name, out BuiltinEntry? entry)
+            || entry.Kind != BuiltinKind.Function
+        )
         {
             return;
         }
@@ -146,17 +156,21 @@ public static class TypeValidator
 
         if (argCount < entry.MinArity)
         {
-            diagnostics.Add(new SemanticException(
-                ArityMessage(id.Name, entry.MinArity, entry.MaxArity, argCount, tooFew: true),
-                Context(c.Span, source, functionName: id.Name)
-            ));
+            diagnostics.Add(
+                new SemanticException(
+                    ArityMessage(id.Name, entry.MinArity, entry.MaxArity, argCount, tooFew: true),
+                    Context(c.Span, source, functionName: id.Name)
+                )
+            );
         }
         else if (argCount > entry.MaxArity)
         {
-            diagnostics.Add(new SemanticException(
-                ArityMessage(id.Name, entry.MinArity, entry.MaxArity, argCount, tooFew: false),
-                Context(c.Span, source, functionName: id.Name)
-            ));
+            diagnostics.Add(
+                new SemanticException(
+                    ArityMessage(id.Name, entry.MinArity, entry.MaxArity, argCount, tooFew: false),
+                    Context(c.Span, source, functionName: id.Name)
+                )
+            );
         }
 
         // Argument kind checks — skip if we didn't supply kinds for this builtin.
@@ -182,10 +196,12 @@ public static class TypeValidator
 
             if (actual != expected)
             {
-                diagnostics.Add(new SemanticException(
-                    $"argument {i + 1} of '{id.Name}' expects {expected}, got {actual}",
-                    Context(c.Args[i].Span, source, functionName: id.Name, argumentIndex: i)
-                ));
+                diagnostics.Add(
+                    new SemanticException(
+                        $"argument {i + 1} of '{id.Name}' expects {expected}, got {actual}",
+                        Context(c.Args[i].Span, source, functionName: id.Name, argumentIndex: i)
+                    )
+                );
             }
         }
 
@@ -195,35 +211,35 @@ public static class TypeValidator
         if (argCount == 1 && IsTypeCheckPredicate(id.Name, out ValueKind targetKind))
         {
             ValueKind actual = inference.KindOf(c.Args[0]);
-            if (actual != ValueKind.Unknown &&
-                actual != ValueKind.Undefined &&
-                targetKind != ValueKind.Undefined)
+            if (
+                actual != ValueKind.Unknown
+                && actual != ValueKind.Undefined
+                && targetKind != ValueKind.Undefined
+            )
             {
                 bool certain = actual != ValueKind.Unknown;
                 if (certain && actual != targetKind)
                 {
-                    diagnostics.Add(new SemanticException(
-                        $"'{id.Name}' is always false for an argument of kind {actual}",
-                        Context(c.Span, source, functionName: id.Name)
-                    ));
+                    diagnostics.Add(
+                        new SemanticException(
+                            $"'{id.Name}' is always false for an argument of kind {actual}",
+                            Context(c.Span, source, functionName: id.Name)
+                        )
+                    );
                 }
             }
         }
     }
 
     private static bool IsDefinitelyNonNumeric(ValueKind k) =>
-        k is ValueKind.String
-            or ValueKind.Array
-            or ValueKind.Object
-            or ValueKind.Function;
+        k is ValueKind.String or ValueKind.Array or ValueKind.Object or ValueKind.Function;
 
     private static string ArityMessage(string name, int min, int max, int got, bool tooFew)
     {
-        string expected = min == max
-            ? $"{min}"
-            : max == int.MaxValue
-                ? $"at least {min}"
-                : $"{min}..{max}";
+        string expected =
+            min == max ? $"{min}"
+            : max == int.MaxValue ? $"at least {min}"
+            : $"{min}..{max}";
         string word = tooFew ? "few" : "many";
         return $"too {word} arguments to '{name}' (expected {expected}, got {got})";
     }
@@ -250,11 +266,12 @@ public static class TypeValidator
         string? source,
         string? functionName = null,
         int? argumentIndex = null
-    ) => new()
-    {
-        Span = span,
-        Expression = source,
-        FunctionName = functionName,
-        ArgumentIndex = argumentIndex,
-    };
+    ) =>
+        new()
+        {
+            Span = span,
+            Expression = source,
+            FunctionName = functionName,
+            ArgumentIndex = argumentIndex,
+        };
 }

@@ -28,31 +28,34 @@ public static class ExpreszoLanguageServer
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(output);
 
-        var server = await OmniSharp.Extensions.LanguageServer.Server.LanguageServer
-            .From(options =>
-            {
-                options
-                    .WithInput(input)
-                    .WithOutput(output)
-                    .ConfigureLogging(logging =>
-                        logging
-                            .AddLanguageProtocolLogging()
-                            .SetMinimumLevel(LogLevel.Information)
-                    )
-                    .WithServices(services =>
-                    {
-                        services.AddSingleton<DocumentCache>();
-                    })
-                    .WithHandler<ExpreszoTextDocumentSyncHandler>()
-                    .WithHandler<ExpreszoHoverHandler>()
-                    .WithHandler<ExpreszoCompletionHandler>()
-                    .WithHandler<ExpreszoSignatureHelpHandler>()
-                    .WithHandler<ExpreszoDocumentSymbolHandler>()
-                    .WithHandler<ExpreszoDefinitionHandler>()
-                    .WithHandler<ExpreszoReferencesHandler>()
-                    .WithHandler<ExpreszoRenameHandler>()
-                    .WithHandler<ExpreszoSemanticTokensHandler>();
-            }, cancellationToken)
+        var server = await OmniSharp
+            .Extensions.LanguageServer.Server.LanguageServer.From(
+                options =>
+                {
+                    options
+                        .WithInput(input)
+                        .WithOutput(output)
+                        .ConfigureLogging(logging =>
+                            logging
+                                .AddLanguageProtocolLogging()
+                                .SetMinimumLevel(LogLevel.Information)
+                        )
+                        .WithServices(services =>
+                        {
+                            services.AddSingleton<DocumentCache>();
+                        })
+                        .WithHandler<ExpreszoTextDocumentSyncHandler>()
+                        .WithHandler<ExpreszoHoverHandler>()
+                        .WithHandler<ExpreszoCompletionHandler>()
+                        .WithHandler<ExpreszoSignatureHelpHandler>()
+                        .WithHandler<ExpreszoDocumentSymbolHandler>()
+                        .WithHandler<ExpreszoDefinitionHandler>()
+                        .WithHandler<ExpreszoReferencesHandler>()
+                        .WithHandler<ExpreszoRenameHandler>()
+                        .WithHandler<ExpreszoSemanticTokensHandler>();
+                },
+                cancellationToken
+            )
             .ConfigureAwait(false);
 
         await server.WaitForExit.ConfigureAwait(false);

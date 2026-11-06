@@ -162,6 +162,8 @@ Higher-order functions accept both `(array, fn)` and `(fn, array)` argument orde
 | `if(c, a, b)` | Function form of `c ? a : b`. **Lazy** - only the matching branch is evaluated. |
 | `coalesce(a, b, ...)` | First non-null, non-undefined, non-empty-string value. |
 | `json(value)` | Convert to a JSON string. |
+| `toJson(value)` | Alias for `json`. |
+| `fromJson(text, fallback?)` | Parse a JSON string into an object, array, or scalar. Throws on invalid JSON, or returns `fallback` when one is given. |
 
 ### Network Functions
 
@@ -511,7 +513,7 @@ Check if a value exists in an array:
 
 Element comparison is strict equality.
 
-## JSON Function
+## JSON Functions
 
 Convert values to JSON strings:
 
@@ -519,9 +521,32 @@ Convert values to JSON strings:
 json([1, 2, 3])           → "[1,2,3]"
 json({a: 1, b: 2})        → '{"a":1,"b":2}'
 json("hello")             → '"hello"'
+toJson([1, 2, 3])         → "[1,2,3]"  (alias for json)
 ```
 
-Function values and `undefined` are dropped from the output (the latter in objects) or emitted as `null` (in arrays). This matches `JSON.stringify` behaviour.
+Function values and `undefined` are dropped from the output (the latter in objects) or emitted as `null` (in arrays). This matches `JSON.stringify` behaviour. `json(undefined)` returns `undefined`.
+
+Parse JSON strings back into values:
+
+```
+fromJson('{"a": 1, "b": [2, 3]}')  → {a: 1, b: [2, 3]}
+fromJson('[1, 2, 3]')              → [1, 2, 3]
+fromJson('42')                     → 42
+fromJson('not json')               → error
+fromJson('not json', {})           → {}
+fromJson(undefined, [])            → []
+fromJson(toJson({a: 1}))           → {a: 1}
+(fromJson('{"a": {"b": 2}}')).a.b  → 2
+```
+
+Wrap the call in parentheses (or assign it to a variable first) to access members of the result.
+
+`fromJson` applies the same protections as the rest of the language:
+
+- Keys named `__proto__`, `prototype`, or `constructor` are dropped from the result.
+- Nesting deeper than 256 levels is rejected (or returns the fallback).
+- Error messages report only the position of the problem, never the input text.
+- A non-string first argument throws, even when a fallback is given.
 
 ## Custom Functions
 
